@@ -17,8 +17,8 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentColor, setCurrentColor] = useState<string>(COLORS.primary.main);
   const [brushSize, setBrushSize] = useState(5);
-  const [gameState, setGameState] = useState<GameStateType>('waiting');
-  const [topic, setTopic] = useState<string>('');
+  const [gameState, setGameState] = useState<GameStateType>('playing');
+  const [topic, setTopic] = useState<string>('고양이');
   const [countdown, setCountdown] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number>(30);
   const [playerCount, setPlayerCount] = useState<number>(1);
@@ -423,8 +423,8 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
           borderRadius: BORDER_RADIUS.sm,
           cursor: gameState === 'playing' ? 'crosshair' : 'not-allowed',
           background: 'white',
-          maxWidth: '100%',
-          height: 'auto',
+          width: GAME_CONFIG.CANVAS_SIZE.width,
+          height: GAME_CONFIG.CANVAS_SIZE.height,
           touchAction: 'none'
         }}
       />
