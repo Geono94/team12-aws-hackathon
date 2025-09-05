@@ -26,7 +26,8 @@ export default function HomePage({ onStartGame, isLoading = false }: HomePagePro
 
   const handleStartClick = () => {
     if (playerName.trim()) {
-      onStartGame(playerName.trim());
+      // MatchingPage로 이동
+      window.location.href = '/matching';
     }
   };
 

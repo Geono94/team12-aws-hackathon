@@ -20,7 +20,7 @@ export default function MatchingPage({
   onStartGame, 
   onLeaveRoom 
 }: MatchingPageProps) {
-  const canStart = players.length >= 2; // Minimum 2 players
+  const canStart = players.length >= 1; // Minimum 1 player
 
   return (
     <div style={{ 
@@ -140,39 +140,25 @@ export default function MatchingPage({
           >
             🚪 나가기
           </Button>
-          {isHost && (
-            <Button 
-              disabled={!canStart}
-              onClick={onStartGame}
-              style={{
-                background: canStart 
-                  ? COLORS.primary.main
-                  : 'rgba(255,255,255,0.2)',
-                border: 'none',
-                borderRadius: '12px',
-                padding: '12px 24px',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                opacity: canStart ? 1 : 0.5
-              }}
-            >
-              🚀 게임 시작
-            </Button>
-          )}
+          <Button 
+            disabled={!canStart}
+            onClick={onStartGame}
+            style={{
+              background: canStart 
+                ? COLORS.primary.main
+                : 'rgba(255,255,255,0.2)',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '12px 24px',
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: '16px',
+              opacity: canStart ? 1 : 0.5
+            }}
+          >
+            🚀 게임 시작
+          </Button>
         </div>
-
-        {!isHost && (
-          <p style={{ 
-            marginTop: SPACING.lg,
-            color: '#888888',
-            fontSize: '14px',
-            textAlign: 'center',
-            fontStyle: 'italic'
-          }}>
-            방장이 게임을 시작하기를 기다리는 중...
-          </p>
-        )}
       </div>
     </div>
   );

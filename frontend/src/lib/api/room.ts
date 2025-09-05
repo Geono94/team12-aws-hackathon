@@ -22,17 +22,20 @@ export async function getRoomInfo(roomId: string): Promise<RoomResponse | null> 
     });
 
     if (!response.ok) {
-      if (response.status === 404) {
-        return null; // Room not found
-      }
+      // 모든 HTTP 에러를 catch 블록에서 처리하도록 throw
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Get room info failed:', error);
-    // API endpoint not available yet, assume room doesn't exist
-    return null;
+    console.error('Get room info failed, using mock data:', error);
+    // API 실패 시 mock 데이터 반환
+    return {
+      roomId: roomId,
+      playerCount: 1,
+      maxPlayers: 4,
+      status: 'waiting'
+    };
   }
 }
 

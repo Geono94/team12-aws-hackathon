@@ -39,11 +39,6 @@ export default function Matching() {
       
       setPlayers(mockPlayers);
       
-      // 1초 후 바로 드로잉 페이지로 이동
-      setTimeout(() => {
-        router.push(`/drawing/${roomData.roomId}`);
-      }, 1000);
-      
     } catch (error) {
       console.error('Failed to join room:', error);
       // 에러 시 홈으로 돌아가기
@@ -54,7 +49,7 @@ export default function Matching() {
   };
 
   const handleStartGame = () => {
-    if (roomId && players.length >= 2) {
+    if (roomId && players.length >= 1) {
       router.push(`/drawing/${roomId}`);
     }
   };
