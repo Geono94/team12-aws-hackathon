@@ -23,11 +23,36 @@ export class DrawTogetherStack extends cdk.Stack {
     });
 
     // DynamoDB Tables
+    const roomsTable = new dynamodb.Table(this, 'RoomsTable', {
+      tableName: 'DrawTogether-Rooms',
+      partitionKey: { name: 'roomId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    // GSI for finding available rooms quickly
+    roomsTable.addGlobalSecondaryIndex({
+      indexName: 'StatusIndex',
+      partitionKey: { name: 'status', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'playerCount', type: dynamodb.AttributeType.NUMBER },
+    });
+
     const gamesTable = new dynamodb.Table(this, 'GamesTable', {
       tableName: 'DrawTogether-Games',
       partitionKey: { name: 'gameId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    // Room Handler Lambda
+    const roomHandler = new lambda.Function(this, 'RoomHandler', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'src/room-handler.handler',
+      code: lambda.Code.fromAsset('lambda'),
+      timeout: cdk.Duration.seconds(30),
+      environment: {
+        ROOMS_TABLE: roomsTable.tableName,
+      },
     });
 
     // AI Handler Lambda
@@ -43,6 +68,7 @@ export class DrawTogetherStack extends cdk.Stack {
     });
 
     // Grant permissions
+    roomsTable.grantReadWriteData(roomHandler);
     gamesTable.grantReadWriteData(aiHandler);
     imagesBucket.grantReadWrite(aiHandler);
 
@@ -65,6 +91,14 @@ export class DrawTogetherStack extends cdk.Stack {
         allowHeaders: ['*'],
       },
     });
+
+    // Room endpoints
+    const roomsResource = restApi.root.addResource('rooms');
+    const joinResource = roomsResource.addResource('join');
+    const leaveResource = roomsResource.addResource('leave');
+    
+    joinResource.addMethod('POST', new apigateway.LambdaIntegration(roomHandler));
+    leaveResource.addMethod('POST', new apigateway.LambdaIntegration(roomHandler));
 
     // AI endpoint
     const aiResource = restApi.root.addResource('ai');

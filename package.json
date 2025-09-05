@@ -18,7 +18,9 @@
     "clean": "cd lambda && npm run clean && rm -rf coverage"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.0.0"
+    "@aws-sdk/client-bedrock-runtime": "^3.0.0",
+    "aws-cdk-lib": "^2.0.0",
+    "constructs": "^10.0.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.145",
