@@ -13,6 +13,12 @@ export interface CardProps {
   hover?: boolean;
 }
 
+export interface Reaction {
+  type: 'like' | 'clap' | 'wow' | 'laugh';
+  count: number;
+  userReacted: boolean;
+}
+
 export interface ArtworkItem {
   id: string;
   originalImage: string;
@@ -20,4 +26,11 @@ export interface ArtworkItem {
   topic: string;
   playerCount: number;
   createdAt: string;
+  aiModel?: string;
+  reactions: Reaction[];
+}
+
+export interface FeedFilters {
+  sortBy: 'latest' | 'popular';
+  topicFilter?: string;
 }
