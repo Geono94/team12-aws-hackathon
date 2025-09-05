@@ -3,7 +3,7 @@
 echo "🚀 Deploying CDK infrastructure..."
 
 # CDK 배포
-cd /Users/link.ahn/project/team12-aws-hackathon
+#cd /Users/link.ahn/project/team12-aws-hackathon
 npm run build
 cdk deploy --require-approval never
 

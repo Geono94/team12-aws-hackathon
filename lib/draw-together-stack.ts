@@ -3,6 +3,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
@@ -108,6 +109,50 @@ export class DrawTogetherStack extends cdk.Stack {
     const aiResource = restApi.root.addResource('ai');
     const generateResource = aiResource.addResource('generate');
     generateResource.addMethod('POST', new apigateway.LambdaIntegration(aiHandler));
+
+    // S3 Trigger Handler
+    const s3TriggerHandler = new lambda.Function(this, 'S3TriggerHandler', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 's3-trigger.handler',
+      code: lambda.Code.fromAsset('lambda'),
+      environment: {
+        ROOMS_TABLE_NAME: roomsTable.tableName,
+        AI_HANDLER_NAME: aiHandler.functionName,
+      },
+    });
+
+    roomsTable.grantReadData(s3TriggerHandler);
+    aiHandler.grantInvoke(s3TriggerHandler);
+
+    // S3 event notification
+    imagesBucket.addEventNotification(
+      s3.EventType.OBJECT_CREATED,
+      new s3n.LambdaDestination(s3TriggerHandler),
+      { prefix: 'original/' }
+    );
+
+    // GitHub token secret
+    // const githubToken = secretsmanager.Secret.fromSecretNameV2(
+    //   this,
+    //   'GitHubToken',
+    //   'github-token'
+    // );
+
+    // Amplify App
+    // const amplifyApp = new amplify.App(this, 'DrawTogetherApp', {
+    //   sourceCodeProvider: new amplify.GitHubSourceCodeProvider({
+    //     owner: process.env.GITHUB_OWNER || 'default-owner',
+    //     repository: process.env.GITHUB_REPO || 'team12-aws-hackathon',
+    //     oauthToken: githubToken.secretValue,
+    //   }),
+    //   environmentVariables: {
+    //     REACT_APP_API_URL: restApi.url,
+    //     REACT_APP_S3_BUCKET: imagesBucket.bucketName,
+    //   },
+    // });
+
+    // amplifyApp.addBranch('main');
+    // amplifyApp.addBranch('preview');
 
     // Outputs
     new cdk.CfnOutput(this, 'RestApiURL', {
