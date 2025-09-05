@@ -23,7 +23,7 @@ export default function MatchingPage({
 
   return (
     <div style={{ 
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: '#000000',
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
@@ -45,9 +45,8 @@ export default function MatchingPage({
         <h1 style={{ 
           fontSize: '32px',
           fontWeight: 'bold',
-          color: 'white',
-          marginBottom: SPACING.sm,
-          textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+          color: '#FFFFFF',
+          marginBottom: SPACING.sm
         }}>
           대기실
         </h1>
@@ -55,11 +54,11 @@ export default function MatchingPage({
 
       {/* Main Card */}
       <div style={{
-        background: 'rgba(255,255,255,0.95)',
-        borderRadius: '20px',
+        background: 'rgba(255,255,255,0.05)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: '16px',
         padding: SPACING.xl,
-        boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-        backdropFilter: 'blur(10px)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
         minWidth: '400px',
         maxWidth: '500px'
       }}>
@@ -68,8 +67,8 @@ export default function MatchingPage({
           textAlign: 'center',
           marginBottom: SPACING.xl,
           padding: SPACING.lg,
-          background: 'linear-gradient(45deg, #667eea, #764ba2)',
-          borderRadius: '15px',
+          background: COLORS.primary.main,
+          borderRadius: '12px',
           color: 'white'
         }}>
           <p style={{ 
@@ -95,14 +94,14 @@ export default function MatchingPage({
                 style={{
                   padding: SPACING.lg,
                   background: player 
-                    ? 'linear-gradient(45deg, #ff6b6b, #ffa726)' 
-                    : 'rgba(0,0,0,0.1)',
+                    ? COLORS.primary.main
+                    : 'rgba(255,255,255,0.1)',
                   borderRadius: '12px',
-                  color: player ? 'white' : '#666',
+                  color: player ? 'white' : '#888888',
                   fontWeight: '600',
                   textAlign: 'center',
                   fontSize: '16px',
-                  border: player ? 'none' : '2px dashed #ccc'
+                  border: player ? 'none' : '1px dashed rgba(255,255,255,0.2)'
                 }}
               >
                 {player ? (
@@ -131,10 +130,11 @@ export default function MatchingPage({
             variant="outline" 
             onClick={onLeaveRoom}
             style={{
-              borderRadius: '25px',
+              borderRadius: '12px',
               padding: '12px 24px',
-              border: '2px solid #ccc',
-              background: 'white'
+              border: '1px solid rgba(255,255,255,0.2)',
+              background: 'rgba(255,255,255,0.1)',
+              color: '#FFFFFF'
             }}
           >
             🚪 나가기
@@ -145,14 +145,15 @@ export default function MatchingPage({
               onClick={onStartGame}
               style={{
                 background: canStart 
-                  ? 'linear-gradient(45deg, #ff6b6b, #ffa726)' 
-                  : '#ccc',
+                  ? COLORS.primary.main
+                  : 'rgba(255,255,255,0.2)',
                 border: 'none',
-                borderRadius: '25px',
+                borderRadius: '12px',
                 padding: '12px 24px',
                 color: 'white',
                 fontWeight: 'bold',
-                fontSize: '16px'
+                fontSize: '16px',
+                opacity: canStart ? 1 : 0.5
               }}
             >
               🚀 게임 시작
@@ -163,7 +164,7 @@ export default function MatchingPage({
         {!isHost && (
           <p style={{ 
             marginTop: SPACING.lg,
-            color: '#666',
+            color: '#888888',
             fontSize: '14px',
             textAlign: 'center',
             fontStyle: 'italic'
