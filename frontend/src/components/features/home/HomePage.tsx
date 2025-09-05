@@ -1,112 +1,111 @@
 'use client';
 
 import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
 import { COLORS, SPACING } from '@/constants/design';
-import { ArtworkItem } from '@/types/ui';
 
 interface HomePageProps {
-  artworks: ArtworkItem[];
   onStartGame: () => void;
 }
 
-export default function HomePage({ artworks, onStartGame }: HomePageProps) {
-  const handleViewAllFeed = () => {
+export default function HomePage({ onStartGame }: HomePageProps) {
+  const handleViewFeed = () => {
     window.location.href = '/feed';
   };
 
   return (
     <div style={{ 
-      padding: SPACING.md,
-      background: COLORS.neutral.background,
-      minHeight: '100vh'
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: SPACING.lg,
+      textAlign: 'center'
     }}>
-      {/* Header */}
-      <div style={{ 
-        textAlign: 'center', 
-        marginBottom: SPACING.xl,
-        paddingTop: SPACING.lg 
-      }}>
+      {/* Logo & Title */}
+      <div style={{ marginBottom: SPACING.xl }}>
+        <div style={{
+          fontSize: '64px',
+          marginBottom: SPACING.sm
+        }}>
+          🎨
+        </div>
         <h1 style={{ 
-          fontSize: '32px',
+          fontSize: '36px',
           fontWeight: 'bold',
-          color: COLORS.neutral.text,
-          marginBottom: SPACING.md
+          color: 'white',
+          marginBottom: SPACING.sm,
+          textShadow: '0 2px 4px rgba(0,0,0,0.3)'
         }}>
           DrawTogether
         </h1>
-        <Button size="lg" onClick={onStartGame}>
-          🎨 새 게임 시작하기
+        <p style={{
+          fontSize: '18px',
+          color: 'rgba(255,255,255,0.9)',
+          marginBottom: SPACING.xl
+        }}>
+          친구들과 함께 그리고 AI가 변환해주는 재미있는 게임
+        </p>
+      </div>
+
+      {/* Main Action Button */}
+      <div style={{ marginBottom: SPACING.xl }}>
+        <Button 
+          size="lg" 
+          onClick={onStartGame}
+          style={{
+            fontSize: '24px',
+            padding: '20px 40px',
+            background: 'linear-gradient(45deg, #ff6b6b, #ffa726)',
+            border: 'none',
+            borderRadius: '50px',
+            color: 'white',
+            fontWeight: 'bold',
+            boxShadow: '0 8px 20px rgba(255,107,107,0.4)',
+            transform: 'scale(1)',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 12px 25px rgba(255,107,107,0.5)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(255,107,107,0.4)';
+          }}
+        >
+          🚀 게임 시작하기
         </Button>
       </div>
 
-      {/* Recent Artworks Preview */}
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: SPACING.md 
-        }}>
-          <h2 style={{ 
-            fontSize: '24px',
-            fontWeight: '600',
-            color: COLORS.neutral.text
-          }}>
-            최근 작품들
-          </h2>
-          <Button variant="outline" onClick={handleViewAllFeed}>
-            전체 보기
-          </Button>
-        </div>
-        
-        <div style={{ 
-          display: 'grid',
-          gap: SPACING.md,
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))'
-        }}>
-          {artworks.slice(0, 4).map((artwork) => (
-            <Card key={artwork.id} hover>
-              <div style={{ display: 'flex', gap: SPACING.sm }}>
-                <img 
-                  src={artwork.originalImage} 
-                  alt="Original"
-                  style={{ 
-                    width: '120px', 
-                    height: '90px', 
-                    objectFit: 'cover',
-                    borderRadius: '8px'
-                  }}
-                />
-                <img 
-                  src={artwork.aiImage} 
-                  alt="AI Generated"
-                  style={{ 
-                    width: '120px', 
-                    height: '90px', 
-                    objectFit: 'cover',
-                    borderRadius: '8px'
-                  }}
-                />
-              </div>
-              <div style={{ marginTop: SPACING.sm }}>
-                <p style={{ 
-                  fontWeight: '600',
-                  color: COLORS.neutral.text,
-                  marginBottom: '4px'
-                }}>
-                  주제: {artwork.topic}
-                </p>
-                <p style={{ 
-                  fontSize: '14px',
-                  color: COLORS.neutral.subtext
-                }}>
-                  {artwork.playerCount}명 참여 • {artwork.createdAt}
-                </p>
-              </div>
-            </Card>
-          ))}
-        </div>
+      {/* Secondary Action */}
+      <div>
+        <Button 
+          variant="outline" 
+          onClick={handleViewFeed}
+          style={{
+            background: 'rgba(255,255,255,0.2)',
+            border: '2px solid rgba(255,255,255,0.3)',
+            color: 'white',
+            borderRadius: '25px',
+            padding: '12px 24px',
+            fontSize: '16px',
+            backdropFilter: 'blur(10px)'
+          }}
+        >
+          📱 작품 피드 보기
+        </Button>
+      </div>
+
+      {/* Bottom decoration */}
+      <div style={{
+        position: 'absolute',
+        bottom: '20px',
+        fontSize: '14px',
+        color: 'rgba(255,255,255,0.7)'
+      }}>
+        최대 4명까지 함께 플레이 가능
       </div>
     </div>
   );

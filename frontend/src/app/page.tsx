@@ -1,27 +1,6 @@
 'use client';
 
 import HomePage from '@/components/features/home/HomePage';
-import { ArtworkItem } from '@/types/ui';
-
-// Mock data for development
-const mockArtworks: ArtworkItem[] = [
-  {
-    id: '1',
-    originalImage: '/api/placeholder/300/200',
-    aiImage: '/api/placeholder/300/200',
-    topic: '고양이',
-    playerCount: 4,
-    createdAt: '2시간 전'
-  },
-  {
-    id: '2',
-    originalImage: '/api/placeholder/300/200',
-    aiImage: '/api/placeholder/300/200',
-    topic: '집',
-    playerCount: 3,
-    createdAt: '5시간 전'
-  }
-];
 
 export default function Home() {
   const handleStartGame = () => {
@@ -31,7 +10,6 @@ export default function Home() {
 
   return (
     <HomePage 
-      artworks={mockArtworks}
       onStartGame={handleStartGame}
     />
   );
