@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, QueryCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, QueryCommand, PutCommand, UpdateCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
@@ -302,28 +302,32 @@ async function getFinishedRooms(event: APIGatewayProxyEvent): Promise<APIGateway
     const limit = parseInt(event.queryStringParameters?.limit || '10');
     const nextToken = event.queryStringParameters?.nextToken;
 
-    const command = new QueryCommand({
+    const command = new ScanCommand({
       TableName: ROOMS_TABLE,
-      IndexName: 'StatusIndex',
-      KeyConditionExpression: '#status = :status',
+      FilterExpression: '#status = :status',
       ExpressionAttributeNames: {
         '#status': 'status',
       },
       ExpressionAttributeValues: {
         ':status': 'finished',
       },
-      ScanIndexForward: false,
-      Limit: Math.min(limit, 50), // Cap at 50 items per request
+      Limit: Math.min(limit * 3, 150), // Get more items to sort properly
       ...(nextToken && { ExclusiveStartKey: JSON.parse(Buffer.from(nextToken, 'base64').toString()) })
     });
 
     const result = await docClient.send(command);
-    const rooms = result.Items as Room[] || [];
+    let rooms = (result.Items as Room[]) || [];
+
+    // Sort by finishedAt descending (newest first)
+    rooms.sort((a, b) => (b.finishedAt || b.createdAt || 0) - (a.finishedAt || a.createdAt || 0));
+    
+    // Take only the requested limit
+    const limitedRooms = rooms.slice(0, limit);
 
     // Prepare response with pagination
     const response: any = {
-      rooms,
-      hasMore: !!result.LastEvaluatedKey
+      rooms: limitedRooms,
+      hasMore: !!result.LastEvaluatedKey || rooms.length > limit
     };
 
     if (result.LastEvaluatedKey) {
