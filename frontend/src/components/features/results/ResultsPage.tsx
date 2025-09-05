@@ -291,88 +291,90 @@ export default function ResultsPage() {
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          width: '100%',
-          maxWidth: '400px',
-          marginTop: '24px'
-        }}>
-          {/* 저장 및 공유 버튼 */}
-          <div style={{ display: 'flex', gap: '12px' }}>
+        {/* Action Buttons - AI 변환 중에는 숨김 */}
+        {!isLoading && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            width: '100%',
+            maxWidth: '400px',
+            marginTop: '24px'
+          }}>
+            {/* 저장 및 공유 버튼 */}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={handleDownloadImage}
+                disabled={!originalImage}
+                style={{
+                  flex: 1,
+                  padding: '14px 20px',
+                  border: '2px solid #4ECDC4',
+                  borderRadius: '12px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: !originalImage ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  background: 'rgba(78,205,196,0.1)',
+                  color: '#4ECDC4',
+                  opacity: !originalImage ? 0.5 : 1
+                }}
+              >
+                💾 저장하기
+              </button>
+              
+              <button
+                onClick={handleShareResult}
+                disabled={!originalImage}
+                style={{
+                  flex: 1,
+                  padding: '14px 20px',
+                  border: '2px solid #45B7D1',
+                  borderRadius: '12px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: !originalImage ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  background: 'rgba(69,183,209,0.1)',
+                  color: '#45B7D1',
+                  opacity: !originalImage ? 0.5 : 1
+                }}
+              >
+                📤 공유하기
+              </button>
+            </div>
+
+            {/* 홈으로 돌아가기 */}
             <button
-              onClick={handleDownloadImage}
-              disabled={!originalImage}
+              onClick={onGoHome}
               style={{
-                flex: 1,
-                padding: '14px 20px',
-                border: '2px solid #4ECDC4',
-                borderRadius: '12px',
-                fontSize: '16px',
+                padding: '16px 32px',
+                border: '2px solid #FF6B6B',
+                borderRadius: '16px',
+                fontSize: '18px',
                 fontWeight: '600',
-                cursor: !originalImage ? 'not-allowed' : 'pointer',
+                cursor: 'pointer',
                 transition: 'all 0.3s ease',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                background: 'rgba(78,205,196,0.1)',
-                color: '#4ECDC4',
-                opacity: !originalImage ? 0.5 : 1
+                background: 'rgba(255,107,107,0.1)',
+                color: '#FF6B6B'
               }}
             >
-              💾 저장하기
-            </button>
-            
-            <button
-              onClick={handleShareResult}
-              disabled={!originalImage}
-              style={{
-                flex: 1,
-                padding: '14px 20px',
-                border: '2px solid #45B7D1',
-                borderRadius: '12px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: !originalImage ? 'not-allowed' : 'pointer',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                background: 'rgba(69,183,209,0.1)',
-                color: '#45B7D1',
-                opacity: !originalImage ? 0.5 : 1
-              }}
-            >
-              📤 공유하기
+              🏠 홈으로 돌아가기
             </button>
           </div>
-
-          {/* 홈으로 돌아가기 */}
-          <button
-            onClick={onGoHome}
-            style={{
-              padding: '16px 32px',
-              border: '2px solid #FF6B6B',
-              borderRadius: '16px',
-              fontSize: '18px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              background: 'rgba(255,107,107,0.1)',
-              color: '#FF6B6B'
-            }}
-          >
-            🏠 홈으로 돌아가기
-          </button>
-        </div>
+        )}
 
       </div>
       
