@@ -9,23 +9,20 @@ export class GeminiImageProcessor {
         this.genAI = new GoogleGenerativeAI(apiKey);
     }
 
-    async generateImage(prompt: string, imagePath: string): Promise<string> {
+    async generateImage(prompt: string, imageBase64: string): Promise<string> {
         console.log('🎨 Gemini 이미지 생성 시작');
         console.log('📝 전달된 프롬프트:', prompt);
-        console.log('🖼️ 참조 이미지:', imagePath);
+        console.log('🖼️ 이미지 데이터 길이:', imageBase64.length);
 
         try {
             const model = this.genAI.getGenerativeModel({ 
                 model: "gemini-2.5-flash-image-preview"
             });
 
-            const imageBuffer = readFileSync(imagePath);
-            const mimeType = imagePath.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
-
             const imagePart = {
                 inlineData: {
-                    data: imageBuffer.toString('base64'),
-                    mimeType: mimeType
+                    data: imageBase64,
+                    mimeType: 'image/png'
                 }
             };
 

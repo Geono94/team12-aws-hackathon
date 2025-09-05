@@ -1,7 +1,6 @@
 import { S3Event } from 'aws-lambda';
-import { DynamoDB, Lambda } from 'aws-sdk';
+import { Lambda } from 'aws-sdk';
 
-const dynamodb = new DynamoDB.DocumentClient();
 const lambda = new Lambda();
 
 export const handler = async (event: S3Event): Promise<void> => {
@@ -24,20 +23,9 @@ export const handler = async (event: S3Event): Promise<void> => {
     // Generate output key with AI suffix
     const fileExtension = fileName.split('.').pop();
     const baseName = fileName.replace(`.${fileExtension}`, '');
-    const outputKey = `processed/${roomId}/${baseName}_ai.${fileExtension}`;
+    const outputKey = `${pathParts.slice(0, -1).join('/')}/${baseName}_ai.${fileExtension}`;
 
     try {
-      // Get room data
-      const roomData = await dynamodb.get({
-        TableName: process.env.ROOMS_TABLE_NAME!,
-        Key: { roomId }
-      }).promise();
-
-      if (!roomData.Item) {
-        console.log('Room not found:', roomId);
-        continue;
-      }
-
       // Invoke AI handler with input and output paths
       await lambda.invoke({
         FunctionName: process.env.AI_HANDLER_NAME!,

@@ -33,9 +33,9 @@ export class BedrockImageProcessor {
         });
     }
 
-    async analyzeImage(imagePath: string): Promise<AnalysisResponse> {
-        const mediaType = imagePath.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
-        const imageBuffer = readFileSync(imagePath);
+    async analyzeImage(imageBase64: string): Promise<AnalysisResponse> {
+        const mediaType = 'image/png';
+        const imageBuffer = Buffer.from(imageBase64, 'base64');
         
         const payload = {
             anthropic_version: "bedrock-2023-05-31",

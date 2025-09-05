@@ -48,8 +48,8 @@ export class DrawTogetherStack extends cdk.Stack {
     // Room Handler Lambda
     const roomHandler = new lambda.Function(this, 'RoomHandler', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'room-handler.handler',
-      code: lambda.Code.fromAsset('lambda/dist'),
+      handler: 'dist/room-handler.handler',
+      code: lambda.Code.fromAsset('lambda'),
       timeout: cdk.Duration.seconds(30),
       environment: {
         ROOMS_TABLE: roomsTable.tableName,
@@ -59,19 +59,26 @@ export class DrawTogetherStack extends cdk.Stack {
     // AI Handler Lambda
     const aiHandler = new lambda.Function(this, 'AIHandler', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'ai.handler',
+      handler: 'dist/ai-handler.handler',
       code: lambda.Code.fromAsset('lambda'),
       timeout: cdk.Duration.minutes(5),
-      environment: {
-        IMAGES_BUCKET: imagesBucket.bucketName,
-        GAMES_TABLE: gamesTable.tableName,
-      },
     });
 
     // Grant permissions
     roomsTable.grantReadWriteData(roomHandler);
     gamesTable.grantReadWriteData(aiHandler);
     imagesBucket.grantReadWrite(aiHandler);
+
+    // Additional S3 permissions for test buckets
+    aiHandler.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        's3:GetObject',
+        's3:PutObject',
+        's3:DeleteObject'
+      ],
+      resources: ['arn:aws:s3:::drawtogether-*/*'],
+    }));
 
     // Bedrock permissions
     aiHandler.addToRolePolicy(new iam.PolicyStatement({
@@ -113,8 +120,9 @@ export class DrawTogetherStack extends cdk.Stack {
     // S3 Trigger Handler
     const s3TriggerHandler = new lambda.Function(this, 'S3TriggerHandler', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 's3-trigger.handler',
+      handler: 'dist/s3-trigger.handler',
       code: lambda.Code.fromAsset('lambda'),
+      timeout: cdk.Duration.seconds(30),
       environment: {
         ROOMS_TABLE_NAME: roomsTable.tableName,
         AI_HANDLER_NAME: aiHandler.functionName,
@@ -153,7 +161,6 @@ export class DrawTogetherStack extends cdk.Stack {
     // });
 
     // amplifyApp.addBranch('main');
-    // amplifyApp.addBranch('preview');
 
     // Outputs
     new cdk.CfnOutput(this, 'RestApiURL', {

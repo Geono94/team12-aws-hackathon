@@ -21,6 +21,8 @@
     "create-test-images": "node scripts/create-test-images.js",
     "create-feed-images": "node scripts/create-feed-images.js",
     "dev:lambda": "npm run lambda:build && cd lambda && npm run typecheck && node local-server.js",
+    "dev:front": "cd frontend && npm run dev",
+    "start:front:local": "npm run dev:front",
     "start:lambda:local": "npm run dev:lambda"
   },
   "dependencies": {

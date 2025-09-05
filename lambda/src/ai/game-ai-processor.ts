@@ -52,31 +52,31 @@ export class GameAIProcessor {
             const imageBuffer = s3Object.Body as Buffer;
             const imageBase64 = imageBuffer.toString('base64');
 
-            // Process with Gemini only
-            const generatedImage = await this.gemini.generateImage(imageBase64, 'drawing');
+            // First analyze with Claude to get prompt
+            const analysisResult = await this.bedrock.analyzeImage(imageBase64);
+            const prompt = analysisResult.regenerationPrompt || "Transform this drawing into a beautiful artistic style";
+            
+            // Process with Gemini using Claude's analysis as prompt
+            const generatedImage = await this.gemini.generateImage(prompt, imageBase64);
             
             if (typeof generatedImage === 'object' && generatedImage !== null && (generatedImage as any).success && (generatedImage as any).data) {
-                const outputKey = request.outputKey.replace('_ai.', '_ai.');
-                
                 await s3.putObject({
                     Bucket: request.bucketName,
-                    Key: outputKey,
+                    Key: request.outputKey,
                     Body: Buffer.from((generatedImage as any).data, 'base64'),
                     ContentType: 'image/png'
                 }).promise();
                 
-                console.log(`AI 처리된 이미지 업로드 완료: ${outputKey}`);
+                console.log(`AI 처리된 이미지 업로드 완료: ${request.outputKey}`);
             } else if (typeof generatedImage === 'string') {
-                const outputKey = request.outputKey.replace('_ai.', '_ai.');
-                
                 await s3.putObject({
                     Bucket: request.bucketName,
-                    Key: outputKey,
+                    Key: request.outputKey,
                     Body: Buffer.from(generatedImage, 'base64'),
                     ContentType: 'image/png'
                 }).promise();
                 
-                console.log(`AI 처리된 이미지 업로드 완료: ${outputKey}`);
+                console.log(`AI 처리된 이미지 업로드 완료: ${request.outputKey}`);
             }
 
         } catch (error) {

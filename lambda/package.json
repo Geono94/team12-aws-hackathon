@@ -17,7 +17,8 @@
     "@aws-sdk/client-bedrock-runtime": "^3.0.0",
     "@aws-sdk/client-dynamodb": "^3.0.0",
     "@aws-sdk/lib-dynamodb": "^3.0.0",
-    "@google/generative-ai": "^0.24.1"
+    "@google/generative-ai": "^0.24.1",
+    "aws-sdk": "^2.1692.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.145",
