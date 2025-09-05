@@ -618,11 +618,77 @@ export default function HomePage({}: HomePageProps) {
         }}>
           최대 4명까지 함께 플레이 가능
         </div>
+
+        {/* Feed Preview Hint */}
+        <div style={{
+          position: 'absolute',
+          bottom: '-60px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '90%',
+          maxWidth: '320px',
+          background: 'rgba(26, 26, 26, 0.95)',
+          borderRadius: '16px 16px 0 0',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderBottom: 'none',
+          backdropFilter: 'blur(10px)',
+          padding: '16px',
+          textAlign: 'center',
+          animation: 'feedPreview 3s ease-in-out infinite'
+        }}>
+          <div style={{
+            fontSize: '14px',
+            color: '#fff',
+            fontWeight: '500',
+            marginBottom: '8px'
+          }}>
+            🎨 커뮤니티 작품들
+          </div>
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            justifyContent: 'center',
+            marginBottom: '8px'
+          }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              background: 'linear-gradient(45deg, #667eea, #764ba2)',
+              borderRadius: '8px',
+              opacity: 0.8
+            }} />
+            <div style={{
+              width: '40px',
+              height: '40px',
+              background: 'linear-gradient(45deg, #f093fb, #f5576c)',
+              borderRadius: '8px',
+              opacity: 0.8
+            }} />
+            <div style={{
+              width: '40px',
+              height: '40px',
+              background: 'linear-gradient(45deg, #4facfe, #00f2fe)',
+              borderRadius: '8px',
+              opacity: 0.8
+            }} />
+          </div>
+          <div style={{
+            fontSize: '12px',
+            color: '#888',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '4px'
+          }}>
+            아래로 스크롤 <span style={{ animation: 'bounce 2s infinite' }}>↓</span>
+          </div>
+        </div>
       </div>
 
       {/* Feed Section */}
       <div style={{ 
         padding: SPACING.lg,
+        paddingTop: '80px',
         borderTop: '1px solid #333333'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -670,9 +736,9 @@ export default function HomePage({}: HomePageProps) {
           ) : (
             <>
               <div style={{ 
-                display: 'grid',
-                gap: SPACING.md,
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))'
+                display: 'flex',
+                flexDirection: 'column',
+                gap: SPACING.md
               }}>
                 {artworks.map((artwork) => (
                   <ArtworkCard
