@@ -1,0 +1,12 @@
+{
+  "name": "sample-cat-drawing",
+  "description": "Simple cat drawing for testing",
+  "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+  "expectedSubject": "고양이",
+  "expectedScore": 7,
+  "metadata": {
+    "width": 400,
+    "height": 300,
+    "format": "jpeg"
+  }
+}
