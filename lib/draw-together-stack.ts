@@ -125,7 +125,8 @@ export class DrawTogetherStack extends cdk.Stack {
     aiHandler.grantInvoke(s3TriggerHandler);
 
     // S3 event notification
-    imagesBucket.addEventNotification(
+    const targetBucket = s3.Bucket.fromBucketName(this, 'TargetBucket', 'drawtogether-test-1757052413482');
+    targetBucket.addEventNotification(
       s3.EventType.OBJECT_CREATED,
       new s3n.LambdaDestination(s3TriggerHandler),
       { prefix: 'original/' }
