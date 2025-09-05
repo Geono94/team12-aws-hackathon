@@ -15,6 +15,12 @@ export interface RoomResponse {
   }>;
 }
 
+export interface PaginatedRoomsResponse {
+  rooms: RoomResponse[];
+  nextToken?: string;
+  hasMore: boolean;
+}
+
 export async function getRoomInfo(roomId: string): Promise<RoomResponse | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/${roomId}`, {
@@ -107,9 +113,12 @@ export async function leaveRoom(roomId: string, playerId: string): Promise<void>
   }
 }
 
-export async function getFinishedRooms(): Promise<RoomResponse[]> {
+export async function getFinishedRooms(limit: number = 10, nextToken?: string): Promise<PaginatedRoomsResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/rooms/finished`, {
+    const params = new URLSearchParams({ limit: limit.toString() });
+    if (nextToken) params.append('nextToken', nextToken);
+    
+    const response = await fetch(`${API_BASE_URL}/rooms/finished?${params}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -123,6 +132,6 @@ export async function getFinishedRooms(): Promise<RoomResponse[]> {
     return await response.json();
   } catch (error) {
     console.error('Get finished rooms failed:', error);
-    return [];
+    return { rooms: [], hasMore: false };
   }
 }

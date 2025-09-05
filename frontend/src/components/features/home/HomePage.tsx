@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import ArtworkCard from '@/components/features/feed/ArtworkCard';
@@ -8,26 +8,33 @@ import { COLORS, SPACING } from '@/constants/design';
 import { getPlayer, savePlayer } from '@/lib/player';
 import { ArtworkItem, Reaction } from '@/types/ui';
 import { useYjs } from '@/contexts/YjsContext';
+import { getFinishedRooms } from '@/lib/api/room';
+import { getOriginalImageUrl, getAiImageUrl } from '@/lib/utils/s3';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
-interface HomePageProps { 
-  artworks?: ArtworkItem[];
-}
+interface HomePageProps {}
 
-export default function HomePage({   artworks = [] }: HomePageProps) {
+export default function HomePage({}: HomePageProps) {
   const router = useRouter();
   const [playerName, setPlayerName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-  const [feedArtworks, setFeedArtworks] = useState(artworks);
   const [profileImage, setProfileImage] = useState('/characters/character1.svg');
   const [showProfileSelector, setShowProfileSelector] = useState(false);
+  const [showFixedButton, setShowFixedButton] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Feed state
+  const [artworks, setArtworks] = useState<ArtworkItem[]>([]);
+  const [isLoadingFeed, setIsLoadingFeed] = useState(false);
+  const [hasMoreArtworks, setHasMoreArtworks] = useState(true);
+  const [nextToken, setNextToken] = useState<string | undefined>();
+
   const defaultAvatars = [
-    '/characters/character1.svg', // 기본 캐릭터 1 (디폴트) - 빨간색 웃는 얼굴
-    '/characters/character2.svg', // 기본 캐릭터 2 - 청록색 동그란 입
-    '/characters/character3.svg', // 기본 캐릭터 3 - 파란색 네모 입
-    '/characters/character4.svg', // 기본 캐릭터 4 - 초록색 뿔 달린 캐릭터
-    '/characters/character5.svg'  // 기본 캐릭터 5 - 보라색 안테나 캐릭터
+    '/characters/character1.svg',
+    '/characters/character2.svg', 
+    '/characters/character3.svg',
+    '/characters/character4.svg',
+    '/characters/character5.svg'
   ];
 
   useEffect(() => {
@@ -39,6 +46,76 @@ export default function HomePage({   artworks = [] }: HomePageProps) {
     } else {
       setIsEditing(true);
     }
+  }, []);
+
+  // Load initial feed data
+  const loadFeedData = useCallback(async (reset = false) => {
+    if (isLoadingFeed || (!hasMoreArtworks && !reset)) return;
+    
+    setIsLoadingFeed(true);
+    try {
+      const response = await getFinishedRooms(10, reset ? undefined : nextToken);
+      
+      const newArtworks: ArtworkItem[] = response.rooms.map((room) => ({
+        id: room.roomId,
+        originalImage: getOriginalImageUrl(room.roomId),
+        aiImage: getAiImageUrl(room.roomId),
+        topic: room.topic || '알 수 없음',
+        playerCount: room.playerCount,
+        createdAt: formatTimeAgo(room.finishedAt || room.createdAt || Date.now()),
+        aiModel: 'Amazon Bedrock',
+        reactions: [{ type: 'like', count: Math.floor(Math.random() * 100), userReacted: Math.random() > 0.5 }]
+      }));
+
+      if (reset) {
+        setArtworks(newArtworks);
+      } else {
+        setArtworks(prev => [...prev, ...newArtworks]);
+      }
+      
+      setNextToken(response.nextToken);
+      setHasMoreArtworks(response.hasMore);
+    } catch (error) {
+      console.error('Failed to load feed:', error);
+    } finally {
+      setIsLoadingFeed(false);
+    }
+  }, [isLoadingFeed, hasMoreArtworks, nextToken]);
+
+  const { ref: loadMoreRef, resetFetching } = useInfiniteScroll(() => {
+    loadFeedData();
+  });
+
+  useEffect(() => {
+    resetFetching();
+  }, [isLoadingFeed, resetFetching]);
+
+  const formatTimeAgo = (timestamp: number): string => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days > 0) return `${days}일 전`;
+    if (hours > 0) return `${hours}시간 전`;
+    if (minutes > 0) return `${minutes}분 전`;
+    return '방금 전';
+  };
+
+  useEffect(() => {
+    loadFeedData(true);
+  }, []);
+
+  // Scroll detection for fixed button
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      setShowFixedButton(scrollY > window.innerHeight * 0.8);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const {  onMessage, sendMessage } = useYjs();
@@ -100,7 +177,7 @@ export default function HomePage({   artworks = [] }: HomePageProps) {
   };
 
   const handleReaction = (artworkId: string, reactionType: Reaction['type']) => {
-    setFeedArtworks(prev => prev.map(artwork => {
+    setArtworks(prev => prev.map(artwork => {
       if (artwork.id === artworkId) {
         return {
           ...artwork,
@@ -129,6 +206,35 @@ export default function HomePage({   artworks = [] }: HomePageProps) {
       background: '#000000',
       minHeight: '100vh'
     }}>
+      {/* Fixed Game Start Button */}
+      {showFixedButton && (
+        <div style={{
+          position: 'fixed',
+          top: SPACING.md,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000,
+          animation: 'slideDown 0.3s ease-out'
+        }}>
+          <Button 
+            onClick={handleQuickMatch}
+            disabled={!playerName.trim()}
+            style={{
+              background: playerName.trim() ? COLORS.primary.main : 'rgba(255,255,255,0.1)',
+              border: 'none',
+              borderRadius: '24px',
+              color: 'white',
+              padding: '12px 24px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+              backdropFilter: 'blur(10px)'
+            }}
+          >
+            🎮 게임 시작하기
+          </Button>
+        </div>
+      )}
       {/* Profile Selector Modal */}
       {showProfileSelector && (
         <div style={{
@@ -515,39 +621,108 @@ export default function HomePage({   artworks = [] }: HomePageProps) {
       </div>
 
       {/* Feed Section */}
-      {feedArtworks.length > 0 && (
-        <div style={{ 
-          padding: SPACING.lg,
-          borderTop: '1px solid #333333'
-        }}>
-          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ 
+        padding: SPACING.lg,
+        borderTop: '1px solid #333333'
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: SPACING.lg,
+            gap: SPACING.sm
+          }}>
+            <div style={{
+              height: '1px',
+              background: 'linear-gradient(to right, transparent, #333, transparent)',
+              flex: 1
+            }} />
             <h2 style={{
               fontSize: '20px',
               fontWeight: 'bold',
               color: '#FFFFFF',
-              margin: `0 0 ${SPACING.lg} 0`,
-              textAlign: 'center'
+              margin: 0,
+              padding: `0 ${SPACING.md}`,
+              whiteSpace: 'nowrap'
             }}>
-              🎨 최근 작품들
+              🎨 커뮤니티 작품들
             </h2>
-
-            <div style={{ 
-              display: 'grid',
-              gap: SPACING.md,
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))'
-            }}>
-              {feedArtworks.slice(0, 4).map((artwork) => (
-                <ArtworkCard
-                  key={artwork.id}
-                  artwork={artwork}
-                  onReaction={handleReaction}
-                  onViewDetail={handleViewDetail}
-                />
-              ))}
-            </div>
+            <div style={{
+              height: '1px',
+              background: 'linear-gradient(to left, transparent, #333, transparent)',
+              flex: 1
+            }} />
           </div>
+
+          {artworks.length === 0 && !isLoadingFeed ? (
+            <div style={{
+              textAlign: 'center',
+              padding: SPACING.xl,
+              color: '#666'
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: SPACING.md }}>🎨</div>
+              <p>아직 완료된 작품이 없습니다.</p>
+              <p style={{ fontSize: '14px', marginTop: SPACING.xs }}>
+                게임을 플레이하고 첫 번째 작품을 만들어보세요!
+              </p>
+            </div>
+          ) : (
+            <>
+              <div style={{ 
+                display: 'grid',
+                gap: SPACING.md,
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))'
+              }}>
+                {artworks.map((artwork) => (
+                  <ArtworkCard
+                    key={artwork.id}
+                    artwork={artwork}
+                    onReaction={handleReaction}
+                    onViewDetail={handleViewDetail}
+                  />
+                ))}
+              </div>
+
+              {/* Loading indicator */}
+              {isLoadingFeed && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: SPACING.lg,
+                  color: '#666'
+                }}>
+                  <div style={{ fontSize: '24px', marginBottom: SPACING.sm }}>🎨</div>
+                  <p>더 많은 작품을 불러오는 중...</p>
+                </div>
+              )}
+
+              {/* Infinite scroll trigger */}
+              {hasMoreArtworks && (
+                <div 
+                  ref={loadMoreRef}
+                  style={{ 
+                    height: '20px',
+                    margin: SPACING.md
+                  }} 
+                />
+              )}
+
+              {/* End message */}
+              {!hasMoreArtworks && artworks.length > 0 && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: SPACING.lg,
+                  color: '#666',
+                  borderTop: '1px solid #333',
+                  marginTop: SPACING.lg
+                }}>
+                  <p>모든 작품을 확인했습니다! 🎉</p>
+                </div>
+              )}
+            </>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

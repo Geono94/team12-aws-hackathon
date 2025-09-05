@@ -43,7 +43,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     if (path === '/rooms/finished' && method === 'GET') {
-      return await getFinishedRooms();
+      return await getFinishedRooms(event);
     }
 
     if (path.startsWith('/rooms/') && method === 'GET') {
@@ -296,8 +296,12 @@ async function leaveRoom(roomId: string, playerId: string): Promise<APIGatewayPr
   }
 }
 
-async function getFinishedRooms(): Promise<APIGatewayProxyResult> {
+async function getFinishedRooms(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
+    // Parse query parameters
+    const limit = parseInt(event.queryStringParameters?.limit || '10');
+    const nextToken = event.queryStringParameters?.nextToken;
+
     const command = new QueryCommand({
       TableName: ROOMS_TABLE,
       IndexName: 'StatusIndex',
@@ -309,16 +313,27 @@ async function getFinishedRooms(): Promise<APIGatewayProxyResult> {
         ':status': 'finished',
       },
       ScanIndexForward: false,
-      Limit: 50,
+      Limit: Math.min(limit, 50), // Cap at 50 items per request
+      ...(nextToken && { ExclusiveStartKey: JSON.parse(Buffer.from(nextToken, 'base64').toString()) })
     });
 
     const result = await docClient.send(command);
     const rooms = result.Items as Room[] || [];
 
+    // Prepare response with pagination
+    const response: any = {
+      rooms,
+      hasMore: !!result.LastEvaluatedKey
+    };
+
+    if (result.LastEvaluatedKey) {
+      response.nextToken = Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64');
+    }
+
     return {
       statusCode: 200,
       headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-      body: JSON.stringify(rooms),
+      body: JSON.stringify(response),
     };
   } catch (error) {
     console.error('Get finished rooms error:', error);
