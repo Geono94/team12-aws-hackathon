@@ -204,37 +204,45 @@ export default function HomePage({}: HomePageProps) {
   return (
     <div style={{ 
       background: '#000000',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center'
     }}>
-      {/* Fixed Game Start Button */}
-      {showFixedButton && (
-        <div style={{
-          position: 'fixed',
-          top: SPACING.md,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 1000,
-          animation: 'slideDown 0.3s ease-out'
-        }}>
-          <Button 
-            onClick={handleQuickMatch}
-            disabled={!playerName.trim()}
-            style={{
-              background: playerName.trim() ? COLORS.primary.main : 'rgba(255,255,255,0.1)',
-              border: 'none',
-              borderRadius: '24px',
-              color: 'white',
-              padding: '12px 24px',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-              backdropFilter: 'blur(10px)'
-            }}
-          >
-            🎮 게임 시작하기
-          </Button>
-        </div>
-      )}
+      <div style={{
+        width: '100%',
+        maxWidth: '414px', // iPhone 14 Pro Max width
+        minHeight: '100vh'
+      }}>
+        {/* Fixed Game Start Button */}
+        {showFixedButton && (
+          <div style={{
+            position: 'fixed',
+            top: SPACING.md,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            animation: 'slideDown 0.3s ease-out'
+          }}>
+            <Button 
+              onClick={handleQuickMatch}
+              disabled={!playerName.trim()}
+              style={{
+                background: playerName.trim() ? COLORS.primary.main : 'rgba(255,255,255,0.1)',
+                border: 'none',
+                borderRadius: '24px',
+                color: 'white',
+                padding: '12px 24px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              🎮 게임 시작하기
+            </Button>
+          </div>
+        )}
       {/* Profile Selector Modal */}
       {showProfileSelector && (
         <div style={{
@@ -338,19 +346,19 @@ export default function HomePage({}: HomePageProps) {
         </div>
       )}
 
-      {/* Hero Section */}
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: SPACING.lg,
-        textAlign: 'center',
-        minHeight: '100vh'
-      }}>
+        {/* Hero Section */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: `${SPACING.md} ${SPACING.lg}`,
+          textAlign: 'center',
+          minHeight: '80vh'
+        }}>
         {/* Enhanced Logo & Title */}
         <div style={{ 
-          marginBottom: SPACING.lg,
+          marginBottom: SPACING.md,
           position: 'relative'
         }}>
           {/* Animated Background */}
@@ -420,7 +428,7 @@ export default function HomePage({}: HomePageProps) {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          marginBottom: SPACING.xl,
+          marginBottom: SPACING.lg,
           width: '100%',
           maxWidth: '320px'
         }}>
@@ -530,7 +538,7 @@ export default function HomePage({}: HomePageProps) {
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center',
-          marginBottom: SPACING.lg,
+          marginBottom: SPACING.md,
           width: '100%'
         }}>
           <Button 
@@ -548,79 +556,39 @@ export default function HomePage({}: HomePageProps) {
           </Button>
         </div>
 
-        {/* Feed Preview Hint */}
+        {/* Scroll Hint */}
         <div style={{
-          position: 'absolute',
-          bottom: '-60px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '90%',
-          maxWidth: '320px',
-          background: 'rgba(26, 26, 26, 0.95)',
-          borderRadius: '16px 16px 0 0',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderBottom: 'none',
-          backdropFilter: 'blur(10px)',
-          padding: '16px',
-          textAlign: 'center',
-          animation: 'feedPreview 3s ease-in-out infinite'
+          marginTop: SPACING.lg,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '8px'
         }}>
           <div style={{
             fontSize: '14px',
             color: '#fff',
-            fontWeight: '500',
-            marginBottom: '8px'
+            fontWeight: '600',
+            textShadow: '0 2px 4px rgba(0,0,0,0.8)'
           }}>
-            🎨 커뮤니티 작품들
+            커뮤니티 작품 보기
           </div>
           <div style={{
-            display: 'flex',
-            gap: '8px',
-            justifyContent: 'center',
-            marginBottom: '8px'
+            fontSize: '24px',
+            color: '#fff',
+            animation: 'bounce 2s infinite',
+            textShadow: '0 2px 4px rgba(0,0,0,0.8)'
           }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: 'linear-gradient(45deg, #667eea, #764ba2)',
-              borderRadius: '8px',
-              opacity: 0.8
-            }} />
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: 'linear-gradient(45deg, #f093fb, #f5576c)',
-              borderRadius: '8px',
-              opacity: 0.8
-            }} />
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: 'linear-gradient(45deg, #4facfe, #00f2fe)',
-              borderRadius: '8px',
-              opacity: 0.8
-            }} />
-          </div>
-          <div style={{
-            fontSize: '12px',
-            color: '#888',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '4px'
-          }}>
-            아래로 스크롤 <span style={{ animation: 'bounce 2s infinite' }}>↓</span>
+            ↓
           </div>
         </div>
       </div>
 
-      {/* Feed Section */}
-      <div style={{ 
-        padding: SPACING.lg,
-        paddingTop: '80px',
-        borderTop: '1px solid #333333'
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        {/* Feed Section */}
+        <div style={{ 
+          padding: SPACING.lg,
+          paddingTop: SPACING.xl,
+          borderTop: '1px solid #333333'
+        }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
