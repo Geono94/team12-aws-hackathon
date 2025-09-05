@@ -34,7 +34,7 @@ export class GameManager {
     const { playerId, playerName } = message.data;
     
     if (!playerId || !playerName) {
-      ws.send(JSON.stringify({ 
+      ws.send(JSON.stringify({
         type: 'error', 
         message: 'playerId and playerName are required' 
       }));
@@ -54,18 +54,19 @@ export class GameManager {
       console.log(`[${roomId}] New room created`);
     }
 
-    const playerInfo: PlayerInfo = {
+    const playerInfo = new PlayerInfo({
       id: playerId,
       name: playerName,
       ws: ws,
       joinedAt: Date.now().toString()
-    };
+    });
 
     const roomId = availableRoom.id;
     availableRoom.addPlayer(playerInfo);
     
     console.log(`[${roomId}] Player joined: ${playerInfo.name} (${playerInfo.id}), total: ${availableRoom.players.size}/${GAME_CONFIG.MAX_PLAYERS_PER_ROOM}`);
-    
+    const joinedRoom = availableRoom;
+
     // Save to database
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://77q0bmlyb4.execute-api.us-east-1.amazonaws.com/prod';
@@ -105,24 +106,32 @@ export class GameManager {
     }
     
     // Send room info to client
-    ws.send(JSON.stringify({
+    playerInfo.send({
       type: 'roomJoined',
       data: {
         roomId,
-        playerCount: availableRoom.players.size,
+        playerCount: joinedRoom.players.size,
         maxPlayers: GAME_CONFIG.MAX_PLAYERS,
-        players: availableRoom.getPlayersArray()
+        players: joinedRoom.getPlayersArray()
       }
-    }));
+    });
 
-    availableRoom.broadcast({
+    joinedRoom.broadcast({
       type: 'playerUpdate', 
-      data: { 
+      data: {
         playerInfo, 
         playerCount: availableRoom.players.size,
         players: availableRoom.getPlayersArray()
       } 
     });
+
+    // Auto-start when max players join
+    if (joinedRoom.players.size >= GAME_CONFIG.MAX_PLAYERS) {
+      if (joinedRoom.state.state !== 'countdown' && joinedRoom.state.state !== 'playing') {
+        console.log(`[${roomId}] Auto-starting game...`);
+        this.startAutoGame(roomId);
+      }
+    }
   }
 
   private findAvailableRoom(): Room | null {
@@ -140,34 +149,11 @@ export class GameManager {
       
       switch (message.type) {
         case 'joinRoom':
-          this.handleJoinRoom(ws, message.data);
-          break;
-           
-        case 'playerJoin':
-          this.handlePlayerJoin(roomId, message.playerInfo);
-          break;
+          this.handleJoinRoom(ws, message);
+          break; 
       }
     } catch (error) {
       console.error('Failed to handle message:', error);
-    }
-  }
-
-  private handlePlayerJoin(roomId: string, player: PlayerInfo) {
-    const room = this.getRoom(roomId);
-    room.addPlayer(player);
-    
-    console.log(`[${roomId}] Player joined: ${player.id}, total: ${room.players.size}/${GAME_CONFIG.MAX_PLAYERS}`);
-    
-    room.broadcast({ 
-      type: 'playerUpdate', 
-      data: { playerInfo: player, playerCount: room.players.size } 
-    });
-    
-    // Auto-start when max players join
-    if (room.players.size === GAME_CONFIG.MAX_PLAYERS) {
-      if (room.state.state !== 'countdown' && room.state.state !== 'playing') {
-        this.startAutoGame(roomId);
-      }
     }
   }
 

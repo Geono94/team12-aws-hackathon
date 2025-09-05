@@ -16,15 +16,9 @@ export interface JoinRoomMessage {
   };
 }
 
-export interface PlayerJoinMessage {
-  type: 'playerJoin';
-  playerInfo: PlayerInfo;
-}
- 
 
 export type ClientToServerMessage = 
-  | JoinRoomMessage
-  | PlayerJoinMessage
+  | JoinRoomMessage;
 
 // Server to Client Messages
 export interface RoomJoinedMessage {

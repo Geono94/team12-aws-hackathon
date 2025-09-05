@@ -40,19 +40,6 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
     '#2D3748'
   ];
 
-  // Join game on mount
-  useEffect(() => {
-    const message: ClientToServerMessage = {
-      type: 'playerJoin',
-      playerInfo: {
-        id: playerId,
-        name: 'Player',
-        joinedAt: new Date().toString()
-      }
-    };
-    sendMessage(message);
-  }, [sendMessage, playerId]);
-
   // Sync local state with server messages
   useEffect(() => {
     return onMessage((message: ServerToClientMessage) => {

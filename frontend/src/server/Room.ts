@@ -4,10 +4,28 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { GAME_CONFIG, S3_BUCKET_NAME, TOPICS } from './config';
 import { ServerToClientMessage } from '@/types';
 
-export interface PlayerInfo {
+export class PlayerInfo {
   id: string;
   name: string;
   joinedAt: string;
+  ws: WebSocket;
+
+
+  constructor(args: {
+    id: string;
+    name: string;
+    joinedAt: string;
+    ws: WebSocket;
+  }) {
+    this.id = args.id;
+    this.name = args.name;
+    this.joinedAt = args.joinedAt;
+    this.ws = args.ws;
+  }
+
+  public send(message: ServerToClientMessage) {
+    this.ws.send(JSON.stringify(message));
+  }
 }
 
 export class Room {

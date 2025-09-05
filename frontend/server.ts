@@ -5,6 +5,7 @@ import WebSocket from 'ws';
 import { setupWSConnection } from 'y-websocket/bin/utils';
 import * as Y from 'yjs';
 import { GameManager } from './src/server/GameManager';
+import { ClientToServerMessage } from '@/types';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = 'localhost';
@@ -51,15 +52,15 @@ app.prepare().then(() => {
     ws.on('message', (data) => {
       try {
         // Try to parse as JSON for game messages
-        const message = JSON.parse(data.toString());
+        const message = JSON.parse(data.toString()) as ClientToServerMessage;
         
         // Only handle if it's a game message (has type property)
         if (message.type && typeof message.type === 'string') {
           console.log('Game message:', message);
           
           // Store playerId for cleanup
-          if (message.type === 'playerJoin' && message.playerInfo) {
-            playerId = message.playerInfo.id;
+          if (message.type === 'joinRoom' && message.data) {
+            playerId = message.data.playerId;
           }
           
           gameManager.handleMessage(roomId, message, ws);
