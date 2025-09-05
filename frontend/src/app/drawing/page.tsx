@@ -6,8 +6,7 @@ import { GAME_CONFIG } from '@/constants/game';
 
 export default function Drawing() {
   const [timeLeft, setTimeLeft] = useState(GAME_CONFIG.DRAWING_TIME);
-  const [topic] = useState('고양이'); // Mock topic
-
+ 
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -22,11 +21,6 @@ export default function Drawing() {
 
     return () => clearInterval(timer);
   }, []);
-
-  const handleDrawingChange = (imageData: string) => {
-    // Store drawing data for results page
-    localStorage.setItem('drawingResult', imageData);
-  };
 
   return (
     <div style={{ 

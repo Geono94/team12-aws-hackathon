@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useYjs } from '@/contexts/YjsContext';
 import { useGameState } from './useGameState';
+import { GameState } from '@/types';
 
-export function useGameRoom(gameId: string) {
+export function useGameRoom(roomId: string) {
   const { doc, connected } = useYjs();
   const gameState = useGameState(doc);
   const [playerId] = useState(() => `player_${Math.random().toString(36).substr(2, 9)}`);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    if (!doc || !connected || !gameId || isInitialized) return;
+    if (!doc || !connected || !roomId || isInitialized) return;
 
-    console.log('Initializing game room:', gameId, 'Player:', playerId);
+    console.log('Initializing game room:', roomId, 'Player:', playerId);
 
     // Initialize game room
     const gameStateMap = doc.getMap('gameState');
@@ -21,7 +22,7 @@ export function useGameRoom(gameId: string) {
     // Initialize game state if not exists
     if (!gameStateMap.get('id')) {
       console.log('Creating new game state');
-      gameStateMap.set('id', gameId);
+      gameStateMap.set('id', roomId);
       gameStateMap.set('state', 'waiting');
       gameStateMap.set('topic', null);
       gameStateMap.set('startTime', null);
@@ -40,7 +41,7 @@ export function useGameRoom(gameId: string) {
     }
 
     setIsInitialized(true);
-  }, [doc, connected, gameId, playerId, isInitialized]);
+  }, [doc, connected, roomId, playerId, isInitialized]);
 
   const startGame = () => {
     if (!doc) return;

@@ -1,4 +1,4 @@
-import { ButtonProps } from '@/types/ui';
+import { ButtonProps } from '@/types';
 import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '@/constants/design';
 
 export default function Button({ 

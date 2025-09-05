@@ -5,17 +5,11 @@ import { useYjs } from '@/contexts/YjsContext';
 import { useGameRoom } from '@/hooks/useGameRoom';
 import { COLORS, SPACING, BORDER_RADIUS } from '@/constants/design';
 import { GAME_CONFIG } from '@/constants/game';
+import { DrawPoint, GameStateType, AIGenerateRequest } from '@/types';
 
 interface DrawingCanvasProps {
   roomId: string;
   playerId: string;
-}
-
-interface DrawPoint {
-  x: number;
-  y: number;
-  color: string;
-  size: number;
 }
 
 export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) {
@@ -23,7 +17,7 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentColor, setCurrentColor] = useState(COLORS.primary.main);
   const [brushSize, setBrushSize] = useState(5);
-  const [gameState, setGameState] = useState<'waiting' | 'countdown' | 'playing' | 'ended'>('waiting');
+  const [gameState, setGameState] = useState<GameStateType>('waiting');
   const [topic, setTopic] = useState<string>('');
   const [countdown, setCountdown] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number>(30);
@@ -110,13 +104,15 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
     const imageData = canvas.toDataURL('image/png');
     
     try {
+      const requestData: AIGenerateRequest = {
+        gameId: roomId,
+        imageData,
+      };
+
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          gameId: roomId,
-          imageData,
-        }),
+        body: JSON.stringify(requestData),
       });
 
       const result = await response.json();

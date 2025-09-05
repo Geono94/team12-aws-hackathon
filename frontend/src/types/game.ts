@@ -5,6 +5,14 @@ export interface Player {
   isReady: boolean;
 }
 
+export interface GameState {
+  id: string;
+  state: 'waiting' | 'countdown' | 'playing' | 'ended';
+  topic: string | null;
+  startTime: number | null;
+  players: string[];
+}
+
 export interface GameRoom {
   id: string;
   players: Player[];
@@ -13,6 +21,13 @@ export interface GameRoom {
   startTime?: number;
   canvasData?: string;
   aiResult?: string;
+}
+
+export interface DrawPoint {
+  x: number;
+  y: number;
+  color: string;
+  size: number;
 }
 
 export interface DrawingEvent {
@@ -30,3 +45,6 @@ export interface GameMessage {
   playerId?: string;
   data?: any;
 }
+
+export type GameStateType = 'waiting' | 'countdown' | 'playing' | 'ended';
+export type RoomStateType = 'waiting' | 'countdown' | 'drawing' | 'processing' | 'results';

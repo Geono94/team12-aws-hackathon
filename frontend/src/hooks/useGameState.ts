@@ -1,13 +1,6 @@
 import { useEffect, useState } from 'react';
 import * as Y from 'yjs';
-
-export interface GameState {
-  id: string;
-  state: 'waiting' | 'countdown' | 'playing' | 'ended';
-  topic: string | null;
-  startTime: number | null;
-  players: string[];
-}
+import { GameState } from '@/types';
 
 export function useGameState(ydoc: Y.Doc | null) {
   const [gameState, setGameState] = useState<GameState>({

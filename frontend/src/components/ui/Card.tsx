@@ -1,4 +1,4 @@
-import { CardProps } from '@/types/ui';
+import { CardProps } from '@/types';
 import { COLORS, BORDER_RADIUS, SHADOWS, SPACING } from '@/constants/design';
 
 export default function Card({ children, className = '', hover = false }: CardProps) {
