@@ -4,6 +4,7 @@ import next from 'next';
 import WebSocket from 'ws';
 import { setupWSConnection } from 'y-websocket/bin/utils';
 import * as Y from 'yjs';
+import { GameManager } from './src/server/GameManager';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = 'localhost';
@@ -35,37 +36,45 @@ app.prepare().then(() => {
     }
   });
 
+  const gameManager = new GameManager(wss);
+
   wss.on('connection', (ws, req) => {
     console.log('New WebSocket connection from:', req.url);
     
-    const docName = req.url?.slice(1) || 'default';
-    console.log('Document name:', docName);
+    const roomId = req.url?.slice(1) || 'default';
+    let playerId: string | null = null;
+    console.log('Room ID:', roomId);
     
-    setupWSConnection(ws, req, {
-      callback: (doc: Y.Doc) => {
-        console.log(`Document connected: ${docName} (${doc.guid})`);
+    setupWSConnection(ws, req);
+    gameManager.addConnection(roomId, ws);
+    
+    ws.on('message', (data) => {
+      try {
+        // Try to parse as JSON for game messages
+        const message = JSON.parse(data.toString());
         
-        // Set up observers on the actual Yjs document
-        const gameState = doc.getMap('gameState');
-        const players = doc.getArray('players');
-        const drawing = doc.getArray('drawing');
-        
-        gameState.observe(() => {
-          console.log(`[${docName}] GameState:`, gameState.toJSON());
-        });
-        
-        players.observe(() => {
-          console.log(`[${docName}] Players:`, players.toArray());
-        });
-        
-        drawing.observe(() => {
-          console.log(`[${docName}] Drawing length:`, drawing.length);
-        });
-        
-        doc.on('update', (update, origin) => {
-          console.log(`[${docName}] Document updated, size: ${update.length}`);
-        });
+        // Only handle if it's a game message (has type property)
+        if (message.type && typeof message.type === 'string') {
+          console.log('Game message:', message);
+          
+          // Store playerId for cleanup
+          if (message.type === 'playerJoin' && 'playerId' in message) {
+            playerId = message.playerId;
+          }
+          
+          gameManager.handleMessage(roomId, message, ws);
+        }
+        // Otherwise, let Yjs handle it (binary data or Yjs protocol)
+      } catch (error) {
+        // If JSON parsing fails, it's likely a Yjs binary message
+        // Let setupWSConnection handle it
       }
+    });
+    
+    ws.on('close', () => {
+      console.log(`WebSocket disconnected from: ${roomId}`);
+      gameManager.removeConnection(roomId, ws);
+      gameManager.cleanup(roomId, playerId);
     });
   });
 

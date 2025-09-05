@@ -11,6 +11,8 @@ export interface GameState {
   topic: string | null;
   startTime: number | null;
   players: string[];
+  countdown?: number;
+  timeLeft?: number;
 }
 
 export interface GameRoom {

@@ -5,7 +5,7 @@ import { useYjs } from '@/contexts/YjsContext';
 import { useGameRoom } from '@/hooks/useGameRoom';
 import { COLORS, SPACING, BORDER_RADIUS } from '@/constants/design';
 import { GAME_CONFIG } from '@/constants/game';
-import { DrawPoint, GameStateType, AIGenerateRequest } from '@/types';
+import { DrawPoint, GameStateType, AIGenerateRequest, ServerToClientMessage, ClientToServerMessage } from '@/types';
 
 interface DrawingCanvasProps {
   roomId: string;
@@ -23,8 +23,8 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
   const [timeLeft, setTimeLeft] = useState<number>(30);
   const [playerCount, setPlayerCount] = useState<number>(1);
   
-  const { doc } = useYjs();
-  const { gameState: currentGameState, startGame: handleStartGame, clearDrawing } = useGameRoom(roomId);
+  const { doc, onMessage, sendMessage } = useYjs();
+  const { clearDrawing } = useGameRoom(roomId);
   
   const drawingArray = doc?.getArray('drawing');
 
@@ -39,21 +39,33 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
     '#2D3748'
   ];
 
-  // Sync local state with Yjs game state
+  // Join game on mount
   useEffect(() => {
-    if (currentGameState) {
-      setGameState(currentGameState.state);
-      setTopic(currentGameState.topic || '');
-      setPlayerCount(currentGameState.players.length);
-      
-      if (currentGameState.state === 'countdown') {
-        startCountdown();
-      } else if (currentGameState.state === 'playing') {
-        setTimeLeft(30);
-        startGameTimer();
+    const message: ClientToServerMessage = {
+      type: 'playerJoin',
+      playerId
+    };
+    sendMessage(message);
+  }, [sendMessage, playerId]);
+
+  // Sync local state with server messages
+  useEffect(() => {
+    return onMessage((message: ServerToClientMessage) => {
+      if (message.type === 'gameStateUpdate') {
+        const data = message.data;
+        if (data.state) setGameState(data.state);
+        if (data.topic) setTopic(data.topic);
+        if (data.countdown !== undefined) setCountdown(data.countdown);
+        if (data.timeLeft !== undefined) setTimeLeft(data.timeLeft);
+      } else if (message.type === 'playerUpdate') {
+        setPlayerCount(message.data.playerCount);
+      } else if (message.type === 'gameEnded') {
+        window.location.href = message.data.redirectTo;
       }
-    }
-  }, [currentGameState]);
+    });
+  }, [onMessage]);
+  
+
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -68,34 +80,6 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }, []);
-
-  const startCountdown = () => {
-    let count = 3;
-    const timer = setInterval(() => {
-      count--;
-      setCountdown(count);
-      if (count <= 0) {
-        clearInterval(timer);
-      }
-    }, 1000);
-  };
-
-  const startGameTimer = () => {
-    let time = 30;
-    const timer = setInterval(() => {
-      time--;
-      setTimeLeft(time);
-      if (time <= 0) {
-        clearInterval(timer);
-      }
-    }, 1000);
-  };
-
-  const startGame = () => {
-    if (gameState === 'waiting') {
-      handleStartGame();
-    }
-  };
 
   const submitDrawing = async () => {
     const canvas = canvasRef.current;
@@ -122,6 +106,7 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
     }
   };
 
+  // Handle drawing with Yjs document
   useEffect(() => {
     if (!drawingArray) return;
     
@@ -195,30 +180,12 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
     }}>
       {/* Game Status */}
       <div style={{ textAlign: 'center', marginBottom: SPACING.md }}>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          gap: SPACING.md,
-          marginBottom: SPACING.sm 
-        }}>
+        <div style={{ marginBottom: SPACING.sm }}>
           <span style={{ fontSize: '18px', fontWeight: '600' }}>Players: {playerCount}/4</span>
-          {gameState === 'waiting' && (
-            <button
-              onClick={startGame}
-              disabled={playerCount < 1}
-              style={{
-                padding: `${SPACING.sm} ${SPACING.md}`,
-                backgroundColor: COLORS.primary.accent,
-                color: 'white',
-                border: 'none',
-                borderRadius: BORDER_RADIUS.md,
-                cursor: playerCount >= 1 ? 'pointer' : 'not-allowed',
-                opacity: playerCount >= 1 ? 1 : 0.5
-              }}
-            >
-              Start Game
-            </button>
+          {gameState === 'waiting' && playerCount < 4 && (
+            <div style={{ fontSize: '16px', color: COLORS.neutral.text, marginTop: SPACING.xs }}>
+              Waiting for more players...
+            </div>
           )}
         </div>
         
