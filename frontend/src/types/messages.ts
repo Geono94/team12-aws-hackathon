@@ -1,3 +1,5 @@
+import { GameStateType } from "./game";
+
 // Player Info Interface
 export interface PlayerInfo {
   id: string;
@@ -18,20 +20,11 @@ export interface PlayerJoinMessage {
   type: 'playerJoin';
   playerInfo: PlayerInfo;
 }
-
-export interface GameStateChangeMessage {
-  type: 'gameStateChange';
-  data: {
-    topic?: string;
-    state?: 'waiting' | 'countdown' | 'playing' | 'ended';
-    startTime?: number;
-  };
-}
+ 
 
 export type ClientToServerMessage = 
   | JoinRoomMessage
   | PlayerJoinMessage
-  | GameStateChangeMessage;
 
 // Server to Client Messages
 export interface RoomJoinedMessage {
@@ -47,7 +40,7 @@ export interface RoomJoinedMessage {
 export interface GameStateUpdateMessage {
   type: 'gameStateUpdate';
   data: {
-    state?: 'waiting' | 'countdown' | 'playing' | 'ended';
+    state?: GameStateType;
     topic?: string;
     countdown?: number;
     timeLeft?: number;

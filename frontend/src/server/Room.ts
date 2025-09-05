@@ -1,9 +1,8 @@
 import WebSocket from 'ws';
 import { createCanvas } from 'canvas';
-import fs from 'fs';
-import path from 'path';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { GAME_CONFIG, S3_BUCKET_NAME } from './config';
+import { GAME_CONFIG, S3_BUCKET_NAME, TOPICS } from './config';
+import { ServerToClientMessage } from '@/types';
 
 export interface PlayerInfo {
   id: string;
@@ -47,7 +46,7 @@ export class Room {
     this.state = { ...this.state, ...newState };
   }
 
-  broadcast(message: any, sender?: WebSocket) {
+  broadcast(message: ServerToClientMessage, sender?: WebSocket) {
     this.connections.forEach((client) => {
       if (client !== sender && client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({ ...message, roomId: this.id }));
@@ -116,6 +115,11 @@ export class Room {
     console.log(`[${this.id}] Uploaded to S3: s3://${S3_BUCKET_NAME}/drawings/${filename}`);
   }
 
+  selectTopic(topic: string) {
+    this.updateState({ state: 'topicSelection' });
+    this.broadcast({ type: 'gameStateUpdate', data: { state: 'topicSelection', topic  } });
+  }
+
   startCountdown(onComplete: () => void) {
     if (this.countdownTimer) return;
     
@@ -156,11 +160,18 @@ export class Room {
   }
 
   startGame(docs: Map<string, any>) {
-    this.startCountdown(() => {
-      this.startGameTimer(() => {
-        this.endGame(docs);
+    const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
+    
+    console.log(`[${this.id}] Auto-starting game with topic: ${topic}`);
+    
+    this.selectTopic(topic);
+    setTimeout(() => {
+      this.startCountdown(() => {
+        this.startGameTimer(() => {
+          this.endGame(docs);
+        });
       });
-    });
+    }, GAME_CONFIG.TOPIC_SELECTION_TIME * 1000); // 3.5 seconds for topic selection
   }
 
   private async endGame(docs: Map<string, any>) {

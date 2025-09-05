@@ -1,14 +1,13 @@
 import WebSocket from 'ws';
-import { ClientToServerMessage } from '../types/messages';
-import { Room } from './Room';
+import { ClientToServerMessage, JoinRoomMessage } from '../types/messages';
+import { PlayerInfo, Room } from './Room';
 import { GAME_CONFIG } from './config';
 
 export class GameManager {
   private rooms = new Map<string, Room>();
   private docs: Map<string, any>;
 
-  constructor(wss: WebSocket.Server) {
-    this.wss = wss;
+  constructor() {
     this.docs = require('y-websocket/bin/utils').docs;
   }
 
@@ -31,8 +30,8 @@ export class GameManager {
     }
   }
 
-  private async handleJoinRoom(ws: WebSocket, data: any) {
-    const { playerId, playerName } = data;
+  private async handleJoinRoom(ws: WebSocket, message: JoinRoomMessage) {
+    const { playerId, playerName } = message.data;
     
     if (!playerId || !playerName) {
       ws.send(JSON.stringify({ 
@@ -59,7 +58,7 @@ export class GameManager {
       id: playerId,
       name: playerName,
       ws: ws,
-      joinedAt: Date.now()
+      joinedAt: Date.now().toString()
     };
 
     const roomId = availableRoom.id;
@@ -111,12 +110,12 @@ export class GameManager {
       data: {
         roomId,
         playerCount: availableRoom.players.size,
-        maxPlayers: GAME_CONFIG.MAX_PLAYERS_PER_ROOM,
+        maxPlayers: GAME_CONFIG.MAX_PLAYERS,
         players: availableRoom.getPlayersArray()
       }
     }));
 
-    availableRoom.broadcast({ 
+    availableRoom.broadcast({
       type: 'playerUpdate', 
       data: { 
         playerInfo, 
@@ -124,16 +123,11 @@ export class GameManager {
         players: availableRoom.getPlayersArray()
       } 
     });
-
-    // Auto-start game if room is full
-    if (availableRoom.players.size >= GAME_CONFIG.MAX_PLAYERS_PER_ROOM) {
-      this.startGame(roomId);
-    }
   }
 
   private findAvailableRoom(): Room | null {
     for (const room of this.rooms.values()) {
-      if (room.players.size < GAME_CONFIG.MAX_PLAYERS_PER_ROOM && room.state.state === 'waiting') {
+      if (room.players.size < GAME_CONFIG.MAX_PLAYERS && room.state.state === 'waiting') {
         return room;
       }
     }
@@ -148,13 +142,9 @@ export class GameManager {
         case 'joinRoom':
           this.handleJoinRoom(ws, message.data);
           break;
-          
-        case 'gameStateChange':
-          this.handleGameStateChange(roomId, message.data);
-          break;
-          
+           
         case 'playerJoin':
-          this.handlePlayerJoin(roomId, message.playerId);
+          this.handlePlayerJoin(roomId, message.playerInfo);
           break;
       }
     } catch (error) {
@@ -162,15 +152,15 @@ export class GameManager {
     }
   }
 
-  private handlePlayerJoin(roomId: string, playerId: string) {
+  private handlePlayerJoin(roomId: string, player: PlayerInfo) {
     const room = this.getRoom(roomId);
-    room.addPlayer(playerId);
+    room.addPlayer(player);
     
-    console.log(`[${roomId}] Player joined: ${playerId}, total: ${room.players.size}/${GAME_CONFIG.MAX_PLAYERS}`);
+    console.log(`[${roomId}] Player joined: ${player.id}, total: ${room.players.size}/${GAME_CONFIG.MAX_PLAYERS}`);
     
     room.broadcast({ 
       type: 'playerUpdate', 
-      data: { playerId, playerCount: room.players.size } 
+      data: { playerInfo: player, playerCount: room.players.size } 
     });
     
     // Auto-start when max players join
@@ -182,33 +172,9 @@ export class GameManager {
   }
 
   private startAutoGame(roomId: string) {
-    const topics = ['cat', 'house', 'tree', 'car', 'flower', 'sun', 'dog', 'bird'];
-    const topic = topics[Math.floor(Math.random() * topics.length)];
-    
-    console.log(`[${roomId}] Auto-starting game with topic: ${topic}`);
-    
     const room = this.getRoom(roomId);
-
-    room.updateState({
-      topic,
-      state: 'countdown',
-      startTime: Date.now()
-    });
-    
+ 
     room.startGame(this.docs);
-  }
-
-  private handleGameStateChange(roomId: string, data: any) {
-    const room = this.getRoom(roomId);
-    room.updateState(data);
-    
-    console.log(`[${roomId}] GameState updated:`, room.state);
-    
-    if (room.state.state === 'countdown') {
-      room.startGame(this.docs);
-    }
-    
-    room.broadcast({ type: 'gameStateUpdate', data: room.state });
   }
 
   cleanup(roomId: string, playerId?: string | null) {

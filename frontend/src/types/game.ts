@@ -48,5 +48,5 @@ export interface GameMessage {
   data?: any;
 }
 
-export type GameStateType = 'waiting' | 'countdown' | 'playing' | 'ended';
-export type RoomStateType = 'waiting' | 'countdown' | 'drawing' | 'processing' | 'results';
+export type GameStateType = 'waiting' | 'topicSelection' | 'countdown' | 'playing' | 'ended';
+ 

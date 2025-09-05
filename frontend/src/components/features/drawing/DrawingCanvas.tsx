@@ -6,6 +6,7 @@ import { useGameRoom } from '@/hooks/useGameRoom';
 import { COLORS, SPACING, BORDER_RADIUS } from '@/constants/design';
 import { GAME_CONFIG } from '@/constants/game';
 import { DrawPoint, GameStateType, AIGenerateRequest, ServerToClientMessage, ClientToServerMessage } from '@/types';
+import TopicSelection from './TopicSelection';
 
 interface DrawingCanvasProps {
   roomId: string;
@@ -22,10 +23,10 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
   const [countdown, setCountdown] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number>(30);
   const [playerCount, setPlayerCount] = useState<number>(1);
-  
+
   const { doc, connected, onMessage, sendMessage } = useYjs();
   const { clearDrawing } = useGameRoom(roomId);
-  
+
   const drawingArray = doc?.getArray('drawing');
 
   const colors = [
@@ -43,7 +44,11 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
   useEffect(() => {
     const message: ClientToServerMessage = {
       type: 'playerJoin',
-      playerId
+      playerInfo: {
+        id: playerId,
+        name: 'Player',
+        joinedAt: new Date().toString()
+      }
     };
     sendMessage(message);
   }, [sendMessage, playerId]);
@@ -64,7 +69,7 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
       }
     });
   }, [onMessage]);
-  
+
 
 
   useEffect(() => {
@@ -81,35 +86,10 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }, []);
 
-  const submitDrawing = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const imageData = canvas.toDataURL('image/png');
-    
-    try {
-      const requestData: AIGenerateRequest = {
-        gameId: roomId,
-        imageData,
-      };
-
-      const response = await fetch('/api/ai/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestData),
-      });
-
-      const result = await response.json();
-      console.log('AI Result:', result);
-    } catch (error) {
-      console.error('Failed to submit drawing:', error);
-    }
-  };
-
   // Handle drawing with Yjs document
   useEffect(() => {
     if (!drawingArray) return;
-    
+
     const observer = () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -120,7 +100,7 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
+
       drawingArray.forEach((point: DrawPoint) => {
         ctx.fillStyle = point.color;
         ctx.beginPath();
@@ -251,7 +231,7 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
                 );
               })}
             </div>
-            
+
             {/* Center Text */}
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: SPACING.xs }}>
@@ -263,7 +243,7 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
                 </div>
               )}
             </div>
-            
+
             {/* Right Characters */}
             <div style={{ display: 'flex', gap: SPACING.sm }}>
               {[3, 4].map((charNumber) => {
@@ -312,43 +292,27 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
               })}
             </div>
           </div>
+        ) : gameState === 'topicSelection' ? (
+          <TopicSelection
+            selectedTopic={topic}
+          />
         ) : (
           <div style={{ marginBottom: SPACING.sm }}>
             <span style={{ fontSize: '18px', fontWeight: '600' }}>Players: {playerCount}/{GAME_CONFIG.MAX_PLAYERS}</span>
           </div>
         )}
-        
+
         {gameState === 'countdown' && (
           <div style={{ fontSize: '48px', fontWeight: 'bold', color: COLORS.primary.main }}>
             {topic && <div style={{ fontSize: '24px', marginBottom: SPACING.sm }}>Draw: {topic}</div>}
             {countdown > 0 ? countdown : 'GO!'}
           </div>
         )}
-        
+
         {gameState === 'playing' && (
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
             <div style={{ marginBottom: SPACING.sm, color: COLORS.neutral.text }}>Draw: {topic}</div>
             <div style={{ color: timeLeft <= 10 ? COLORS.primary.main : COLORS.primary.accent }}>Time: {timeLeft}s</div>
-          </div>
-        )}
-        
-        {gameState === 'ended' && (
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: COLORS.primary.accent }}>
-            <div>Time's up!</div>
-            <button
-              onClick={submitDrawing}
-              style={{
-                marginTop: SPACING.sm,
-                padding: `${SPACING.sm} ${SPACING.md}`,
-                backgroundColor: COLORS.primary.accent,
-                color: 'white',
-                border: 'none',
-                borderRadius: BORDER_RADIUS.md,
-                cursor: 'pointer'
-              }}
-            >
-              Generate AI Art
-            </button>
           </div>
         )}
       </div>
@@ -381,7 +345,7 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
               />
             ))}
           </div>
-          
+
           <div style={{ display: 'flex', alignItems: 'center', gap: SPACING.xs }}>
             <label>Size:</label>
             <input
@@ -394,7 +358,7 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
             />
             <span>{brushSize}px</span>
           </div>
-          
+
           <button
             onClick={clearCanvas}
             style={{
