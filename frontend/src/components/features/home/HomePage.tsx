@@ -57,7 +57,6 @@ export default function HomePage() {
       const response = await getFinishedRooms(10, reset ? undefined : nextToken);
       
       const newArtworks: ArtworkItem[] = response.rooms
-        .sort((a, b) => (b.finishedAt || b.createdAt || 0) - (a.finishedAt || a.createdAt || 0))
         .map((room) => ({
           id: room.roomId,
           originalImage: getOriginalImageUrl(room.roomId),
