@@ -131,7 +131,7 @@ export class Room {
 
   selectTopic(topic: string) {
     this.updateState({ state: 'topicSelection' });
-    this.broadcast({ type: 'gameStateUpdate', data: { state: 'topicSelection', topic  } });
+    this.broadcast({ type: 'gameStateUpdate', data: { topic  } });
   }
 
   startCountdown(onComplete: () => void) {
@@ -139,12 +139,12 @@ export class Room {
     
     let countdown = GAME_CONFIG.COUNTDOWN_TIME;
     this.updateState({ countdown });
-    this.broadcast({ type: 'gameStateUpdate', data: { countdown } });
+    this.broadcastGameState();
     
     this.countdownTimer = setInterval(() => {
       countdown--;
       this.updateState({ countdown });
-      this.broadcast({ type: 'gameStateUpdate', data: { countdown } });
+      this.broadcastGameState();
       
       if (countdown <= 0) {
         clearInterval(this.countdownTimer!);
@@ -179,18 +179,15 @@ export class Room {
     console.log(`[${this.id}] Auto-starting game with topic: ${topic}`);
     
     this.selectTopic(topic);
-
-    setTimeout(() => {
-      this.startCountdown(() => {
-        this.startGameTimer(() => {
-          this.endGame(docs);
-        });
+ 
+    this.startCountdown(() => {
+      this.startGameTimer(() => {
+        this.endGame(docs);
       });
-    }, GAME_CONFIG.TOPIC_SELECTION_TIME * 1000); // 3.5 seconds for topic selection
+    }); 
   }
 
   public broadcastGameState() {
-    console.log('broadcase state', this.state)
     this.broadcast({ type: 'gameStateUpdate', data: this.state }); 
   }
 
