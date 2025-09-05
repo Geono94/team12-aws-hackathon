@@ -37,9 +37,10 @@ describe('AI Integration Tests', () => {
 
     const result = await handler(event);
     
-    expect(result.statusCode).toBe(200);
+    expect(result).toBeDefined();
+    expect(result!.statusCode).toBe(200);
     
-    const data = JSON.parse(result.body);
+    const data = JSON.parse(result!.body);
     expect(data.success).toBe(true);
     expect(data.data.analysis).toBeDefined();
     expect(typeof data.data.analysis.score).toBe('number');
@@ -63,7 +64,8 @@ describe('AI Integration Tests', () => {
 
     const result = await handler(event);
     
-    expect(result.statusCode).toBe(200);
-    expect(result.headers?.['Access-Control-Allow-Origin']).toBe('*');
+    expect(result).toBeDefined();
+    expect(result!.statusCode).toBe(200);
+    expect(result!.headers?.['Access-Control-Allow-Origin']).toBe('*');
   });
 });

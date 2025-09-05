@@ -53,15 +53,26 @@ export class GameAIProcessor {
             const imageBase64 = imageBuffer.toString('base64');
 
             // Process with Gemini only
-            const generatedImage = await this.gemini.generateImage(imageBase64);
+            const generatedImage = await this.gemini.generateImage(imageBase64, 'drawing');
             
-            if (generatedImage.success && generatedImage.data) {
+            if (typeof generatedImage === 'object' && generatedImage !== null && (generatedImage as any).success && (generatedImage as any).data) {
                 const outputKey = request.outputKey.replace('_ai.', '_ai.');
                 
                 await s3.putObject({
                     Bucket: request.bucketName,
                     Key: outputKey,
-                    Body: Buffer.from(generatedImage.data, 'base64'),
+                    Body: Buffer.from((generatedImage as any).data, 'base64'),
+                    ContentType: 'image/png'
+                }).promise();
+                
+                console.log(`AI 처리된 이미지 업로드 완료: ${outputKey}`);
+            } else if (typeof generatedImage === 'string') {
+                const outputKey = request.outputKey.replace('_ai.', '_ai.');
+                
+                await s3.putObject({
+                    Bucket: request.bucketName,
+                    Key: outputKey,
+                    Body: Buffer.from(generatedImage, 'base64'),
                     ContentType: 'image/png'
                 }).promise();
                 
@@ -167,13 +178,13 @@ export class GameAIProcessor {
             if (result) {
                 console.log('✅ Nova Canvas 이미지 생성 완료');
                 return [{
-                    type: 'nova',
+                    type: 'gemini',
                     data: result, // base64 데이터 직접 반환
                     success: true
                 }];
             } else {
                 return [{
-                    type: 'nova',
+                    type: 'gemini',
                     data: null,
                     success: false
                 }];
@@ -181,7 +192,7 @@ export class GameAIProcessor {
         } catch (error: any) {
             console.error('Nova Canvas 생성 실패:', error.message);
             return [{
-                type: 'nova',
+                type: 'gemini',
                 data: null,
                 success: false
             }];
