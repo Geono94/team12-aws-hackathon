@@ -12,14 +12,14 @@ interface YjsContextType {
   connected: boolean;
   sendMessage: (message: ClientToServerMessage) => void;
   onMessage: (callback: (message: ServerToClientMessage) => void) => (() => void) | undefined;
-  messages: any[];
+  messages: any[]; 
   roomId: string;
 }
 
 const YjsContext = createContext<YjsContextType>({
   doc: null,
   provider: null,
-  connected: false,
+  connected: false, 
   sendMessage: () => {},
   onMessage: () => undefined,
   messages: [],
@@ -28,10 +28,10 @@ const YjsContext = createContext<YjsContextType>({
 
 interface YjsProviderProps {
   children: ReactNode;
-  roomId?: string;
+  roomId?: string; 
 }
 
-export function YjsProvider({ children, roomId = 'default' }: YjsProviderProps) {
+export function YjsProvider({ children,   roomId = 'default' }: YjsProviderProps) {
   const wsUrl = typeof window !== 'undefined' 
     ? (process.env.NODE_ENV === 'production' 
         ? `wss://${window.location.host}` 
@@ -45,7 +45,7 @@ export function YjsProvider({ children, roomId = 'default' }: YjsProviderProps) 
   }
 
   return (
-    <YjsContext.Provider value={{ doc, provider, connected, sendMessage, onMessage, messages, roomId: currentRoomId }}>
+    <YjsContext.Provider value={{   doc, provider, connected, sendMessage, onMessage, messages, roomId: currentRoomId }}>
       {children}
     </YjsContext.Provider>
   );

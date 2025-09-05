@@ -10,7 +10,6 @@ import { getRoomInfo, joinRoom } from '@/lib/api/room';
 export default function Drawing() {
   const {roomId} = useParams<{ roomId: string}>(); 
   const router = useRouter();
-  const [playerId] = useState(() => `player_${Math.random().toString(36).substr(2, 9)}`);
   const [isReady, setIsReady] = useState(false);
   const [roomNotFound, setRoomNotFound] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
@@ -163,8 +162,7 @@ export default function Drawing() {
     }}>
       <YjsProvider roomId={roomId}>
         <DrawingCanvas
-          roomId={roomId}
-          playerId={playerId}
+          roomId={roomId} 
         />
       </YjsProvider>
     </div>

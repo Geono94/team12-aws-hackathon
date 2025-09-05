@@ -10,10 +10,10 @@ export const useWebSocket = (roomId: string, wsUrl: string) => {
 
   const sendMessage = useCallback((message: any) => {
     if (provider?.ws && connected) {
-      const messageWithRoom = { ...message, roomId };
+      const messageWithRoom = { ...message };
       provider.ws.send(JSON.stringify(messageWithRoom));
     }
-  }, [provider, connected, roomId]);
+  }, [provider, connected]);
 
   const onMessage = useCallback((callback: (message: any) => void) => {
     console.log(provider?.ws)

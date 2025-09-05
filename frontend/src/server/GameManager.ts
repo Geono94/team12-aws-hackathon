@@ -1,5 +1,5 @@
 import WebSocket from 'ws';
-import { ClientToServerMessage, JoinRoomMessage } from '../types/messages';
+import { ClientToServerMessage, JoinRoomMessage, SearchRoomMessage } from '../types/messages';
 import { PlayerInfo, Room } from './Room';
 import { GAME_CONFIG } from './config';
 
@@ -18,19 +18,7 @@ export class GameManager {
     return this.rooms.get(roomId)!;
   }
 
-  addConnection(roomId: string, ws: WebSocket) {
-    const room = this.getRoom(roomId);
-    room.addConnection(ws);
-  }
-
-  removeConnection(roomId: string, ws: WebSocket) {
-    const room = this.rooms.get(roomId);
-    if (room) {
-      room.removeConnection(ws);
-    }
-  }
-
-  private async handleJoinRoom(ws: WebSocket, message: JoinRoomMessage) {
+  private async handleSearchRoom(ws: WebSocket, message: SearchRoomMessage) {
     const { playerId, playerName } = message.data;
     
     if (!playerId || !playerName) {
@@ -53,6 +41,8 @@ export class GameManager {
       isNewRoom = true;
       console.log(`[${roomId}] New room created`);
     }
+
+    console.log("availableRoom", availableRoom)
 
     const playerInfo = new PlayerInfo({
       id: playerId,
@@ -143,14 +133,37 @@ export class GameManager {
     return null;
   }
 
+  private rejoinRoom(ws: WebSocket, message: JoinRoomMessage) {
+    const { roomId, playerId } = message.data;
+    const room = this.rooms.get(roomId);
+    if (!room) {
+      ws.send(JSON.stringify({
+         type: 'kickRoom'
+      }));
+      return;
+    }
+
+    if (!room.players.has(playerId)) {
+      ws.send(JSON.stringify({
+         type: 'kickRoom'
+      }));
+      return;
+    }
+
+    room.players.get(playerId)!.ws = ws;
+    room.broadcastGameState();
+  }
+
   handleMessage(roomId: string, message: ClientToServerMessage, ws: WebSocket) {
     try {
       console.log(`[${roomId}] Received message:`, message);
       
       switch (message.type) {
-        case 'joinRoom':
-          this.handleJoinRoom(ws, message);
+        case 'searchRoom':
+          this.handleSearchRoom(ws, message);
           break; 
+        case 'joinRoom':
+          this.rejoinRoom(ws, message);
       }
     } catch (error) {
       console.error('Failed to handle message:', error);
@@ -163,27 +176,36 @@ export class GameManager {
     room.startGame(this.docs);
   }
 
-  cleanup(roomId: string, playerId?: string | null) {
-    const room = this.rooms.get(roomId);
-    if (!room) return;
-    
-    // Remove player from room if specified
-    if (playerId) {
-      room.removePlayer(playerId);
-      console.log(`[${roomId}] Player ${playerId} left, remaining: ${room.players.size}`);
-      
-      // If room is empty, clean up everything
-      if (room.isEmpty()) {
-        console.log(`[${roomId}] Room is empty, cleaning up`);
-        room.cleanup();
-        this.rooms.delete(roomId);
-      } else {
-        // Broadcast updated player count
-        room.broadcast({ 
-          type: 'playerUpdate', 
-          data: { playerCount: room.players.size } 
-        });
-      }
+  cleanup(playerId?: string | null) {
+    if (!playerId) {
+      return;
     }
+
+    // for (const room of this.rooms.values()) {
+    //   if (room.players.has(playerId)) {
+ 
+    //       const player = room.players.get(playerId);
+    //       if (!player) {
+    //         return;
+    //       }
+          
+    //       // Only cleanup if WebSocket is not in OPEN state
+    //       if (player.ws.readyState !== WebSocket.OPEN) {
+    //         room.removePlayer(playerId);
+    //         // If room is empty, clean up everything
+    //         if (room.isEmpty()) {
+    //           console.log(`[${room.id}] Room is empty, cleaning up`);
+    //           room.cleanup();
+    //           this.rooms.delete(room.id);
+    //         } else {
+    //           // Broadcast updated player count
+    //           room.broadcast({ 
+    //             type: 'playerUpdate', 
+    //             data: { playerCount: room.players.size } 
+    //           });
+    //         }
+    //       }  
+    //   }
+    // }
   }
 }

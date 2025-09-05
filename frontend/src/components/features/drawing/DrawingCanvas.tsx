@@ -9,13 +9,13 @@ import { DrawPoint, GameStateType, AIGenerateRequest, ServerToClientMessage, Cli
 import TopicSelection from './TopicSelection';
 import { PlayerInfo } from '@/server/Room';
 import Button from '@/components/ui/Button';
+import { getPlayer } from '@/lib/player';
 
 interface DrawingCanvasProps {
   roomId: string;
-  playerId: string;
 }
 
-export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) {
+export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentColor, setCurrentColor] = useState<string>(COLORS.primary.main);
@@ -29,6 +29,22 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
 
   const { doc, connected, onMessage, sendMessage } = useYjs();
   const { clearDrawing } = useGameRoom(roomId);
+
+  useEffect(() => {
+    const player = getPlayer();
+    if (!player) {
+      return;
+    }
+
+    sendMessage({
+      type: 'joinRoom',
+      data: {
+        roomId,
+        playerId : player.id,
+        playerName: player.name,
+      }
+    })
+  }, [])
 
   const drawingArray = doc?.getArray('drawing');
 
@@ -46,6 +62,8 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
   // Sync local state with server messages
   useEffect(() => {
     return onMessage((message: ServerToClientMessage) => {
+      console.log('Received message:', message);
+
       if (message.type === 'gameStateUpdate') {
         const data = message.data;
         if (data.state) setGameState(data.state);
@@ -56,6 +74,8 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
         setPlayerCount(message.data.playerCount);
       } else if (message.type === 'gameEnded') {
         window.location.href = message.data.redirectTo;
+      } else if (message.type === 'kickRoom') {
+        window.location.href = '/';
       }
     });
   }, [onMessage]);
@@ -100,6 +120,7 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
     drawingArray.observe(observer);
     return () => drawingArray.unobserve(observer);
   }, [drawingArray]);
+ 
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (gameState !== 'playing') return;

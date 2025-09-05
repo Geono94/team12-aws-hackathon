@@ -38,9 +38,13 @@ export class Room {
 
   constructor(id: string) {
     this.id = id;
+    this.state = {
+      state: 'waiting',
+    }
   }
 
   addPlayer(playerInfo: PlayerInfo) {
+    console.log("[ADD Player]", this.id, playerInfo.id)
     this.players.set(playerInfo.id, playerInfo);
   }
 
@@ -52,24 +56,16 @@ export class Room {
     return Array.from(this.players.values());
   }
 
-  addConnection(ws: WebSocket) {
-    this.connections.add(ws);
-  }
-
-  removeConnection(ws: WebSocket) {
-    this.connections.delete(ws);
-  }
-
   updateState(newState: any) {
     this.state = { ...this.state, ...newState };
   }
 
   broadcast(message: ServerToClientMessage, sender?: WebSocket) {
-    this.connections.forEach((client) => {
-      if (client !== sender && client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ ...message, roomId: this.id }));
-      }
-    });
+    for (const player of this.players.values()) {
+      if (player.ws !== sender && player.ws.readyState === WebSocket.OPEN) {
+        player.ws.send(JSON.stringify({ ...message, roomId: this.id }));
+      } 
+    }
   }
 
   cleanup() {
@@ -183,6 +179,7 @@ export class Room {
     console.log(`[${this.id}] Auto-starting game with topic: ${topic}`);
     
     this.selectTopic(topic);
+
     setTimeout(() => {
       this.startCountdown(() => {
         this.startGameTimer(() => {
@@ -190,6 +187,11 @@ export class Room {
         });
       });
     }, GAME_CONFIG.TOPIC_SELECTION_TIME * 1000); // 3.5 seconds for topic selection
+  }
+
+  public broadcastGameState() {
+    console.log('broadcase state', this.state)
+    this.broadcast({ type: 'gameStateUpdate', data: this.state }); 
   }
 
   private async endGame(docs: Map<string, any>) {
@@ -231,5 +233,7 @@ export class Room {
       type: 'gameEnded', 
       data: { redirectTo: `/results?roomId=${this.id}` } 
     });
+
+    this.players.clear();
   }
 }

@@ -7,10 +7,24 @@ export interface PlayerInfo {
   joinedAt: string;
 }
 
-// Client to Server Messages
+/**
+ * 방을 찾고, 없으면 만들고, 있으면 들어갑니다
+ */
+export interface SearchRoomMessage {
+  type: 'searchRoom';
+  data: {
+    playerId: string;
+    playerName: string;
+  };
+}
+
+/**
+ * 이미 있던 방에 들어갑니다
+ */
 export interface JoinRoomMessage {
   type: 'joinRoom';
   data: {
+    roomId: string;
     playerId: string;
     playerName: string;
   };
@@ -18,7 +32,7 @@ export interface JoinRoomMessage {
 
 
 export type ClientToServerMessage = 
-  | JoinRoomMessage;
+  | SearchRoomMessage | JoinRoomMessage;
 
 // Server to Client Messages
 export interface RoomJoinedMessage {
@@ -51,6 +65,10 @@ export interface PlayerUpdateMessage {
   };
 }
 
+export interface KickRoomMessage {
+  type: 'kickRoom';
+}
+
 export interface GameEndedMessage {
   type: 'gameEnded';
   data: {
@@ -62,7 +80,7 @@ export type ServerToClientMessage =
   | RoomJoinedMessage
   | GameStateUpdateMessage
   | PlayerUpdateMessage
-  | GameEndedMessage;
+  | GameEndedMessage | KickRoomMessage;
 
 // Combined message types
 export type NetworkMessage = ClientToServerMessage | ServerToClientMessage;

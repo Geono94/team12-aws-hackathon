@@ -46,8 +46,7 @@ app.prepare().then(() => {
     let playerId: string | null = null;
     console.log('Room ID:', roomId);
     
-    setupWSConnection(ws, req);
-    gameManager.addConnection(roomId, ws);
+    setupWSConnection(ws, req); 
     
     ws.on('message', (data) => {
       try {
@@ -59,7 +58,7 @@ app.prepare().then(() => {
           console.log('Game message:', message);
           
           // Store playerId for cleanup
-          if (message.type === 'joinRoom' && message.data) {
+          if (message.type === 'searchRoom' && message.data) {
             playerId = message.data.playerId;
           }
           
@@ -73,9 +72,8 @@ app.prepare().then(() => {
     });
     
     ws.on('close', () => {
-      console.log(`WebSocket disconnected from: ${roomId}`);
-      gameManager.removeConnection(roomId, ws);
-      gameManager.cleanup(roomId, playerId);
+      console.log(`WebSocket disconnected from: ${roomId}`); 
+      gameManager.cleanup(playerId);
     });
   });
 

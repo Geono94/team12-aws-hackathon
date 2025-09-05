@@ -58,13 +58,17 @@ export default function HomePage({   artworks = [] }: HomePageProps) {
       setIsEditing(true);
       return;
     }
+    const player = getPlayer();
+    if (!player) {
+      return;
+    }
     
-    savePlayer(playerName, profileImage);
     setIsMatching(true);
+
     sendMessage({
-      type: 'joinRoom',
+      type: 'searchRoom',
       data: {
-        playerId: playerName,
+        playerId: player.id,
         playerName,
       }
     });
