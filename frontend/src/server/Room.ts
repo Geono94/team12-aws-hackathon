@@ -56,6 +56,15 @@ export class Room {
     return Array.from(this.players.values());
   }
 
+  getPlayersForClient() {
+    return Array.from(this.players.values()).map(player => ({
+      id: player.id,
+      name: player.name,
+      joinedAt: player.joinedAt
+      // WebSocket 객체는 제외
+    }));
+  }
+
   updateState(newState: any) {
     this.state = { ...this.state, ...newState };
   }
@@ -138,7 +147,7 @@ export class Room {
     if (this.countdownTimer) return;
     
     let countdown = GAME_CONFIG.COUNTDOWN_TIME;
-    this.updateState({ countdown });
+    this.updateState({ state: 'countdown', countdown });
     this.broadcastGameState();
     
     this.countdownTimer = setInterval(() => {
@@ -192,7 +201,7 @@ export class Room {
       type: 'gameStateUpdate', 
       data: {
         ...this.state,
-        players: this.getPlayersArray()
+        players: this.getPlayersForClient()
       }
     }); 
   }

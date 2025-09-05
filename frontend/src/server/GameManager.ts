@@ -102,25 +102,36 @@ export class GameManager {
         roomId,
         playerCount: joinedRoom.players.size,
         maxPlayers: GAME_CONFIG.MAX_PLAYERS,
-        players: joinedRoom.getPlayersArray()
+        players: joinedRoom.getPlayersForClient()
       }
     });
 
     joinedRoom.broadcast({
       type: 'playerUpdate', 
       data: {
-        playerInfo, 
+        playerInfo: {
+          id: playerInfo.id,
+          name: playerInfo.name,
+          joinedAt: playerInfo.joinedAt
+          // WebSocket은 제외
+        },
         playerCount: availableRoom.players.size,
-        players: availableRoom.getPlayersArray()
+        players: availableRoom.getPlayersForClient()
       } 
     });
 
     // Auto-start when max players join
+    console.log(`[${roomId}] Checking auto-start: ${joinedRoom.players.size}/${GAME_CONFIG.MAX_PLAYERS} players, state: ${joinedRoom.state.state}`);
     if (joinedRoom.players.size >= GAME_CONFIG.MAX_PLAYERS) {
+      console.log(`[${roomId}] Max players reached! Current state: ${joinedRoom.state.state}`);
       if (joinedRoom.state.state !== 'countdown' && joinedRoom.state.state !== 'playing') {
         console.log(`[${roomId}] Auto-starting game...`);
         this.startAutoGame(roomId);
+      } else {
+        console.log(`[${roomId}] Game already started or starting (state: ${joinedRoom.state.state})`);
       }
+    } else {
+      console.log(`[${roomId}] Waiting for more players (${joinedRoom.players.size}/${GAME_CONFIG.MAX_PLAYERS})`);
     }
   }
 
@@ -134,24 +145,78 @@ export class GameManager {
   }
 
   private rejoinRoom(ws: WebSocket, message: JoinRoomMessage) {
-    const { roomId, playerId } = message.data;
+    const { roomId, playerId, playerName } = message.data;
     const room = this.rooms.get(roomId);
+    
     if (!room) {
-      ws.send(JSON.stringify({
-         type: 'kickRoom'
-      }));
+      console.log(`[${roomId}] Room not found for rejoin, treating as new join`);
+      // 룸이 없으면 searchRoom으로 처리
+      this.handleSearchRoom(ws, {
+        type: 'searchRoom',
+        data: { playerId, playerName }
+      });
       return;
     }
 
-    if (!room.players.has(playerId)) {
-      ws.send(JSON.stringify({
-         type: 'kickRoom'
-      }));
+    // 이미 존재하는 플레이어면 재연결
+    if (room.players.has(playerId)) {
+      console.log(`[${roomId}] Player ${playerId} rejoining`);
+      room.players.get(playerId)!.ws = ws;
+      room.broadcastGameState();
       return;
     }
 
-    room.players.get(playerId)!.ws = ws;
-    room.broadcastGameState();
+    // 새로운 플레이어면 추가
+    console.log(`[${roomId}] New player ${playerId} joining via joinRoom`);
+    const playerInfo = new PlayerInfo({
+      id: playerId,
+      name: playerName,
+      ws: ws,
+      joinedAt: Date.now().toString()
+    });
+
+    room.addPlayer(playerInfo);
+    
+    console.log(`[${roomId}] Player joined: ${playerInfo.name} (${playerInfo.id}), total: ${room.players.size}/${GAME_CONFIG.MAX_PLAYERS}`);
+
+    // Send room info to client
+    playerInfo.send({
+      type: 'roomJoined',
+      data: {
+        roomId,
+        playerCount: room.players.size,
+        maxPlayers: GAME_CONFIG.MAX_PLAYERS,
+        players: room.getPlayersForClient()
+      }
+    });
+
+    room.broadcast({
+      type: 'playerUpdate', 
+      data: {
+        playerInfo: {
+          id: playerInfo.id,
+          name: playerInfo.name,
+          joinedAt: playerInfo.joinedAt
+          // WebSocket은 제외
+        },
+        playerCount: room.players.size,
+        players: room.getPlayersForClient()
+      } 
+    });
+
+    // Auto-start when max players join
+    console.log(`[${roomId}] Checking auto-start: ${room.players.size}/${GAME_CONFIG.MAX_PLAYERS} players, state: ${room.state.state}`);
+    if (room.players.size >= GAME_CONFIG.MAX_PLAYERS) {
+      console.log(`[${roomId}] Max players reached! Current state: ${room.state.state}`);
+      if (room.state.state !== 'countdown' && room.state.state !== 'playing') {
+        console.log(`[${roomId}] Auto-starting game...`);
+        this.startAutoGame(roomId);
+      } else {
+        console.log(`[${roomId}] Game already started or starting (state: ${room.state.state})`);
+      }
+    } else {
+      console.log(`[${roomId}] Waiting for more players (${room.players.size}/${GAME_CONFIG.MAX_PLAYERS})`);
+    }
   }
 
   handleMessage(roomId: string, message: ClientToServerMessage, ws: WebSocket) {
@@ -171,9 +236,11 @@ export class GameManager {
   }
 
   private startAutoGame(roomId: string) {
+    console.log(`[${roomId}] Starting auto game...`);
     const room = this.getRoom(roomId);
- 
+    console.log(`[${roomId}] Room found, calling startGame...`);
     room.startGame(this.docs);
+    console.log(`[${roomId}] startGame called successfully`);
   }
 
   cleanup(playerId?: string | null) {
