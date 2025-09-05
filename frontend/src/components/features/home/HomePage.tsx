@@ -242,91 +242,190 @@ export default function HomePage({   artworks = [] }: HomePageProps) {
         textAlign: 'center',
         minHeight: '100vh'
       }}>
-        {/* Logo & Title */}
-        <div style={{ marginBottom: SPACING.lg }}>
+        {/* Enhanced Logo & Title */}
+        <div style={{ 
+          marginBottom: SPACING.lg,
+          position: 'relative'
+        }}>
+          {/* Animated Background */}
           <div style={{
-            fontSize: '48px',
-            marginBottom: SPACING.sm
+            position: 'absolute',
+            top: '-20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '200px',
+            height: '200px',
+            background: 'radial-gradient(circle, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 50%, rgba(240,147,251,0.1) 100%)',
+            borderRadius: '50%',
+            animation: 'pulse 3s ease-in-out infinite',
+            zIndex: 0
+          }} />
+          
+          {/* Logo */}
+          <div style={{
+            position: 'relative',
+            zIndex: 1,
+            marginBottom: SPACING.md
           }}>
-            🎨
+            <img 
+              src="/logo.svg" 
+              alt="DrawTogether Logo"
+              style={{
+                width: '80px',
+                height: '80px',
+                filter: 'drop-shadow(0 4px 12px rgba(102,126,234,0.3))',
+                animation: 'float 4s ease-in-out infinite'
+              }}
+            />
           </div>
+          
+          {/* Title with Gradient */}
           <h1 style={{ 
-            fontSize: '32px',
+            fontSize: '36px',
             fontWeight: 'bold',
-            color: '#FFFFFF',
-            marginBottom: SPACING.sm
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            marginBottom: SPACING.sm,
+            position: 'relative',
+            zIndex: 1
           }}>
             DrawTogether
           </h1>
-          <p style={{
-            fontSize: '16px',
-            color: '#888888',
-            marginBottom: SPACING.lg
+          
+          {/* Enhanced Subtitle */}
+          <div style={{
+            position: 'relative',
+            zIndex: 1
           }}>
-            친구들과 함께 그리고 AI가 변환해주는 재미있는 게임
-          </p>
+            <p style={{
+              fontSize: '16px',
+              color: '#888888',
+              marginBottom: SPACING.lg
+            }}>
+              친구들과 함께 그리고 AI가 새로운 스타일로 변환해주는 게임
+            </p>
+          </div>
+          
+          {/* Feature Icons */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: SPACING.lg,
+            marginTop: SPACING.md,
+            position: 'relative',
+            zIndex: 1
+          }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <div style={{
+                fontSize: '24px',
+                background: 'rgba(255,107,107,0.1)',
+                padding: '8px',
+                borderRadius: '12px',
+                border: '1px solid rgba(255,107,107,0.2)'
+              }}>
+                👥
+              </div>
+              <span style={{ fontSize: '10px', color: '#999' }}>협업</span>
+            </div>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <div style={{
+                fontSize: '24px',
+                background: 'rgba(118,75,162,0.1)',
+                padding: '8px',
+                borderRadius: '12px',
+                border: '1px solid rgba(118,75,162,0.2)'
+              }}>
+                🤖
+              </div>
+              <span style={{ fontSize: '10px', color: '#999' }}>AI 생성</span>
+            </div>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <div style={{
+                fontSize: '24px',
+                background: 'rgba(78,205,196,0.1)',
+                padding: '8px',
+                borderRadius: '12px',
+                border: '1px solid rgba(78,205,196,0.2)'
+              }}>
+                🌐
+              </div>
+              <span style={{ fontSize: '10px', color: '#999' }}>커뮤니티</span>
+            </div>
+          </div>
         </div>
 
         {/* Profile Section */}
         <div style={{
-          background: 'rgba(255,255,255,0.05)',
-          borderRadius: '16px',
-          padding: SPACING.lg,
-          marginBottom: SPACING.lg,
-          minWidth: '320px',
-          border: '1px solid rgba(255,255,255,0.1)'
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          marginBottom: SPACING.xl,
+          width: '100%',
+          maxWidth: '320px'
         }}>
-          {/* Profile Image - Center */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            marginBottom: SPACING.md 
-          }}>
-            <button
-              onClick={handleProfileImageClick}
+          {/* Profile Image */}
+          <button
+            onClick={handleProfileImageClick}
+            style={{
+              background: 'none',
+              border: '2px solid rgba(255,255,255,0.15)',
+              borderRadius: '50%',
+              padding: '3px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              marginBottom: SPACING.md
+            }}
+          >
+            <img 
+              src={profileImage} 
+              alt="프로필"
               style={{
-                background: 'none',
-                border: '3px solid rgba(255,255,255,0.2)',
+                width: '64px',
+                height: '64px',
                 borderRadius: '50%',
-                padding: '4px',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
+                objectFit: 'cover'
               }}
-            >
-              <img 
-                src={profileImage} 
-                alt="프로필"
-                style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  objectFit: 'cover'
-                }}
-              />
-            </button>
-          </div>
+            />
+          </button>
 
-          {/* Name Input & Save Button - Same Line */}
+          {/* Name Section */}
           {isEditing ? (
             <div style={{ 
               display: 'flex', 
-              gap: SPACING.sm, 
+              gap: SPACING.xs, 
               alignItems: 'center',
-              marginBottom: SPACING.md,
+              width: '100%'
             }}>
               <input
                 type="text"
                 value={playerName}
                 onChange={(e) => setPlayerName(e.target.value)}
-                placeholder="닉네임을 입력하세요"
+                placeholder="닉네임 입력"
                 maxLength={20}
                 style={{
                   flex: 1,
-                  padding: '12px 16px',
+                  padding: '10px 14px',
                   fontSize: '16px',
-                  border: '2px solid #444',
+                  border: '1px solid rgba(255,255,255,0.2)',
                   borderRadius: '8px',
-                  background: '#1a1a1a',
+                  background: 'rgba(255,255,255,0.05)',
                   color: '#FFFFFF',
                   outline: 'none',
                   textAlign: 'center'
@@ -337,59 +436,71 @@ export default function HomePage({   artworks = [] }: HomePageProps) {
                 onClick={handleNameSave}
                 disabled={!playerName.trim()}
                 style={{
-                  background: playerName.trim() ? COLORS.primary.main : '#666',
+                  background: playerName.trim() ? COLORS.primary.main : 'rgba(255,255,255,0.1)',
                   border: 'none',
                   borderRadius: '8px',
                   color: 'white',
-                  padding: '12px 16px',
-                  fontSize: '14px'
+                  padding: '10px 14px',
+                  fontSize: '14px',
+                  minWidth: '50px'
                 }}
               >
-                저장
+                ✓
               </Button>
             </div>
           ) : (
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: SPACING.md,
-              padding: SPACING.sm,
-              background: 'rgba(255,255,255,0.1)',
-              borderRadius: '8px'
+              gap: SPACING.xs,
+              padding: '8px 12px',
+              background: 'rgba(255,255,255,0.05)',
+              borderRadius: '8px',
+              border: '1px solid rgba(255,255,255,0.1)'
             }}>
-              <div>
-                <div style={{ color: '#FFFFFF', fontSize: '16px', fontWeight: '500' }}>
-                  {playerName}
-                </div>
-                <div style={{ color: '#888', fontSize: '12px' }}>
-                  🟢 온라인
-                </div>
-              </div>
+              <span style={{ 
+                color: '#FFFFFF', 
+                fontSize: '16px', 
+                fontWeight: '500' 
+              }}>
+                {playerName}
+              </span>
               <button
                 onClick={() => setIsEditing(true)}
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#888',
+                  color: 'rgba(255,255,255,0.5)',
                   cursor: 'pointer',
-                  fontSize: '12px'
+                  fontSize: '14px',
+                  padding: '2px 4px'
                 }}
               >
-                수정
+                ✏️
               </button>
             </div>
           )}
         </div>
 
-        {/* Quick Match Section */}
-        <div style={{ marginBottom: SPACING.lg, width: '320px' }} className={"w-full"}>
+        {/* Game Start Button - Centered */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center',
+          marginBottom: SPACING.lg,
+          width: '100%'
+        }}>
           <Button 
             onClick={handleQuickMatch}
             disabled={!playerName.trim()}
-            className="w-full text-lg px-4 py-4 border-none rounded-xl text-white font-bold shadow-lg cursor-pointer"
+            className="w-full text-lg px-4 py-4 border-none rounded-xl text-white font-bold shadow-lg cursor-pointer max-w-xs"
+            style={{
+              background: playerName.trim() ? COLORS.primary.main : 'rgba(255,255,255,0.1)',
+              cursor: playerName.trim() ? 'pointer' : 'not-allowed',
+              transition: 'all 0.2s',
+              boxShadow: playerName.trim() ? '0 4px 16px rgba(255,107,107,0.3)' : 'none'
+            }}
           >
-            게임 시작하기
+            🎮 게임 시작하기
           </Button>
         </div>
 

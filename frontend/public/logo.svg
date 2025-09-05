@@ -1,0 +1,54 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#764ba2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f093fb;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="brushGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+      <stop offset="33%" style="stop-color:#4ecdc4;stop-opacity:1" />
+      <stop offset="66%" style="stop-color:#45b7d1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#96ceb4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="60" cy="60" r="55" fill="url(#bgGradient)" opacity="0.9"/>
+  
+  <!-- Collaborative Hands -->
+  <g transform="translate(60,60)">
+    <!-- Hand 1 -->
+    <path d="M-25,-15 Q-20,-20 -15,-15 L-10,-10 Q-8,-8 -10,-5 L-15,-10 Q-20,-12 -25,-15Z" fill="#ff6b6b" opacity="0.8"/>
+    <!-- Hand 2 -->
+    <path d="M15,-20 Q20,-25 25,-20 L30,-15 Q32,-13 30,-10 L25,-15 Q20,-17 15,-20Z" fill="#4ecdc4" opacity="0.8"/>
+    <!-- Hand 3 -->
+    <path d="M-20,10 Q-15,5 -10,10 L-5,15 Q-3,17 -5,20 L-10,15 Q-15,13 -20,10Z" fill="#45b7d1" opacity="0.8"/>
+    <!-- Hand 4 -->
+    <path d="M20,15 Q25,10 30,15 L35,20 Q37,22 35,25 L30,20 Q25,18 20,15Z" fill="#96ceb4" opacity="0.8"/>
+  </g>
+  
+  <!-- Central Canvas -->
+  <rect x="40" y="40" width="40" height="40" rx="8" fill="white" opacity="0.9" stroke="#333" stroke-width="1"/>
+  
+  <!-- Drawing Lines -->
+  <path d="M45,50 Q55,45 65,55 Q70,65 60,70 Q50,65 45,50" fill="none" stroke="url(#brushGradient)" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- AI Sparkles -->
+  <g fill="#ffd93d" opacity="0.8">
+    <circle cx="25" cy="25" r="2"/>
+    <circle cx="95" cy="30" r="1.5"/>
+    <circle cx="30" cy="90" r="1.5"/>
+    <circle cx="90" cy="85" r="2"/>
+    <polygon points="75,15 77,19 81,19 78,22 79,26 75,24 71,26 72,22 69,19 73,19"/>
+    <polygon points="15,75 17,79 21,79 18,82 19,86 15,84 11,86 12,82 9,79 13,79"/>
+  </g>
+  
+  <!-- Connection Lines (Community) -->
+  <g stroke="#fff" stroke-width="1" opacity="0.3" fill="none">
+    <path d="M35,35 Q60,20 85,35"/>
+    <path d="M35,85 Q60,100 85,85"/>
+    <path d="M35,35 Q20,60 35,85"/>
+    <path d="M85,35 Q100,60 85,85"/>
+  </g>
+</svg>
