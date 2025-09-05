@@ -59,7 +59,12 @@ export class GameManager {
 
     // Save to database
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://77q0bmlyb4.execute-api.us-east-1.amazonaws.com/prod';
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+      
+      if (!API_BASE_URL) {
+        console.error('NEXT_PUBLIC_API_URL environment variable is not set');
+        return;
+      }
       
       if (isNewRoom) {
         // Create new room in DB
