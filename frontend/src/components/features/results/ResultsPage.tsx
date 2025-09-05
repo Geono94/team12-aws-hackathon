@@ -306,35 +306,46 @@ export default function ResultsPage() {
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '12px',
+            gap: '16px',
             width: '100%',
             maxWidth: '400px',
-            marginTop: '24px'
+            marginTop: '32px'
           }}>
             {/* 저장 및 공유 버튼 */}
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '16px' }}>
               <button
                 onClick={handleDownloadImage}
                 disabled={!originalImage}
                 style={{
                   flex: 1,
-                  padding: '14px 20px',
-                  border: '2px solid #4ECDC4',
-                  borderRadius: '12px',
+                  padding: '16px',
+                  border: 'none',
+                  borderRadius: '16px',
                   fontSize: '16px',
                   fontWeight: '600',
                   cursor: !originalImage ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  background: 'rgba(78,205,196,0.1)',
-                  color: '#4ECDC4',
-                  opacity: !originalImage ? 0.5 : 1
+                  transition: 'all 0.2s ease',
+                  background: !originalImage 
+                    ? 'rgba(255,255,255,0.1)' 
+                    : 'linear-gradient(135deg, #4ECDC4, #45B7D1)',
+                  color: !originalImage ? '#666' : '#FFFFFF',
+                  opacity: !originalImage ? 0.5 : 1,
+                  boxShadow: !originalImage ? 'none' : '0 4px 12px rgba(78,205,196,0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  if (originalImage) {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 6px 20px rgba(78,205,196,0.4)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (originalImage) {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(78,205,196,0.3)';
+                  }
                 }}
               >
-                💾 저장하기
+                저장
               </button>
               
               <button
@@ -342,23 +353,34 @@ export default function ResultsPage() {
                 disabled={!originalImage}
                 style={{
                   flex: 1,
-                  padding: '14px 20px',
-                  border: '2px solid #45B7D1',
-                  borderRadius: '12px',
+                  padding: '16px',
+                  border: 'none',
+                  borderRadius: '16px',
                   fontSize: '16px',
                   fontWeight: '600',
                   cursor: !originalImage ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  background: 'rgba(69,183,209,0.1)',
-                  color: '#45B7D1',
-                  opacity: !originalImage ? 0.5 : 1
+                  transition: 'all 0.2s ease',
+                  background: !originalImage 
+                    ? 'rgba(255,255,255,0.1)' 
+                    : 'linear-gradient(135deg, #FF6B6B, #FF8E8E)',
+                  color: !originalImage ? '#666' : '#FFFFFF',
+                  opacity: !originalImage ? 0.5 : 1,
+                  boxShadow: !originalImage ? 'none' : '0 4px 12px rgba(255,107,107,0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  if (originalImage) {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 6px 20px rgba(255,107,107,0.4)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (originalImage) {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(255,107,107,0.3)';
+                  }
                 }}
               >
-                📤 공유하기
+                공유
               </button>
             </div>
 
@@ -366,22 +388,29 @@ export default function ResultsPage() {
             <button
               onClick={onGoHome}
               style={{
-                padding: '16px 32px',
-                border: '2px solid #FF6B6B',
+                padding: '18px',
+                border: '2px solid rgba(255,255,255,0.2)',
                 borderRadius: '16px',
-                fontSize: '18px',
+                fontSize: '16px',
                 fontWeight: '600',
                 cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                background: 'rgba(255,107,107,0.1)',
-                color: '#FF6B6B'
+                transition: 'all 0.2s ease',
+                background: 'rgba(255,255,255,0.05)',
+                color: '#FFFFFF',
+                backdropFilter: 'blur(10px)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(255,255,255,0.1)';
+                e.target.style.borderColor = 'rgba(255,255,255,0.3)';
+                e.target.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'rgba(255,255,255,0.05)';
+                e.target.style.borderColor = 'rgba(255,255,255,0.2)';
+                e.target.style.transform = 'translateY(0)';
               }}
             >
-              🏠 홈으로 돌아가기
+              홈으로 돌아가기
             </button>
           </div>
         )}
