@@ -7,9 +7,10 @@ import { getPlayer } from '@/lib/player';
 
 interface HomePageProps {
   onStartGame: (playerName: string) => void;
+  isLoading?: boolean;
 }
 
-export default function HomePage({ onStartGame }: HomePageProps) {
+export default function HomePage({ onStartGame, isLoading = false }: HomePageProps) {
   const [playerName, setPlayerName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
@@ -132,11 +133,11 @@ export default function HomePage({ onStartGame }: HomePageProps) {
         <Button 
           size="lg" 
           onClick={handleStartClick}
-          disabled={!playerName.trim()}
+          disabled={!playerName.trim() || isLoading}
           style={{
             fontSize: '24px',
             padding: '20px 40px',
-            background: playerName.trim() ? COLORS.primary.main : '#666',
+            background: (playerName.trim() && !isLoading) ? COLORS.primary.main : '#666',
             border: 'none',
             borderRadius: '12px',
             color: 'white',
@@ -144,10 +145,10 @@ export default function HomePage({ onStartGame }: HomePageProps) {
             boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
             transform: 'scale(1)',
             transition: 'all 0.3s ease',
-            cursor: playerName.trim() ? 'pointer' : 'not-allowed'
+            cursor: (playerName.trim() && !isLoading) ? 'pointer' : 'not-allowed'
           }}
           onMouseEnter={(e) => {
-            if (playerName.trim()) {
+            if (playerName.trim() && !isLoading) {
               e.currentTarget.style.transform = 'scale(1.05)';
               e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.4)';
             }
@@ -157,7 +158,7 @@ export default function HomePage({ onStartGame }: HomePageProps) {
             e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
           }}
         >
-          🚀 게임 시작하기
+          {isLoading ? '🔄 연결 중...' : '🚀 게임 시작하기'}
         </Button>
       </div>
 

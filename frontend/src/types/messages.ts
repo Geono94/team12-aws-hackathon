@@ -6,6 +6,14 @@ export interface PlayerInfo {
 }
 
 // Client to Server Messages
+export interface JoinRoomMessage {
+  type: 'joinRoom';
+  data: {
+    playerId: string;
+    playerName: string;
+  };
+}
+
 export interface PlayerJoinMessage {
   type: 'playerJoin';
   playerInfo: PlayerInfo;
@@ -21,10 +29,21 @@ export interface GameStateChangeMessage {
 }
 
 export type ClientToServerMessage = 
+  | JoinRoomMessage
   | PlayerJoinMessage
   | GameStateChangeMessage;
 
 // Server to Client Messages
+export interface RoomJoinedMessage {
+  type: 'roomJoined';
+  data: {
+    roomId: string;
+    playerCount: number;
+    maxPlayers: number;
+    players: PlayerInfo[];
+  };
+}
+
 export interface GameStateUpdateMessage {
   type: 'gameStateUpdate';
   data: {
@@ -53,6 +72,7 @@ export interface GameEndedMessage {
 }
 
 export type ServerToClientMessage = 
+  | RoomJoinedMessage
   | GameStateUpdateMessage
   | PlayerUpdateMessage
   | GameEndedMessage;

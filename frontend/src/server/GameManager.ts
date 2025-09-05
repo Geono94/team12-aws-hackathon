@@ -31,11 +31,124 @@ export class GameManager {
     }
   }
 
+  private async handleJoinRoom(ws: WebSocket, data: any) {
+    const { playerId, playerName } = data;
+    
+    if (!playerId || !playerName) {
+      ws.send(JSON.stringify({ 
+        type: 'error', 
+        message: 'playerId and playerName are required' 
+      }));
+      return;
+    }
+
+    // Find available room or create new one
+    let availableRoom = this.findAvailableRoom();
+    let isNewRoom = false;
+    
+    if (!availableRoom) {
+      // Create new room
+      const roomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      availableRoom = new Room(roomId);
+      this.rooms.set(roomId, availableRoom);
+      isNewRoom = true;
+      console.log(`[${roomId}] New room created`);
+    }
+
+    const playerInfo: PlayerInfo = {
+      id: playerId,
+      name: playerName,
+      ws: ws,
+      joinedAt: Date.now()
+    };
+
+    const roomId = availableRoom.id;
+    availableRoom.addPlayer(playerInfo);
+    
+    console.log(`[${roomId}] Player joined: ${playerInfo.name} (${playerInfo.id}), total: ${availableRoom.players.size}/${GAME_CONFIG.MAX_PLAYERS_PER_ROOM}`);
+    
+    // Save to database
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://77q0bmlyb4.execute-api.us-east-1.amazonaws.com/prod';
+      
+      if (isNewRoom) {
+        // Create new room in DB
+        const response = await fetch(`${API_BASE_URL}/rooms/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomId,
+            playerId,
+            playerName
+          })
+        });
+        
+        if (!response.ok) {
+          console.error(`Failed to create room in DB: ${response.status}`);
+        }
+      } else {
+        // Join existing room in DB
+        const response = await fetch(`${API_BASE_URL}/rooms/join`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            playerId,
+            playerName
+          })
+        });
+        
+        if (!response.ok) {
+          console.error(`Failed to join room in DB: ${response.status}`);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to sync with database:', error);
+    }
+    
+    // Send room info to client
+    ws.send(JSON.stringify({
+      type: 'roomJoined',
+      data: {
+        roomId,
+        playerCount: availableRoom.players.size,
+        maxPlayers: GAME_CONFIG.MAX_PLAYERS_PER_ROOM,
+        players: availableRoom.getPlayersArray()
+      }
+    }));
+
+    availableRoom.broadcast({ 
+      type: 'playerUpdate', 
+      data: { 
+        playerInfo, 
+        playerCount: availableRoom.players.size,
+        players: availableRoom.getPlayersArray()
+      } 
+    });
+
+    // Auto-start game if room is full
+    if (availableRoom.players.size >= GAME_CONFIG.MAX_PLAYERS_PER_ROOM) {
+      this.startGame(roomId);
+    }
+  }
+
+  private findAvailableRoom(): Room | null {
+    for (const room of this.rooms.values()) {
+      if (room.players.size < GAME_CONFIG.MAX_PLAYERS_PER_ROOM && room.state.state === 'waiting') {
+        return room;
+      }
+    }
+    return null;
+  }
+
   handleMessage(roomId: string, message: ClientToServerMessage, ws: WebSocket) {
     try {
       console.log(`[${roomId}] Received message:`, message);
       
       switch (message.type) {
+        case 'joinRoom':
+          this.handleJoinRoom(ws, message.data);
+          break;
+          
         case 'gameStateChange':
           this.handleGameStateChange(roomId, message.data);
           break;

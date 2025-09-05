@@ -45,6 +45,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return await getRoomInfo(roomId);
     }
 
+    if (path === '/rooms/create' && method === 'POST') {
+      const { roomId, playerId, playerName } = JSON.parse(event.body || '{}');
+      return await createRoom(roomId, playerId, playerName);
+    }
+
     if (path === '/rooms/join' && method === 'POST') {
       const { playerId, playerName } = JSON.parse(event.body || '{}');
       if (!playerId || !playerName) {
@@ -54,7 +59,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
           body: JSON.stringify({ error: 'playerId and playerName are required' }),
         };
       }
-      return await joinRoomSafely(playerId, playerName);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Room join via Lambda is deprecated. Use WebSocket server.' }),
+      };
     }
 
     if (path === '/rooms/leave' && method === 'POST') {
@@ -77,85 +86,46 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   }
 };
 
-async function joinRoomSafely(playerId: string, playerName: string, maxRetries: number = 3): Promise<APIGatewayProxyResult> {
-  const headers = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' };
-
-  const newPlayer: Player = {
-    playerId,
-    name: playerName,
-    joinedAt: Date.now(),
-  };
-
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      // 1. 빈 방 찾기
-      const availableRoom = await findAvailableRoom();
-      
-      if (availableRoom) {
-        // 2. 조건부 업데이트로 안전하게 참가
-        const updatedPlayers = [...(availableRoom.players || []), newPlayer];
-        
-        await docClient.send(new UpdateCommand({
-          TableName: ROOMS_TABLE,
-          Key: { roomId: availableRoom.roomId },
-          UpdateExpression: 'SET playerCount = playerCount + :inc, players = :players, updatedAt = :time',
-          ConditionExpression: 'playerCount < maxPlayers AND #status = :status',
-          ExpressionAttributeNames: {
-            '#status': 'status'
-          },
-          ExpressionAttributeValues: {
-            ':inc': 1,
-            ':players': updatedPlayers,
-            ':time': Date.now(),
-            ':status': 'waiting'
-          },
-        }));
-
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({
-            roomId: availableRoom.roomId,
-            playerCount: availableRoom.playerCount + 1,
-            maxPlayers: availableRoom.maxPlayers,
-            players: updatedPlayers,
-          }),
-        };
-      } else {
-        // 3. 빈 방이 없으면 새로 생성
-        const newRoom = await createNewRoom(newPlayer);
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({
-            roomId: newRoom.roomId,
-            playerCount: 1,
-            maxPlayers: newRoom.maxPlayers,
-            players: newRoom.players,
-          }),
-        };
-      }
-    } catch (error: any) {
-      if (error.name === 'ConditionalCheckFailedException') {
-        console.log(`Join attempt ${attempt + 1} failed, retrying...`);
-        continue; // 재시도
-      }
-      throw error;
-    }
-  }
-
-  // 재시도 실패시 새 방 생성
-  const newRoom = await createNewRoom(newPlayer);
-  return {
-    statusCode: 200,
-    headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      roomId: newRoom.roomId,
+async function createRoom(roomId: string, playerId: string, playerName: string): Promise<APIGatewayProxyResult> {
+  try {
+    const now = Date.now();
+    const room: Room = {
+      roomId,
       playerCount: 1,
-      maxPlayers: newRoom.maxPlayers,
-      players: newRoom.players,
-    }),
-  };
+      maxPlayers: 4,
+      status: 'waiting',
+      createdAt: now,
+      updatedAt: now,
+      players: [{
+        playerId,
+        name: playerName,
+        joinedAt: now
+      }]
+    };
+
+    await docClient.send(new PutCommand({
+      TableName: ROOMS_TABLE,
+      Item: room,
+    }));
+
+    return {
+      statusCode: 200,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({
+        roomId,
+        playerCount: 1,
+        maxPlayers: 4,
+        players: room.players
+      }),
+    };
+  } catch (error) {
+    console.error('Create room error:', error);
+    return {
+      statusCode: 500,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'Failed to create room' }),
+    };
+  }
 }
 
 async function updateRoomStatus(roomId: string, status: 'waiting' | 'playing' | 'finished'): Promise<APIGatewayProxyResult> {
@@ -247,26 +217,6 @@ async function findAvailableRoom(): Promise<Room | null> {
   );
   
   return availableRooms?.[0] || null;
-}
-
-async function createNewRoom(initialPlayer: Player): Promise<Room> {
-  const roomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-  const room: Room = {
-    roomId,
-    status: 'waiting',
-    playerCount: 1,
-    maxPlayers: 4,
-    players: [initialPlayer],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
-
-  await docClient.send(new PutCommand({
-    TableName: ROOMS_TABLE,
-    Item: room,
-  }));
-
-  return room;
 }
 
 async function leaveRoom(roomId: string, playerId: string): Promise<APIGatewayProxyResult> {
