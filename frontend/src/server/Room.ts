@@ -130,8 +130,8 @@ export class Room {
   }
 
   selectTopic(topic: string) {
-    this.updateState({ state: 'topicSelection' });
-    this.broadcast({ type: 'gameStateUpdate', data: { topic  } });
+    this.updateState({ state: 'topicSelection', topic });
+    this.broadcastGameState();
   }
 
   startCountdown(onComplete: () => void) {
