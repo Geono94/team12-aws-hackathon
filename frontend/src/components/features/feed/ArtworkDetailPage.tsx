@@ -34,10 +34,10 @@ export default function ArtworkDetailPage({ artwork }: ArtworkDetailPageProps) {
 
   // Mock related artworks
   const relatedArtworks = [
-    { id: '2', topic: artwork.topic, aiImage: '/api/placeholder/300/300', likes: 12 },
-    { id: '3', topic: artwork.topic, aiImage: '/api/placeholder/300/300', likes: 8 },
-    { id: '4', topic: artwork.topic, aiImage: '/api/placeholder/300/300', likes: 15 },
-    { id: '5', topic: artwork.topic, aiImage: '/api/placeholder/300/300', likes: 6 }
+    { id: '2', topic: artwork.topic, aiImage: `${process.env.NEXT_PUBLIC_S3_BUCKET_URL || 'https://drawtogether-test-1757052413482.s3.amazonaws.com'}/images/ai2.svg`, likes: 12 },
+    { id: '3', topic: artwork.topic, aiImage: `${process.env.NEXT_PUBLIC_S3_BUCKET_URL || 'https://drawtogether-test-1757052413482.s3.amazonaws.com'}/images/ai3.svg`, likes: 8 },
+    { id: '4', topic: artwork.topic, aiImage: `${process.env.NEXT_PUBLIC_S3_BUCKET_URL || 'https://drawtogether-test-1757052413482.s3.amazonaws.com'}/images/ai4.svg`, likes: 15 },
+    { id: '5', topic: artwork.topic, aiImage: `${process.env.NEXT_PUBLIC_S3_BUCKET_URL || 'https://drawtogether-test-1757052413482.s3.amazonaws.com'}/images/ai5.svg`, likes: 6 }
   ];
 
   const handleReaction = (artworkId: string, reactionType: 'like') => {
@@ -107,8 +107,6 @@ export default function ArtworkDetailPage({ artwork }: ArtworkDetailPageProps) {
         zIndex: 100
       }}>
         <div style={{
-          maxWidth: '800px',
-          margin: '0 auto',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
@@ -228,14 +226,16 @@ export default function ArtworkDetailPage({ artwork }: ArtworkDetailPageProps) {
         </div>
       </div>
 
-      <div style={{ padding: SPACING.md }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <div style={{ padding: SPACING.sm }}>
+        <div>
           {/* Image Compare Slider */}
           <div style={{ 
             marginBottom: SPACING.sm,
             borderRadius: BORDER_RADIUS.lg,
             overflow: 'hidden',
-            position: 'relative'
+            position: 'relative',
+            height: '300px',
+            width: '100%'
           }}>
             <ImageCompareSlider
               originalImage={artwork.originalImage}
@@ -512,7 +512,7 @@ export default function ArtworkDetailPage({ artwork }: ArtworkDetailPageProps) {
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: SPACING.sm,
+              gap: SPACING.xs,
               padding: `0 ${SPACING.xs}`
             }}>
               {relatedArtworks.map((related) => (
@@ -538,7 +538,7 @@ export default function ArtworkDetailPage({ artwork }: ArtworkDetailPageProps) {
                     alt={`${related.topic} artwork`}
                     style={{
                       width: '100%',
-                      height: '120px',
+                      height: '100px',
                       objectFit: 'cover'
                     }}
                   />

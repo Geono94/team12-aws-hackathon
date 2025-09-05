@@ -1,14 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import FeedPage from '@/components/features/feed/FeedPage';
+import EmptyState from '@/components/ui/EmptyState';
+import Button from '@/components/ui/Button';
 import { ArtworkItem } from '@/types/ui';
 import { getFinishedRooms } from '@/lib/api/room';
 import { getOriginalImageUrl, getAiImageUrl } from '@/lib/utils/s3';
 
 export default function Feed() {
+  const router = useRouter();
   const [artworks, setArtworks] = useState<ArtworkItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadFinishedRooms();
@@ -40,7 +45,7 @@ export default function Feed() {
       setArtworks(artworkItems);
     } catch (error) {
       console.error('Failed to load finished rooms:', error);
-      setArtworks([]);
+      setError('작품을 불러오는 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -61,40 +66,47 @@ export default function Feed() {
 
   if (isLoading) {
     return (
-      <div style={{
-        background: '#000000',
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#FFFFFF'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎨</div>
-          <p>작품 로딩 중...</p>
-        </div>
-      </div>
+      <EmptyState
+        title="작품 로딩 중..."
+        description="잠시만 기다려주세요"
+      />
+    );
+  }
+
+  if (error) {
+    return (
+      <EmptyState
+        icon="⚠️"
+        title="로딩 오류"
+        description={error}
+        action={
+          <Button
+            onClick={() => window.location.reload()}
+            variant="primary"
+            size="md"
+          >
+            다시 시도
+          </Button>
+        }
+      />
     );
   }
 
   if (artworks.length === 0) {
     return (
-      <div style={{
-        background: '#000000',
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#FFFFFF'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎨</div>
-          <p>아직 완료된 작품이 없습니다.</p>
-          <p style={{ fontSize: '14px', color: '#888', marginTop: '8px' }}>
-            게임을 플레이하고 작품을 만들어보세요!
-          </p>
-        </div>
-      </div>
+      <EmptyState
+        title="아직 완료된 작품이 없습니다"
+        description="게임을 플레이하고 작품을 만들어보세요!"
+        action={
+          <Button
+            onClick={() => router.push('/')}
+            variant="primary"
+            size="medium"
+          >
+            게임 시작하기
+          </Button>
+        }
+      />
     );
   }
 

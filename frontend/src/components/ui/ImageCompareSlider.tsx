@@ -14,9 +14,13 @@ export default function ImageCompareSlider({
   aiImage, 
   alt = 'Artwork comparison' 
 }: ImageCompareSliderProps) {
-  const [sliderPosition, setSliderPosition] = useState(95); // Start with 95% original visible
+  const [sliderPosition, setSliderPosition] = useState(95);
   const [isDragging, setIsDragging] = useState(false);
+  const [originalImageError, setOriginalImageError] = useState(false);
+  const [aiImageError, setAiImageError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const fallbackImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjMzMzMzMzIi8+Cjx0ZXh0IHg9IjIwMCIgeT0iMTUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjY2NjY2IiBmb250LXNpemU9IjE2Ij7snbTrr7jsp4Drpbwg67aE7J2EIOyImCDsl4bsnYQ8L3RleHQ+Cjwvc3ZnPgo=';
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
@@ -90,7 +94,7 @@ export default function ImageCompareSlider({
     >
       {/* AI Image (Background) */}
       <img
-        src={aiImage}
+        src={aiImageError ? fallbackImage : aiImage}
         alt={`${alt} - AI version`}
         style={{
           position: 'absolute',
@@ -102,11 +106,12 @@ export default function ImageCompareSlider({
           pointerEvents: 'none'
         }}
         draggable={false}
+        onError={() => setAiImageError(true)}
       />
 
       {/* Original Image (Foreground with clip) */}
       <img
-        src={originalImage}
+        src={originalImageError ? fallbackImage : originalImage}
         alt={`${alt} - Original`}
         style={{
           position: 'absolute',
@@ -119,6 +124,7 @@ export default function ImageCompareSlider({
           pointerEvents: 'none'
         }}
         draggable={false}
+        onError={() => setOriginalImageError(true)}
       />
 
       {/* Slider Line */}

@@ -56,16 +56,18 @@ export default function HomePage() {
     try {
       const response = await getFinishedRooms(10, reset ? undefined : nextToken);
       
-      const newArtworks: ArtworkItem[] = response.rooms.map((room) => ({
-        id: room.roomId,
-        originalImage: getOriginalImageUrl(room.roomId),
-        aiImage: getAiImageUrl(room.roomId),
-        topic: room.topic || '알 수 없음',
-        playerCount: room.playerCount,
-        createdAt: formatTimeAgo(room.finishedAt || room.createdAt || Date.now()),
-        aiModel: 'Amazon Bedrock',
-        reactions: [{ type: 'like', count: Math.floor(Math.random() * 100), userReacted: Math.random() > 0.5 }]
-      }));
+      const newArtworks: ArtworkItem[] = response.rooms
+        .sort((a, b) => (b.finishedAt || b.createdAt || 0) - (a.finishedAt || a.createdAt || 0))
+        .map((room) => ({
+          id: room.roomId,
+          originalImage: getOriginalImageUrl(room.roomId),
+          aiImage: getAiImageUrl(room.roomId),
+          topic: room.topic || '알 수 없음',
+          playerCount: room.playerCount,
+          createdAt: formatTimeAgo(room.finishedAt || room.createdAt || Date.now()),
+          aiModel: 'Amazon Bedrock',
+          reactions: [{ type: 'like', count: Math.floor(Math.random() * 100), userReacted: Math.random() > 0.5 }]
+        }));
 
       if (reset) {
         setArtworks(newArtworks);

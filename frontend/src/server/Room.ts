@@ -136,9 +136,29 @@ export class Room {
     console.log(`[${this.id}] Uploaded to S3: s3://${S3_BUCKET_NAME}/drawings/${filename}`);
   }
 
-  selectTopic(topic: string) {
+  async selectTopic(topic: string) {
     this.updateState({ state: 'topicSelection', topic });
     this.broadcastGameState();
+    
+    // Update topic in database
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://77q0bmlyb4.execute-api.us-east-1.amazonaws.com/prod';
+      const response = await fetch(`${API_BASE_URL}/rooms/${this.id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'playing', topic }),
+      });
+      
+      if (response.ok) {
+        console.log(`[${this.id}] Room topic updated: ${topic}`);
+      } else {
+        console.error(`[${this.id}] Failed to update room topic: ${response.status}`);
+      }
+    } catch (error) {
+      console.error(`[${this.id}] Failed to update room topic:`, error);
+    }
   }
 
   startCountdown(onComplete: () => void) {
@@ -180,12 +200,12 @@ export class Room {
     }, 1000);
   }
 
-  startGame(docs: Map<string, any>) {
+  async startGame(docs: Map<string, any>) {
     const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
     
     console.log(`[${this.id}] Auto-starting game with topic: ${topic}`);
     
-    this.selectTopic(topic);
+    await this.selectTopic(topic);
  
     // TopicSelection 화면을 3초간 보여준 후 카운트다운 시작
     setTimeout(() => {
