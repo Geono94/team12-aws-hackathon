@@ -7,7 +7,7 @@ interface BrushSizeSelectorProps {
 
 export function BrushSizeSelector({ currentSize, onSizeChange }: BrushSizeSelectorProps) {
   const brushSizes = [
-    { display: 8, stroke: 2 },
+    { display: 8, stroke: 3 },
     { display: 12, stroke: 4 },
     { display: 16, stroke: 8 }
   ];

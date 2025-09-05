@@ -350,13 +350,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     setCurrentStrokeId('');
     setLastSyncTime(0);
   };
-
-  const clearCanvas = () => {
-    if (gameState === 'playing' && strokesArray) {
-      strokesArray.delete(0, strokesArray.length);
-    }
-  };
-
+ 
   if (!connected || !doc) {
     return (
       <div style={{
@@ -545,6 +539,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
         <div style={{
           display: 'flex',
           alignItems: 'center',
+          flexDirection: 'column',
           gap: SPACING.md,
           marginBottom: SPACING.md,
           flexWrap: 'wrap',
@@ -558,20 +553,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
           <BrushSizeSelector
             currentSize={brushSize}
             onSizeChange={setBrushSize}
-          /> 
-          <button
-            onClick={clearCanvas}
-            style={{
-              padding: `${SPACING.xs} ${SPACING.sm}`,
-              backgroundColor: COLORS.primary.main,
-              color: 'white',
-              border: 'none',
-              borderRadius: BORDER_RADIUS.sm,
-              cursor: 'pointer'
-            }}
-          >
-            Clear
-          </button>
+          />
         </div>
       )}
 
