@@ -413,68 +413,6 @@ export default function HomePage({}: HomePageProps) {
               친구들과 함께 그리고 AI가 새로운 스타일로 변환해주는 게임
             </p>
           </div>
-          
-          {/* Feature Icons */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: SPACING.lg,
-            marginTop: SPACING.md,
-            position: 'relative',
-            zIndex: 1
-          }}>
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '4px'
-            }}>
-              <div style={{
-                fontSize: '24px',
-                background: 'rgba(255,107,107,0.1)',
-                padding: '8px',
-                borderRadius: '12px',
-                border: '1px solid rgba(255,107,107,0.2)'
-              }}>
-                👥
-              </div>
-              <span style={{ fontSize: '10px', color: '#999' }}>협업</span>
-            </div>
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '4px'
-            }}>
-              <div style={{
-                fontSize: '24px',
-                background: 'rgba(118,75,162,0.1)',
-                padding: '8px',
-                borderRadius: '12px',
-                border: '1px solid rgba(118,75,162,0.2)'
-              }}>
-                🤖
-              </div>
-              <span style={{ fontSize: '10px', color: '#999' }}>AI 생성</span>
-            </div>
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '4px'
-            }}>
-              <div style={{
-                fontSize: '24px',
-                background: 'rgba(78,205,196,0.1)',
-                padding: '8px',
-                borderRadius: '12px',
-                border: '1px solid rgba(78,205,196,0.2)'
-              }}>
-                🌐
-              </div>
-              <span style={{ fontSize: '10px', color: '#999' }}>커뮤니티</span>
-            </div>
-          </div>
         </div>
 
         {/* Profile Section */}
@@ -608,15 +546,6 @@ export default function HomePage({}: HomePageProps) {
           >
             🎮 게임 시작하기
           </Button>
-        </div>
-
-        {/* Info */}
-        <div style={{
-          marginTop: SPACING.lg,
-          fontSize: '12px',
-          color: '#666666'
-        }}>
-          최대 4명까지 함께 플레이 가능
         </div>
 
         {/* Feed Preview Hint */}
