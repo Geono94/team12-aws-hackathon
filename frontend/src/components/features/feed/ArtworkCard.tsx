@@ -19,28 +19,30 @@ export default function ArtworkCard({ artwork, onReaction, onViewDetail }: Artwo
   };
 
   return (
-    <div style={{
-      background: '#1a1a1a',
-      borderRadius: BORDER_RADIUS.lg,
-      overflow: 'hidden',
-      boxShadow: '0 1px 3px rgba(255,255,255,0.1)',
-      transition: 'transform 0.2s ease-out, box-shadow 0.2s ease-out',
-      cursor: 'pointer'
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = 'translateY(-2px)';
-      e.currentTarget.style.boxShadow = '0 4px 12px rgba(255,255,255,0.15)';
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = 'translateY(0)';
-      e.currentTarget.style.boxShadow = '0 1px 3px rgba(255,255,255,0.1)';
-    }}>
+    <div 
+      style={{
+        background: '#1a1a1a',
+        borderRadius: BORDER_RADIUS.lg,
+        overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(255,255,255,0.1)',
+        transition: 'transform 0.2s ease-out, box-shadow 0.2s ease-out',
+        cursor: 'pointer'
+      }}
+      onClick={() => onViewDetail(artwork.id)}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = '0 4px 12px rgba(255,255,255,0.15)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = '0 1px 3px rgba(255,255,255,0.1)';
+      }}
+    >
       
-      {/* AI Image Only */}
+      {/* AI Image */}
       <div 
         style={{ position: 'relative' }}
         onDoubleClick={handleDoubleClick}
-        onClick={() => onViewDetail(artwork.id)}
       >
         <img
           src={artwork.aiImage}
@@ -52,6 +54,25 @@ export default function ArtworkCard({ artwork, onReaction, onViewDetail }: Artwo
             display: 'block'
           }}
         />
+
+        {/* AI Model Tag - Semi-transparent overlay */}
+        {artwork.aiModel && (
+          <div style={{
+            position: 'absolute',
+            top: SPACING.sm,
+            left: SPACING.sm,
+            background: 'rgba(0,0,0,0.6)',
+            color: 'white',
+            padding: `4px ${SPACING.sm}`,
+            borderRadius: '12px',
+            fontSize: '11px',
+            fontWeight: '500',
+            backdropFilter: 'blur(10px)',
+            pointerEvents: 'none'
+          }}>
+            {artwork.aiModel}
+          </div>
+        )}
 
         {/* Topic Badge */}
         <div style={{
@@ -72,105 +93,101 @@ export default function ArtworkCard({ artwork, onReaction, onViewDetail }: Artwo
       </div>
 
       {/* Content */}
-      <div style={{ padding: SPACING.md }}>
-        {/* Meta Info */}
-        <div style={{ 
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: SPACING.sm
-        }}>
-          <div style={{ 
-            display: 'flex',
-            alignItems: 'center',
-            gap: SPACING.xs,
-            fontSize: '13px',
-            color: '#888888'
-          }}>
-            <span>{artwork.playerCount}명 참여</span>
-            <span>•</span>
-            <span>{artwork.createdAt}</span>
-          </div>
-          
-          {artwork.aiModel && (
-            <span style={{ 
-              fontSize: '11px',
-              color: '#888888',
-              background: '#2a2a2a',
-              padding: '2px 6px',
-              borderRadius: '8px'
-            }}>
-              {artwork.aiModel}
-            </span>
-          )}
-        </div>
-
-        {/* Like Button */}
+      <div style={{ padding: `${SPACING.sm} ${SPACING.md}` }}>
+        {/* Action Buttons and Creation Date */}
         <div style={{ 
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
         }}>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onReaction(artwork.id, 'like');
-            }}
-            style={{
+          <div style={{ 
+            display: 'flex',
+            alignItems: 'center',
+            gap: SPACING.sm
+          }}>
+            {/* Like Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onReaction(artwork.id, 'like');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px',
+                border: 'none',
+                background: 'transparent',
+                color: isLiked ? COLORS.primary.main : '#888888',
+                fontSize: '13px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease-out'
+              }}
+            >
+              <svg 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill={isLiked ? 'currentColor' : 'none'}
+                stroke="currentColor" 
+                strokeWidth="2"
+              >
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+              <span>{likeCount}</span>
+            </button>
+
+            {/* Comment Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetail(artwork.id);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px',
+                border: 'none',
+                background: 'transparent',
+                color: '#888888',
+                fontSize: '13px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'color 0.2s ease-out'
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              <span>12</span>
+            </button>
+
+            {/* View Button */}
+            <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: SPACING.xs,
-              padding: `${SPACING.xs} ${SPACING.sm}`,
-              borderRadius: '20px',
-              border: 'none',
-              background: isLiked ? 'rgba(255, 107, 107, 0.1)' : 'transparent',
-              color: isLiked ? COLORS.primary.main : '#888888',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease-out'
-            }}
-            onMouseEnter={(e) => {
-              if (!isLiked) {
-                e.currentTarget.style.background = 'rgba(255, 107, 107, 0.05)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isLiked) {
-                e.currentTarget.style.background = 'transparent';
-              }
-            }}
-          >
-            <span style={{ 
-              fontSize: '16px',
-              transform: isLiked ? 'scale(1.1)' : 'scale(1)',
-              transition: 'transform 0.2s ease-out'
-            }}>
-              {isLiked ? '❤️' : '🤍'}
-            </span>
-            <span>{likeCount}</span>
-          </button>
-
-          {/* View Detail Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewDetail(artwork.id);
-            }}
-            style={{
-              padding: `${SPACING.xs} ${SPACING.sm}`,
-              borderRadius: '16px',
-              border: 'none',
-              background: '#2a2a2a',
+              gap: '4px',
               color: '#888888',
-              fontSize: '12px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease-out'
-            }}
-          >
-            자세히 보기
-          </button>
+              fontSize: '13px',
+              fontWeight: '500'
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <span>156</span>
+            </div>
+          </div>
+
+          {/* Creation Date */}
+          <div style={{ 
+            fontSize: '11px',
+            color: '#666666'
+          }}>
+            {artwork.createdAt}
+          </div>
         </div>
       </div>
     </div>

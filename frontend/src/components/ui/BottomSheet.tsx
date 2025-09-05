@@ -72,7 +72,8 @@ export default function BottomSheet({ isOpen, onClose, title, children }: Bottom
         {/* Header */}
         <div style={{
           padding: `0 ${SPACING.md} ${SPACING.md} ${SPACING.md}`,
-          borderBottom: '1px solid #333333'
+          borderBottom: '1px solid #333333',
+          position: 'relative'
         }}>
           <h3 style={{
             fontSize: '18px',
@@ -83,6 +84,39 @@ export default function BottomSheet({ isOpen, onClose, title, children }: Bottom
           }}>
             {title}
           </h3>
+          
+          {/* X Button */}
+          <button
+            onClick={onClose}
+            style={{
+              position: 'absolute',
+              right: SPACING.md,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              border: 'none',
+              background: '#2a2a2a',
+              color: '#888888',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              transition: 'all 0.2s ease-out'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#333333';
+              e.currentTarget.style.color = '#FFFFFF';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#2a2a2a';
+              e.currentTarget.style.color = '#888888';
+            }}
+          >
+            ✕
+          </button>
         </div>
         
         {/* Content */}
