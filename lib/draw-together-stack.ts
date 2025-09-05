@@ -136,8 +136,7 @@ export class DrawTogetherStack extends cdk.Stack {
     const targetBucket = s3.Bucket.fromBucketName(this, 'TargetBucket', 'drawtogether-test-1757052413482');
     targetBucket.addEventNotification(
       s3.EventType.OBJECT_CREATED,
-      new s3n.LambdaDestination(s3TriggerHandler),
-      { prefix: 'original/' }
+      new s3n.LambdaDestination(s3TriggerHandler)
     );
 
     // GitHub token secret
