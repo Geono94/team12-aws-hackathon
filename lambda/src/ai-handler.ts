@@ -1,154 +1,75 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { AnalysisResponse } from "./ai/bedrock-image-processor";
 import { GameAIProcessor } from './ai/game-ai-processor';
-import { DynamoDB } from 'aws-sdk';
+import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 
-const dynamodb = new DynamoDB.DocumentClient();
+const dynamodb = new DynamoDBClient({});
 
-const updateRoomWithAIResult = async (roomId: string, aiResult: any) => {
-    try {
-        await dynamodb.update({
-            TableName: 'DrawTogether-Rooms',
-            Key: { roomId },
-            UpdateExpression: 'SET aiGeneratedImageUrl = :aiUrl, aiAnalysisResult = :analysis, aiProcessedAt = :timestamp, aiStatus = :status',
-            ExpressionAttributeValues: {
-                ':aiUrl': aiResult.outputUrl || '',
-                ':analysis': aiResult.analysis || {},
-                ':timestamp': Date.now(),
-                ':status': 'completed'
-            }
-        }).promise();
-        
-        console.log(`AI 결과 DynamoDB 업데이트 완료: ${roomId}`);
-    } catch (error) {
-        console.error('DynamoDB 업데이트 실패:', error);
-    }
-};
-
-const CORS_HEADERS = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
-};
-
-const createResponse = (statusCode: number, body: any): APIGatewayProxyResult => ({
-    statusCode,
-    headers: CORS_HEADERS,
-    body: JSON.stringify(body)
-});
-
-export const handler = async (event: any): Promise<APIGatewayProxyResult | void> => {
+export const handler = async (event: any): Promise<any> => {
     console.log('🎮 AI 처리 시작...');
     console.log('Event:', JSON.stringify(event, null, 2));
     
-    // Handle S3 trigger events
+    // Only handle S3 trigger events
     if (event.source === 's3-trigger') {
         console.log('S3 트리거 이벤트 처리 중...');
         try {
             const processor = new GameAIProcessor();
+            
+            // 분석 결과를 즉시 DB에 저장하는 콜백 함수
+            const saveAnalysisCallback = async (analysis: any) => {
+                console.log('📊 분석 완료, 즉시 DB 저장 중...');
+                await dynamodb.send(new UpdateItemCommand({
+                    TableName: 'DrawTogether-Rooms',
+                    Key: { roomId: { S: event.roomId } },
+                    UpdateExpression: 'SET analysis = :analysis, analysisTimestamp = :timestamp, aiStatus = :status',
+                    ExpressionAttributeValues: {
+                        ':analysis': { S: JSON.stringify(analysis) },
+                        ':timestamp': { S: new Date().toISOString() },
+                        ':status': { S: 'analyzing' }
+                    }
+                }));
+                console.log(`분석 결과 즉시 저장 완료: ${event.roomId}`);
+            };
             
             const result = await processor.processS3Image({
                 bucketName: event.bucketName,
                 inputKey: event.inputKey,
                 outputKey: event.outputKey,
                 roomId: event.roomId
-            });
-            
+            }, saveAnalysisCallback);
+
             console.log('S3 이미지 처리 완료:', result);
-            
-            // Update room with AI results
-            await updateRoomWithAIResult(event.roomId, result);
-            
-            return;
+
+            // 최종 완료 상태 업데이트
+            if (result.outputUrl) {
+                await dynamodb.send(new UpdateItemCommand({
+                    TableName: 'DrawTogether-Rooms',
+                    Key: { roomId: { S: event.roomId } },
+                    UpdateExpression: 'SET aiGeneratedImageUrl = :aiUrl, aiStatus = :status, completedAt = :completedAt',
+                    ExpressionAttributeValues: {
+                        ':aiUrl': { S: result.outputUrl },
+                        ':status': { S: 'completed' },
+                        ':completedAt': { S: new Date().toISOString() }
+                    }
+                }));
+                console.log(`AI 이미지 생성 완료 저장: ${event.roomId}`);
+            }
+
+            return result;
         } catch (error) {
             console.error('S3 이미지 처리 실패:', error);
-            return;
+            // 실패 상태 저장
+            await dynamodb.send(new UpdateItemCommand({
+                TableName: 'DrawTogether-Rooms',
+                Key: { roomId: { S: event.roomId } },
+                UpdateExpression: 'SET aiStatus = :status, errorMessage = :error',
+                ExpressionAttributeValues: {
+                    ':status': { S: 'failed' },
+                    ':error': { S: error instanceof Error ? error.message : String(error) }
+                }
+            }));
+            throw error;
         }
     }
     
-    // Handle API Gateway events
-    if (event.httpMethod === 'OPTIONS') {
-        return createResponse(200, { message: 'CORS preflight' });
-    }
-
-    console.log('API Gateway 이벤트 처리 중...');
-    console.log('Lambda 환경 정보:', {
-        region: process.env.AWS_REGION,
-        memorySize: process.env.AWS_LAMBDA_FUNCTION_MEMORY_SIZE,
-        timeout: process.env.AWS_LAMBDA_FUNCTION_TIMEOUT
-    });
-
-    try {
-        // Validate request
-        if (!event.body) {
-            throw new Error('Request body is required');
-        }
-
-        const { imageBase64 } = JSON.parse(event.body);
-        
-        if (!imageBase64) {
-            throw new Error('imageBase64 is required');
-        }
-
-        // 환경 변수 확인
-        if (!process.env.GEMINI_API_KEY) {
-            console.warn('⚠️ GEMINI_API_KEY 환경 변수가 설정되지 않음');
-        }
-
-        // Process with AI (타임아웃 처리)
-        const gameAI = new GameAIProcessor();
-        
-        // 25초 타임아웃 설정 (API Gateway 30초 제한 고려)
-        const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Lambda timeout - 처리 시간 초과')), 25000);
-        });
-
-        const result = await Promise.race([
-            gameAI.processGameRound(imageBase64),
-            timeoutPromise
-        ]) as any;
-
-        console.log('AI 처리 완료:', {
-            hasAnalysis: !!result.analysis,
-            hasGeneratedImages: result.generatedImages?.length || 0,
-            timestamp: result.timestamp
-        });
-
-        return createResponse(200, {
-            success: true,
-            data: {
-                analysis: result.analysis,
-                generatedImages: result.generatedImages?.map((img: any) => ({
-                    type: img.type,
-                    success: img.success,
-                    url: img.url // base64 대신 S3 URL만 반환
-                })),
-                timestamp: result.timestamp
-            }
-        });
-
-    } catch (error) {
-        console.error('Lambda 처리 오류:', error);
-        
-        // 구체적인 에러 타입별 처리
-        let errorMessage = (error as Error).message;
-        let statusCode = 500;
-
-        if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
-            statusCode = 429;
-            errorMessage = 'AI 서비스 할당량 초과 - 잠시 후 다시 시도해주세요';
-        } else if (errorMessage.includes('timeout')) {
-            statusCode = 408;
-            errorMessage = '처리 시간 초과 - 이미지가 너무 크거나 복잡합니다';
-        } else if (errorMessage.includes('not found')) {
-            statusCode = 404;
-            errorMessage = 'AI 모델을 찾을 수 없습니다';
-        }
-        
-        return createResponse(statusCode, {
-            success: false,
-            error: errorMessage,
-            timestamp: new Date().toISOString()
-        });
-    }
+    throw new Error('Unsupported event type');
 };

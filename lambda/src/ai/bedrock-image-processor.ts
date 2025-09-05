@@ -1,16 +1,6 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 import { readFileSync } from 'fs';
 
-export interface ImageAnalysisResult {
-    subject: string;
-    style: string;
-    quality: number;
-    description: string;
-    score?: number;
-    mvp?: string;
-    worst?: string;
-}
-
 export interface AnalysisResponse {
     evaluation: {
         subject: string;

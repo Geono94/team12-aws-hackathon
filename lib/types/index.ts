@@ -9,7 +9,6 @@ export interface EnvironmentConfig {
 export interface ResourceNames {
   readonly imagesBucket: string;
   readonly roomsTable: string;
-  readonly gamesTable: string;
   readonly restApi: string;
   readonly webSocketApi: string;
   readonly amplifyApp: string;
@@ -30,7 +29,6 @@ export const DEFAULT_LAMBDA_CONFIG: LambdaConfig = {
 export const RESOURCE_NAMES: ResourceNames = {
   imagesBucket: 'DrawTogether-Images',
   roomsTable: 'DrawTogether-Rooms',
-  gamesTable: 'DrawTogether-Games',
   restApi: 'DrawTogether-API',
   webSocketApi: 'DrawTogether-WebSocket',
   amplifyApp: 'DrawTogether',

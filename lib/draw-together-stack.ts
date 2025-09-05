@@ -16,12 +16,14 @@ export class DrawTogetherStack extends cdk.Stack {
 
     // S3 Bucket for images
     const imagesBucket = new s3.Bucket(this, 'ImagesBucket', {
-      bucketName: `drawtogether-images-${this.account}-${Date.now()}`,
+      bucketName: `drawtogether-images-${this.account}`,
       cors: [{
         allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.PUT, s3.HttpMethods.POST],
         allowedOrigins: ['*'],
         allowedHeaders: ['*'],
       }],
+      publicReadAccess: true,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ACLS,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
@@ -39,13 +41,6 @@ export class DrawTogetherStack extends cdk.Stack {
       indexName: 'StatusIndex',
       partitionKey: { name: 'status', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'playerCount', type: dynamodb.AttributeType.NUMBER },
-    });
-
-    const gamesTable = new dynamodb.Table(this, 'GamesTable', {
-      tableName: 'DrawTogether-Games',
-      partitionKey: { name: 'gameId', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     // Room Handler Lambda
@@ -69,7 +64,7 @@ export class DrawTogetherStack extends cdk.Stack {
 
     // Grant permissions
     roomsTable.grantReadWriteData(roomHandler);
-    gamesTable.grantReadWriteData(aiHandler);
+    roomsTable.grantReadWriteData(aiHandler);
     imagesBucket.grantReadWrite(aiHandler);
 
     // Additional S3 permissions for test buckets
