@@ -1,6 +1,9 @@
 import {BedrockImageProcessor, ImageAnalysisResult, AnalysisResponse} from './bedrock-image-processor';
 import {GeminiImageProcessor} from './gemini-image-processor';
 import {writeFileSync, unlinkSync, existsSync} from 'fs';
+import AWS from 'aws-sdk';
+
+const s3 = new AWS.S3();
 
 export interface GameResult {
     analysis: ImageAnalysisResult;
@@ -11,9 +14,16 @@ export interface GameResult {
 }
 
 export interface GeneratedImage {
-    type: 'nova' | 'gemini';
+    type: 'gemini';
     data: string | null; // base64 데이터
     success: boolean;
+}
+
+export interface S3ImageProcessRequest {
+    bucketName: string;
+    inputKey: string;
+    outputKey: string;
+    roomId: string;
 }
 
 export class GameAIProcessor {
@@ -23,6 +33,45 @@ export class GameAIProcessor {
     constructor() {
         this.bedrock = new BedrockImageProcessor();
         this.gemini = new GeminiImageProcessor();
+    }
+
+    async processS3Image(request: S3ImageProcessRequest): Promise<void> {
+        console.log('S3 이미지 처리 시작 (Gemini만 사용):', request);
+        
+        try {
+            // Download image from S3
+            const s3Object = await s3.getObject({
+                Bucket: request.bucketName,
+                Key: request.inputKey
+            }).promise();
+
+            if (!s3Object.Body) {
+                throw new Error('S3 객체가 비어있습니다');
+            }
+
+            const imageBuffer = s3Object.Body as Buffer;
+            const imageBase64 = imageBuffer.toString('base64');
+
+            // Process with Gemini only
+            const generatedImage = await this.gemini.generateImage(imageBase64);
+            
+            if (generatedImage.success && generatedImage.data) {
+                const outputKey = request.outputKey.replace('_ai.', '_ai.');
+                
+                await s3.putObject({
+                    Bucket: request.bucketName,
+                    Key: outputKey,
+                    Body: Buffer.from(generatedImage.data, 'base64'),
+                    ContentType: 'image/png'
+                }).promise();
+                
+                console.log(`AI 처리된 이미지 업로드 완료: ${outputKey}`);
+            }
+
+        } catch (error) {
+            console.error('S3 이미지 처리 실패:', error);
+            throw error;
+        }
     }
 
     async analyzeDrawing(imageBase64: string): Promise<ImageAnalysisResult> {

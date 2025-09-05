@@ -14,18 +14,42 @@ const createResponse = (statusCode: number, body: any): APIGatewayProxyResult =>
     body: JSON.stringify(body)
 });
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    console.log('🎮 게임 라운드 AI 처리 시작...');
+export const handler = async (event: any): Promise<APIGatewayProxyResult | void> => {
+    console.log('🎮 AI 처리 시작...');
+    console.log('Event:', JSON.stringify(event, null, 2));
+    
+    // Handle S3 trigger events
+    if (event.source === 's3-trigger') {
+        console.log('S3 트리거 이벤트 처리 중...');
+        try {
+            const processor = new GameAIProcessor();
+            
+            const result = await processor.processS3Image({
+                bucketName: event.bucketName,
+                inputKey: event.inputKey,
+                outputKey: event.outputKey,
+                roomId: event.roomId
+            });
+            
+            console.log('S3 이미지 처리 완료:', result);
+            return;
+        } catch (error) {
+            console.error('S3 이미지 처리 실패:', error);
+            return;
+        }
+    }
+    
+    // Handle API Gateway events
+    if (event.httpMethod === 'OPTIONS') {
+        return createResponse(200, { message: 'CORS preflight' });
+    }
+
+    console.log('API Gateway 이벤트 처리 중...');
     console.log('Lambda 환경 정보:', {
         region: process.env.AWS_REGION,
         memorySize: process.env.AWS_LAMBDA_FUNCTION_MEMORY_SIZE,
         timeout: process.env.AWS_LAMBDA_FUNCTION_TIMEOUT
     });
-    
-    // Handle CORS preflight
-    if (event.httpMethod === 'OPTIONS') {
-        return createResponse(200, { message: 'CORS preflight' });
-    }
 
     try {
         // Validate request
