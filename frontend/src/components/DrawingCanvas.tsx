@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
+import { useYjs } from '@/contexts/YjsContext';
+import { useGameRoom } from '@/hooks/useGameRoom';
 
 interface DrawingCanvasProps {
   roomId: string;
@@ -27,64 +27,28 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
   const [timeLeft, setTimeLeft] = useState<number>(30);
   const [playerCount, setPlayerCount] = useState<number>(1);
   
-  // Yjs setup
-  const [doc] = useState(() => new Y.Doc());
-  const [yjsProvider, setYjsProvider] = useState<WebsocketProvider | null>(null);
-  const [gameWs, setGameWs] = useState<WebSocket | null>(null);
+  const { doc } = useYjs();
+  const { gameState: currentGameState, startGame: handleStartGame } = useGameRoom(roomId);
   
-  const drawingArray = doc.getArray('drawing');
+  const drawingArray = doc?.getArray('drawing');
 
-  // Initialize WebSocket connections
+  // Sync local state with Yjs game state
   useEffect(() => {
-    // Yjs WebSocket for drawing sync
-    const provider = new WebsocketProvider('ws://localhost:3000/yjs', roomId, doc);
-    setYjsProvider(provider);
-
-    // Game WebSocket for game logic
-    const gameSocket = new WebSocket('ws://localhost:3000/game');
-    
-    gameSocket.onopen = () => {
-      gameSocket.send(JSON.stringify({
-        action: 'joinGame',
-        gameId: roomId,
-        playerId,
-      }));
-    };
-
-    gameSocket.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      handleGameMessage(message);
-    };
-
-    setGameWs(gameSocket);
-
-    return () => {
-      provider.destroy();
-      gameSocket.close();
-    };
-  }, [roomId, playerId, doc]);
-
-  const handleGameMessage = (message: any) => {
-    switch (message.action) {
-      case 'playerJoined':
-        setPlayerCount(message.playerCount);
-        break;
-      case 'gameStarting':
-        setTopic(message.topic);
-        setGameState('countdown');
-        setCountdown(message.countdown);
+    if (currentGameState) {
+      setGameState(currentGameState.state);
+      setTopic(currentGameState.topic || '');
+      setPlayerCount(currentGameState.players.length);
+      
+      if (currentGameState.state === 'countdown') {
         startCountdown();
-        break;
-      case 'gameStarted':
-        setGameState('playing');
+      } else if (currentGameState.state === 'playing') {
         setTimeLeft(30);
         startGameTimer();
-        break;
-      case 'gameEnded':
-        setGameState('ended');
-        break;
+      }
     }
-  };
+  }, [currentGameState]);
+
+
 
   const startCountdown = () => {
     let count = 3;
@@ -109,11 +73,8 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
   };
 
   const startGame = () => {
-    if (gameWs && gameState === 'waiting') {
-      gameWs.send(JSON.stringify({
-        action: 'startGame',
-        gameId: roomId,
-      }));
+    if (gameState === 'waiting') {
+      handleStartGame();
     }
   };
 
@@ -140,24 +101,11 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
     }
   };
 
-  // Drawing logic (same as before)
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawingArray.forEach((point: DrawPoint) => {
-      ctx.fillStyle = point.color;
-      ctx.beginPath();
-      ctx.arc(point.x, point.y, point.size, 0, 2 * Math.PI);
-      ctx.fill();
-    });
-  }, [drawingArray]);
 
   useEffect(() => {
+    if (!drawingArray) return;
+    
     const observer = () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -166,6 +114,7 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
       if (!ctx) return;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
       drawingArray.forEach((point: DrawPoint) => {
         ctx.fillStyle = point.color;
         ctx.beginPath();
@@ -201,7 +150,9 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
       size: brushSize,
     };
 
-    drawingArray.push([point]);
+    if (drawingArray) {
+      drawingArray.push([point]);
+    }
   };
 
   const stopDrawing = () => {
@@ -209,7 +160,7 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
   };
 
   const clearCanvas = () => {
-    if (gameState === 'playing') {
+    if (gameState === 'playing' && drawingArray) {
       drawingArray.delete(0, drawingArray.length);
     }
   };
@@ -223,7 +174,7 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
           {gameState === 'waiting' && (
             <button
               onClick={startGame}
-              disabled={playerCount < 2}
+              disabled={playerCount < 1}
               className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-400"
             >
               Start Game
