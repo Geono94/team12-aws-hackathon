@@ -14,7 +14,7 @@ export default function ImageCompareSlider({
   aiImage, 
   alt = 'Artwork comparison' 
 }: ImageCompareSliderProps) {
-  const [sliderPosition, setSliderPosition] = useState(0); // 0 = full AI, 100 = full original
+  const [sliderPosition, setSliderPosition] = useState(95); // Start with 95% original visible
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -80,7 +80,7 @@ export default function ImageCompareSlider({
       style={{
         position: 'relative',
         width: '100%',
-        aspectRatio: '1',
+        height: '100%',
         overflow: 'hidden',
         cursor: isDragging ? 'grabbing' : 'grab',
         userSelect: 'none'
@@ -201,8 +201,8 @@ export default function ImageCompareSlider({
         </div>
       )}
 
-      {/* Instruction Text (only when not dragging) */}
-      {!isDragging && sliderPosition === 0 && (
+      {/* Instruction Text (only when not dragging and at initial position) */}
+      {!isDragging && sliderPosition === 95 && (
         <div
           style={{
             position: 'absolute',
@@ -220,7 +220,7 @@ export default function ImageCompareSlider({
             animation: 'fadeInOut 3s ease-in-out infinite'
           }}
         >
-          드래그해서 원본 보기 →
+          ← 드래그해서 AI 변환 보기
         </div>
       )}
 
