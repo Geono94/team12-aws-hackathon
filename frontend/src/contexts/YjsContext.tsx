@@ -34,8 +34,8 @@ export function YjsProvider({ children, roomId = 'default' }: YjsProviderProps) 
   const wsUrl = typeof window !== 'undefined' 
     ? (process.env.NODE_ENV === 'production' 
         ? `wss://${window.location.host}` 
-        : 'ws://localhost:3001')
-    : 'ws://localhost:3001';
+        : `ws://${window.location.host}:3001`)
+    : `ws://172.30.3.57:3001`;
     
   const { doc, provider, connected, sendMessage, onMessage, messages, roomId: currentRoomId } = useWebSocket(roomId, wsUrl);
 
