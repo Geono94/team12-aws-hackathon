@@ -134,11 +134,26 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = GAME_CONFIG.CANVAS_SIZE.width;
-    canvas.height = GAME_CONFIG.CANVAS_SIZE.height;
+    // Responsive canvas sizing
+    const container = canvas.parentElement;
+    if (container) {
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      
+      canvas.width = containerWidth;
+      canvas.height = containerHeight;
+      
+      // Scale for high DPI displays
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = containerWidth * dpr;
+      canvas.height = containerHeight * dpr;
+      canvas.style.width = containerWidth + 'px';
+      canvas.style.height = containerHeight + 'px';
+      ctx.scale(dpr, dpr);
+    }
 
     ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, canvas.width / (window.devicePixelRatio || 1), canvas.height / (window.devicePixelRatio || 1));
   }, []);
 
   // Handle drawing with Yjs document
@@ -169,21 +184,41 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   }, [drawingArray]);
  
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const getEventPos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / (window.devicePixelRatio || 1) / rect.width;
+    const scaleY = canvas.height / (window.devicePixelRatio || 1) / rect.height;
+    
+    let clientX, clientY;
+    if ('touches' in e) {
+      clientX = e.touches[0]?.clientX || e.changedTouches[0]?.clientX || 0;
+      clientY = e.touches[0]?.clientY || e.changedTouches[0]?.clientY || 0;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+    
+    return { x, y };
+  };
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (gameState !== 'playing') return;
+    e.preventDefault();
     setIsDrawing(true);
     draw(e);
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing || gameState !== 'playing') return;
+    e.preventDefault();
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = getEventPos(e);
 
     const point: DrawPoint = {
       x,
@@ -197,7 +232,8 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     }
   };
 
-  const stopDrawing = () => {
+  const stopDrawing = (e?: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (e) e.preventDefault();
     setIsDrawing(false);
   };
 
@@ -467,6 +503,10 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
           onMouseMove={draw}
           onMouseUp={stopDrawing}
           onMouseLeave={stopDrawing}
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={stopDrawing}
+          onTouchCancel={stopDrawing}
           style={{
             border: `2px solid ${COLORS.neutral.border}`,
             borderRadius: BORDER_RADIUS.sm,
