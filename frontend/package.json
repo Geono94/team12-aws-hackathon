@@ -3,12 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
-    "start": "next start",
-    "lint": "eslint",
-    "ws-server": "node server.js",
-    "dev-full": "concurrently \"npm run ws-server\" \"npm run dev\""
+    "dev": "node server.js",
+    "build": "next build",
+    "start": "NODE_ENV=production node server.js",
+    "lint": "eslint"
   },
   "dependencies": {
     "@types/ws": "^8.18.1",

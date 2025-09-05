@@ -6,10 +6,8 @@ import DrawingCanvas from '@/components/DrawingCanvas';
 export default function Home() {
   const [roomId, setRoomId] = useState('');
   const [joined, setJoined] = useState(false);
+  const [playerId] = useState(() => Math.random().toString(36).substring(2, 10));
   
-  // WebSocket URL - will be replaced with actual AWS API Gateway WebSocket URL
-  const wsUrl = 'ws://localhost:1234';
-
   const joinRoom = () => {
     if (roomId.trim()) {
       setJoined(true);
@@ -82,7 +80,7 @@ export default function Home() {
           </button>
         </div>
         
-        <DrawingCanvas roomId={roomId} wsUrl={wsUrl} />
+        <DrawingCanvas roomId={roomId} playerId={playerId} />
       </div>
     </main>
   );

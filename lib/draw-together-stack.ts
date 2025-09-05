@@ -4,8 +4,6 @@ import * as apigateway from 'aws-cdk-lib/aws-apigatewayv2';
 import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
-import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
-import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
@@ -33,47 +31,21 @@ export class DrawTogetherStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    const connectionsTable = new dynamodb.Table(this, 'ConnectionsTable', {
-      tableName: 'DrawTogether-Connections',
-      partitionKey: { name: 'connectionId', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
-
-    // Lambda Functions
-    const connectHandler = new lambda.Function(this, 'ConnectHandler', {
+    // Next.js Lambda Function
+    const nextjsHandler = new lambda.Function(this, 'NextjsHandler', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'connect.handler',
-      code: lambda.Code.fromAsset('lambda'),
+      handler: 'server.handler',
+      code: lambda.Code.fromAsset('frontend/.next/standalone'),
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 1024,
       environment: {
-        CONNECTIONS_TABLE: connectionsTable.tableName,
-        GAMES_TABLE: gamesTable.tableName,
-        AWS_REGION: 'us-east-1',
-      },
-    });
-
-    const disconnectHandler = new lambda.Function(this, 'DisconnectHandler', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'disconnect.handler',
-      code: lambda.Code.fromAsset('lambda'),
-      environment: {
-        CONNECTIONS_TABLE: connectionsTable.tableName,
-        GAMES_TABLE: gamesTable.tableName,
-      },
-    });
-
-    const messageHandler = new lambda.Function(this, 'MessageHandler', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'message.handler',
-      code: lambda.Code.fromAsset('lambda'),
-      environment: {
-        CONNECTIONS_TABLE: connectionsTable.tableName,
         GAMES_TABLE: gamesTable.tableName,
         IMAGES_BUCKET: imagesBucket.bucketName,
         AWS_REGION: 'us-east-1',
       },
     });
 
+    // AI Handler Lambda
     const aiHandler = new lambda.Function(this, 'AIHandler', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'ai.handler',
@@ -86,16 +58,10 @@ export class DrawTogetherStack extends cdk.Stack {
     });
 
     // Grant permissions
-    connectionsTable.grantReadWriteData(connectHandler);
-    connectionsTable.grantReadWriteData(disconnectHandler);
-    connectionsTable.grantReadWriteData(messageHandler);
-    
-    gamesTable.grantReadWriteData(connectHandler);
-    gamesTable.grantReadWriteData(disconnectHandler);
-    gamesTable.grantReadWriteData(messageHandler);
+    gamesTable.grantReadWriteData(nextjsHandler);
     gamesTable.grantReadWriteData(aiHandler);
     
-    imagesBucket.grantReadWrite(messageHandler);
+    imagesBucket.grantReadWrite(nextjsHandler);
     imagesBucket.grantReadWrite(aiHandler);
 
     // Bedrock permissions
@@ -108,32 +74,9 @@ export class DrawTogetherStack extends cdk.Stack {
       resources: ['*'],
     }));
 
-    // WebSocket API
-    const webSocketApi = new apigateway.WebSocketApi(this, 'WebSocketApi', {
-      apiName: 'DrawTogether-WebSocket',
-      connectRouteOptions: {
-        integration: new integrations.WebSocketLambdaIntegration('ConnectIntegration', connectHandler),
-      },
-      disconnectRouteOptions: {
-        integration: new integrations.WebSocketLambdaIntegration('DisconnectIntegration', disconnectHandler),
-      },
-      defaultRouteOptions: {
-        integration: new integrations.WebSocketLambdaIntegration('MessageIntegration', messageHandler),
-      },
-    });
-
-    const webSocketStage = new apigateway.WebSocketStage(this, 'WebSocketStage', {
-      webSocketApi,
-      stageName: 'prod',
-      autoDeploy: true,
-    });
-
-    // Grant API Gateway permissions to Lambda
-    webSocketApi.grantManageConnections(messageHandler);
-
-    // REST API for AI processing
-    const restApi = new apigateway.HttpApi(this, 'RestApi', {
-      apiName: 'DrawTogether-REST',
+    // HTTP API
+    const httpApi = new apigateway.HttpApi(this, 'HttpApi', {
+      apiName: 'DrawTogether-API',
       corsPreflight: {
         allowOrigins: ['*'],
         allowMethods: [apigateway.CorsHttpMethod.ANY],
@@ -141,48 +84,29 @@ export class DrawTogetherStack extends cdk.Stack {
       },
     });
 
-    restApi.addRoutes({
-      path: '/ai/generate',
+    // Next.js routes
+    httpApi.addRoutes({
+      path: '/{proxy+}',
+      methods: [apigateway.HttpMethod.ANY],
+      integration: new integrations.HttpLambdaIntegration('NextjsIntegration', nextjsHandler),
+    });
+
+    // AI endpoint
+    httpApi.addRoutes({
+      path: '/api/ai/generate',
       methods: [apigateway.HttpMethod.POST],
       integration: new integrations.HttpLambdaIntegration('AIIntegration', aiHandler),
     });
 
-    // Static website bucket
-    const websiteBucket = new s3.Bucket(this, 'WebsiteBucket', {
-      bucketName: `drawtogether-website-${this.account}`,
-      websiteIndexDocument: 'index.html',
-      publicReadAccess: true,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-    });
-
-    // CloudFront distribution
-    const distribution = new cloudfront.Distribution(this, 'Distribution', {
-      defaultBehavior: {
-        origin: new origins.S3Origin(websiteBucket),
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-      },
-    });
-
     // Outputs
-    new cdk.CfnOutput(this, 'WebSocketURL', {
-      value: webSocketStage.url,
-      description: 'WebSocket API URL',
-    });
-
-    new cdk.CfnOutput(this, 'RestApiURL', {
-      value: restApi.url!,
-      description: 'REST API URL',
+    new cdk.CfnOutput(this, 'ApiURL', {
+      value: httpApi.url!,
+      description: 'API Gateway URL',
     });
 
     new cdk.CfnOutput(this, 'ImagesBucketName', {
       value: imagesBucket.bucketName,
       description: 'S3 Images Bucket Name',
-    });
-
-    new cdk.CfnOutput(this, 'WebsiteURL', {
-      value: `https://${distribution.domainName}`,
-      description: 'CloudFront Website URL',
     });
   }
 }
