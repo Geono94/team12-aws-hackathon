@@ -163,37 +163,61 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
 
       <div style={{ padding: SPACING.md }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          {/* Header with Home Button */}
+          {/* Header */}
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: SPACING.md,
-            marginBottom: SPACING.lg
+            position: 'sticky',
+            top: 0,
+            background: '#000000',
+            borderBottom: '1px solid #333333',
+            padding: `${SPACING.xs} 0`,
+            zIndex: 100,
+            margin: `-${SPACING.md} 0 ${SPACING.lg} 0`
           }}>
-            <button
-              onClick={() => router.push('/')}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '24px',
-                cursor: 'pointer',
-                color: '#FFFFFF',
-                padding: SPACING.xs
-              }}
-            >
-              ←
-            </button>
-            <h1 style={{ 
-              fontSize: '28px',
-              fontWeight: 'bold',
-              color: '#FFFFFF',
-              margin: 0,
-              flex: 1,
-              textAlign: 'center'
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
             }}>
-              작품 피드
-            </h1>
-            <div style={{ width: '32px' }}></div> {/* Spacer for centering */}
+              {/* Back Button */}
+              <button
+                onClick={() => router.push('/')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#FFFFFF',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="15,18 9,12 15,6"/>
+                </svg>
+              </button>
+
+              {/* Title */}
+              <div style={{ 
+                position: 'absolute',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                textAlign: 'center'
+              }}>
+                <span style={{
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: '#FFFFFF',
+                  margin: 0,
+                  lineHeight: '1.2',
+                  display: 'block'
+                }}>
+                  작품 피드
+                </span>
+              </div>
+
+              {/* Spacer for layout balance */}
+              <div style={{ width: '20px' }}></div>
+            </div>
           </div>
 
           {/* Sticky Filters */}
@@ -205,16 +229,6 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
 
           {/* Content Area */}
           <div ref={contentRef}>
-            {/* Results Count */}
-            <p style={{ 
-              fontSize: '16px',
-              color: '#888888',
-              marginBottom: SPACING.md,
-              textAlign: 'center'
-            }}>
-              {filteredArtworks.length}개의 작품
-            </p>
-            
             {/* Artworks Grid */}
             <div style={{ 
               display: 'grid',

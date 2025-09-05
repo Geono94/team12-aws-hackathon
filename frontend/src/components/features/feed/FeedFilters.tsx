@@ -43,16 +43,16 @@ export default function FeedFiltersComponent({
   };
 
   const buttonStyle = {
-    padding: `8px ${SPACING.sm}`,
+    padding: `6px ${SPACING.sm}`,
     borderRadius: '12px',
     border: '1px solid #333333',
     background: '#1a1a1a',
     color: '#FFFFFF',
-    fontSize: '14px',
+    fontSize: '13px',
     fontWeight: '500',
     cursor: 'pointer',
     outline: 'none',
-    height: '36px',
+    height: '32px',
     transition: 'all 0.2s ease-out',
     display: 'flex',
     alignItems: 'center',
@@ -70,8 +70,8 @@ export default function FeedFiltersComponent({
         background: 'rgba(0, 0, 0, 0.95)',
         borderBottom: '1px solid #333333',
         backdropFilter: 'blur(20px)',
-        margin: `-${SPACING.md} -${SPACING.md} ${SPACING.lg} -${SPACING.md}`,
-        padding: SPACING.md
+        margin: `-${SPACING.md} -${SPACING.md} ${SPACING.md} -${SPACING.md}`,
+        padding: `${SPACING.sm} ${SPACING.md}`
       }}>
         <div style={{ 
           maxWidth: '1200px',
@@ -114,7 +114,7 @@ export default function FeedFiltersComponent({
             onClick={() => setShowSortSheet(true)}
             style={{
               ...buttonStyle,
-              minWidth: '100px',
+              minWidth: '70px',
               flexShrink: 0
             }}
             onMouseEnter={(e) => {
