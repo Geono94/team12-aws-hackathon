@@ -1,4 +1,5 @@
 import WebSocket from 'ws';
+import { GAME_CONFIG } from './config';
 
 export class Room {
   public id: string;
@@ -57,5 +58,70 @@ export class Room {
 
   isEmpty(): boolean {
     return this.players.size === 0;
+  }
+
+  startCountdown(onComplete: () => void) {
+    if (this.countdownTimer) return;
+    
+    let countdown = GAME_CONFIG.COUNTDOWN_TIME;
+    this.updateState({ countdown });
+    this.broadcast({ type: 'gameStateUpdate', data: { countdown } });
+    
+    this.countdownTimer = setInterval(() => {
+      countdown--;
+      this.updateState({ countdown });
+      this.broadcast({ type: 'gameStateUpdate', data: { countdown } });
+      
+      if (countdown <= 0) {
+        clearInterval(this.countdownTimer!);
+        this.countdownTimer = undefined;
+        onComplete();
+      }
+    }, 1000);
+  }
+
+  startGameTimer(onComplete: () => void) {
+    let timeLeft = GAME_CONFIG.GAME_TIME;
+    
+    this.updateState({ state: 'playing', timeLeft });
+    this.broadcast({ type: 'gameStateUpdate', data: { state: 'playing', timeLeft } });
+    
+    this.gameTimer = setInterval(() => {
+      timeLeft--;
+      this.updateState({ timeLeft });
+      this.broadcast({ type: 'gameStateUpdate', data: { timeLeft } });
+      
+      if (timeLeft <= 0) {
+        clearInterval(this.gameTimer!);
+        this.gameTimer = undefined;
+        onComplete();
+      }
+    }, 1000);
+  }
+
+  startGame(docs: Map<string, any>) {
+    this.startCountdown(() => {
+      this.startGameTimer(() => {
+        this.endGame(docs);
+      });
+    });
+  }
+
+  private endGame(docs: Map<string, any>) {
+    console.log(`[${this.id}] Game ended, reading drawing data...`);
+    
+    const doc = docs.get(this.id);
+    if (doc) {
+      const drawingArray = doc.getArray('drawing');
+      const drawingData = drawingArray.toArray();
+      console.log(`[${this.id}] Drawing data:`, drawingData);
+    }
+    
+    this.updateState({ state: 'ended' });
+    
+    this.broadcast({ 
+      type: 'gameEnded', 
+      data: { redirectTo: `/results?roomId=${this.id}` } 
+    });
   }
 }

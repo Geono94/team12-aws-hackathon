@@ -1,10 +1,10 @@
 import WebSocket from 'ws';
-import { ClientToServerMessage, ServerToClientMessage } from '../types/messages';
+import { ClientToServerMessage } from '../types/messages';
 import { Room } from './Room';
+import { GAME_CONFIG } from './config';
 
 export class GameManager {
   private rooms = new Map<string, Room>();
-  private wss: WebSocket.Server;
   private docs: Map<string, any>;
 
   constructor(wss: WebSocket.Server) {
@@ -53,15 +53,15 @@ export class GameManager {
     const room = this.getRoom(roomId);
     room.addPlayer(playerId);
     
-    console.log(`[${roomId}] Player joined: ${playerId}, total: ${room.players.size}/4`);
+    console.log(`[${roomId}] Player joined: ${playerId}, total: ${room.players.size}/${GAME_CONFIG.MAX_PLAYERS_PER_ROOM}`);
     
     room.broadcast({ 
       type: 'playerUpdate', 
       data: { playerId, playerCount: room.players.size } 
     });
     
-    // Auto-start when 4 players join
-    if (room.players.size === 4) {
+    // Auto-start when max players join
+    if (room.players.size === GAME_CONFIG.MAX_PLAYERS_PER_ROOM) {
       if (room.state.state !== 'countdown' && room.state.state !== 'playing') {
         this.startAutoGame(roomId);
       }
@@ -74,11 +74,15 @@ export class GameManager {
     
     console.log(`[${roomId}] Auto-starting game with topic: ${topic}`);
     
-    this.handleGameStateChange(roomId, {
+    const room = this.getRoom(roomId);
+
+    room.updateState({
       topic,
       state: 'countdown',
       startTime: Date.now()
     });
+    
+    room.startGame(this.docs);
   }
 
   private handleGameStateChange(roomId: string, data: any) {
@@ -88,72 +92,10 @@ export class GameManager {
     console.log(`[${roomId}] GameState updated:`, room.state);
     
     if (room.state.state === 'countdown') {
-      this.startCountdown(roomId);
+      room.startGame(this.docs);
     }
     
     room.broadcast({ type: 'gameStateUpdate', data: room.state });
-  }
-
-  private startCountdown(roomId: string) {
-    const room = this.getRoom(roomId);
-    if (room.countdownTimer) return;
-    
-    let countdown = 3;
-    room.updateState({ countdown });
-    room.broadcast({ type: 'gameStateUpdate', data: { countdown } });
-    
-    room.countdownTimer = setInterval(() => {
-      countdown--;
-      room.updateState({ countdown });
-      room.broadcast({ type: 'gameStateUpdate', data: { countdown } });
-      
-      if (countdown <= 0) {
-        clearInterval(room.countdownTimer!);
-        room.countdownTimer = undefined;
-        this.startGameTimer(roomId);
-      }
-    }, 1000);
-  }
-
-  private startGameTimer(roomId: string) {
-    const room = this.getRoom(roomId);
-    let timeLeft = 30;
-    
-    room.updateState({ state: 'playing', timeLeft });
-    room.broadcast({ type: 'gameStateUpdate', data: { state: 'playing', timeLeft } });
-    
-    room.gameTimer = setInterval(() => {
-      timeLeft--;
-      room.updateState({ timeLeft });
-      room.broadcast({ type: 'gameStateUpdate', data: { timeLeft } });
-      
-      if (timeLeft <= 0) {
-        clearInterval(room.gameTimer!);
-        room.gameTimer = undefined;
-        this.endGame(roomId);
-      }
-    }, 1000);
-  }
-
-  private endGame(roomId: string) {
-    const room = this.getRoom(roomId);
-    console.log(`[${roomId}] Game ended, reading drawing data...`);
-    
-    // Read Yjs drawing data
-    const doc = this.docs.get(roomId);
-    if (doc) {
-      const drawingArray = doc.getArray('drawing');
-      const drawingData = drawingArray.toArray();
-      console.log(`[${roomId}] Drawing data:`, drawingData);
-    }
-    
-    room.updateState({ state: 'ended' });
-    
-    // Send redirect message to clients
-    room.broadcast({ 
-      type: 'gameEnded', 
-      data: { redirectTo: `/results?roomId=${roomId}` } 
-    });
   }
 
   cleanup(roomId: string, playerId?: string | null) {

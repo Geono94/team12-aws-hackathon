@@ -15,10 +15,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body>
-        <YjsProvider roomId='DEFAULT'>
-          {children}
-        </YjsProvider>
+      <body> 
+        {children} 
       </body>
     </html>
   );

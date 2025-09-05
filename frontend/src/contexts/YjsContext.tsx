@@ -36,8 +36,6 @@ export function YjsProvider({ children, roomId = 'default' }: YjsProviderProps) 
         ? `wss://${window.location.host}` 
         : 'ws://localhost:3001')
     : 'ws://localhost:3001';
-  
-  console.log('YjsProvider connecting to:', wsUrl, 'room:', roomId);
     
   const { doc, provider, connected, sendMessage, onMessage, messages, roomId: currentRoomId } = useWebSocket(roomId, wsUrl);
 
