@@ -122,7 +122,7 @@ export default function HomePage() {
   useEffect(() => {
     return onMessage((message) => {
       if (message.type === 'roomJoined') {
-        window.location.href = '/drawing/' + message.data.roomId;
+        router.push('/drawing/' + message.data.roomId);
       }
     })
   }, [])

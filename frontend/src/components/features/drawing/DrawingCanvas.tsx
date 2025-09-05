@@ -3,7 +3,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useYjs } from '@/contexts/YjsContext';
-import { useGameRoom } from '@/hooks/useGameRoom';
 import { COLORS, SPACING, BORDER_RADIUS } from '@/constants/design';
 import { GAME_CONFIG } from '@/constants/game';
 import { GameStateType, ServerToClientMessage } from '@/types';
@@ -127,9 +126,9 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
           setPlayerCount(message.data.playerCount);
         }
       } else if (message.type === 'gameEnded') {
-        window.location.href = message.data.redirectTo;
+        router.push(message.data.redirectTo);
       } else if (message.type === 'kickRoom') {
-        window.location.href = '/';
+        router.push('/')
       }
     });
   }, [onMessage]);
