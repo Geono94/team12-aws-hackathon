@@ -53,7 +53,7 @@ export class GameManager {
     const room = this.getRoom(roomId);
     room.addPlayer(playerId);
     
-    console.log(`[${roomId}] Player joined: ${playerId}, total: ${room.players.size}/${GAME_CONFIG.MAX_PLAYERS_PER_ROOM}`);
+    console.log(`[${roomId}] Player joined: ${playerId}, total: ${room.players.size}/${GAME_CONFIG.MAX_PLAYERS}`);
     
     room.broadcast({ 
       type: 'playerUpdate', 
@@ -61,7 +61,7 @@ export class GameManager {
     });
     
     // Auto-start when max players join
-    if (room.players.size === GAME_CONFIG.MAX_PLAYERS_PER_ROOM) {
+    if (room.players.size === GAME_CONFIG.MAX_PLAYERS) {
       if (room.state.state !== 'countdown' && room.state.state !== 'playing') {
         this.startAutoGame(roomId);
       }

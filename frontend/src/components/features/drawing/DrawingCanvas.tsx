@@ -239,9 +239,9 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
             {/* Center Text */}
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: SPACING.xs }}>
-                Players: {playerCount}/4
+                Players: {playerCount}/{GAME_CONFIG.MAX_PLAYERS}
               </div>
-              {playerCount < 4 && (
+              {playerCount < GAME_CONFIG.MAX_PLAYERS && (
                 <div style={{ fontSize: '16px', color: COLORS.neutral.text }}>
                   Waiting for more players...
                 </div>
@@ -298,7 +298,7 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
           </div>
         ) : (
           <div style={{ marginBottom: SPACING.sm }}>
-            <span style={{ fontSize: '18px', fontWeight: '600' }}>Players: {playerCount}/4</span>
+            <span style={{ fontSize: '18px', fontWeight: '600' }}>Players: {playerCount}/{GAME_CONFIG.MAX_PLAYERS}</span>
           </div>
         )}
         

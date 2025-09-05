@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { COLORS, SPACING } from '@/constants/design';
+import { GAME_CONFIG } from '@/constants/game';
 import { Player } from '@/types/game';
 
 interface MatchingPageProps {
@@ -75,7 +76,7 @@ export default function MatchingPage({
             fontSize: '24px',
             fontWeight: 'bold'
           }}>
-            {players.length}/4 명 참여 중
+            {players.length}/{GAME_CONFIG.MAX_PLAYERS} 명 참여 중
           </p>
         </div>
 
@@ -86,7 +87,7 @@ export default function MatchingPage({
           gap: SPACING.md,
           marginBottom: SPACING.xl
         }}>
-          {Array.from({ length: 4 }).map((_, index) => {
+          {Array.from({ length: GAME_CONFIG.MAX_PLAYERS }).map((_, index) => {
             const player = players[index];
             return (
               <div

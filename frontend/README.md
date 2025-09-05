@@ -45,7 +45,6 @@ src/
 - 각 컴포넌트는 TypeScript 인터페이스로 props 타입 정의
 
 ### 상태 관리
-- `hooks/game/useGameState.ts`: 게임 전체 상태 관리
 - `hooks/websocket/useWebSocket.ts`: 실시간 통신 관리
 
 ### 디자인 시스템
