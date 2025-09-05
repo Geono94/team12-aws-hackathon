@@ -19,8 +19,6 @@ export default function HomePage({   artworks = [] }: HomePageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [feedArtworks, setFeedArtworks] = useState(artworks);
   const [profileImage, setProfileImage] = useState('/characters/character1.svg');
-  const [isMatching, setIsMatching] = useState(false);
-  const [matchingCount, setMatchingCount] = useState(1);
   const [showProfileSelector, setShowProfileSelector] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -62,8 +60,6 @@ export default function HomePage({   artworks = [] }: HomePageProps) {
     if (!player) {
       return;
     }
-    
-    setIsMatching(true);
 
     sendMessage({
       type: 'searchRoom',
@@ -388,58 +384,24 @@ export default function HomePage({   artworks = [] }: HomePageProps) {
 
         {/* Quick Match Section */}
         <div style={{ marginBottom: SPACING.lg, width: '320px' }}>
-          {isMatching ? (
-            <div style={{
-              background: 'rgba(255,255,255,0.05)',
+          <Button 
+            onClick={handleQuickMatch}
+            disabled={!playerName.trim()}
+            style={{
+              width: '100%',
+              fontSize: '18px',
+              padding: '16px',
+              background: playerName.trim() ? COLORS.primary.main : '#666',
+              border: 'none',
               borderRadius: '12px',
-              padding: SPACING.lg,
-              textAlign: 'center',
-              border: '1px solid rgba(255,255,255,0.1)'
-            }}>
-              <div style={{ fontSize: '24px', marginBottom: SPACING.sm }}>
-                🔄
-              </div>
-              <div style={{ color: '#FFFFFF', fontSize: '16px', marginBottom: SPACING.xs }}>
-                매칭 중...
-              </div>
-              <div style={{ color: '#888', fontSize: '14px' }}>
-                {matchingCount}/4명 모이는 중
-              </div>
-              <div style={{
-                background: 'rgba(255,255,255,0.1)',
-                height: '4px',
-                borderRadius: '2px',
-                marginTop: SPACING.sm,
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  background: COLORS.primary.main,
-                  height: '100%',
-                  width: `${(matchingCount / 4) * 100}%`,
-                  transition: 'width 0.3s ease'
-                }} />
-              </div>
-            </div>
-          ) : (
-            <Button 
-              onClick={handleQuickMatch}
-              disabled={!playerName.trim()}
-              style={{
-                width: '100%',
-                fontSize: '18px',
-                padding: '16px',
-                background: playerName.trim() ? COLORS.primary.main : '#666',
-                border: 'none',
-                borderRadius: '12px',
-                color: 'white',
-                fontWeight: 'bold',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                cursor: playerName.trim() ? 'pointer' : 'not-allowed'
-              }}
-            >
-              게임 시작하기
-            </Button>
-          )}
+              color: 'white',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              cursor: playerName.trim() ? 'pointer' : 'not-allowed'
+            }}
+          >
+            게임 시작하기
+          </Button>
         </div>
 
         {/* Info */}
