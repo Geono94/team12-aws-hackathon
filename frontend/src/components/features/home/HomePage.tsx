@@ -11,6 +11,10 @@ interface HomePageProps {
 }
 
 export default function HomePage({ artworks, onStartGame }: HomePageProps) {
+  const handleViewAllFeed = () => {
+    window.location.href = '/feed';
+  };
+
   return (
     <div style={{ 
       padding: SPACING.md,
@@ -36,23 +40,32 @@ export default function HomePage({ artworks, onStartGame }: HomePageProps) {
         </Button>
       </div>
 
-      {/* Recent Artworks Feed */}
+      {/* Recent Artworks Preview */}
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <h2 style={{ 
-          fontSize: '24px',
-          fontWeight: '600',
-          color: COLORS.neutral.text,
-          marginBottom: SPACING.md
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: SPACING.md 
         }}>
-          최근 작품들
-        </h2>
+          <h2 style={{ 
+            fontSize: '24px',
+            fontWeight: '600',
+            color: COLORS.neutral.text
+          }}>
+            최근 작품들
+          </h2>
+          <Button variant="outline" onClick={handleViewAllFeed}>
+            전체 보기
+          </Button>
+        </div>
         
         <div style={{ 
           display: 'grid',
           gap: SPACING.md,
           gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))'
         }}>
-          {artworks.map((artwork) => (
+          {artworks.slice(0, 4).map((artwork) => (
             <Card key={artwork.id} hover>
               <div style={{ display: 'flex', gap: SPACING.sm }}>
                 <img 
