@@ -251,12 +251,14 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
                 }}>
                   {/* Header */}
                   <div style={{ 
-                    textAlign: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: SPACING.md,
                     marginBottom: SPACING.xl
                   }}>
                     <div style={{
-                      fontSize: '48px',
-                      marginBottom: SPACING.sm
+                      fontSize: '48px'
                     }}>
                       🎮
                     </div>
@@ -264,7 +266,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
                       fontSize: '32px',
                       fontWeight: 'bold',
                       color: '#FFFFFF',
-                      marginBottom: SPACING.sm
+                      margin: 0
                     }}>
                       대기실
                     </h1>
