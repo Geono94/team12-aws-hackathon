@@ -1,26 +1,29 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useYjs } from '@/contexts/YjsContext';
 import { useGameRoom } from '@/hooks/useGameRoom';
 import { COLORS, SPACING, BORDER_RADIUS } from '@/constants/design';
 import { GAME_CONFIG } from '@/constants/game';
-import { DrawPoint, GameStateType, AIGenerateRequest, ServerToClientMessage, ClientToServerMessage } from '@/types';
+import { DrawPoint, GameStateType, ServerToClientMessage } from '@/types';
 import TopicSelection from './TopicSelection';
 import { PlayerInfo } from '@/server/Room';
 import Button from '@/components/ui/Button';
 import { getPlayer } from '@/lib/player';
+import { leaveRoom } from '@/lib/api/room';
 
 interface DrawingCanvasProps {
   roomId: string;
 }
 
 export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
+  const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentColor, setCurrentColor] = useState<string>(COLORS.primary.main);
   const [brushSize, setBrushSize] = useState(5);
-  const [gameState, setGameState] = useState<GameStateType>('playing');
+  const [gameState, setGameState] = useState<GameStateType>('waiting');
   const [topic, setTopic] = useState<string>('고양이');
   const [countdown, setCountdown] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number>(30);
@@ -29,6 +32,22 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
 
   const { doc, connected, onMessage, sendMessage } = useYjs();
   const { clearDrawing } = useGameRoom(roomId);
+
+  // 나가기 함수
+  const handleLeaveRoom = async () => {
+    try {
+      // 백엔드에 룸 나가기 API 호출
+      const playerId = getPlayer().id;
+      await leaveRoom(roomId, playerId);
+      
+      // 홈페이지로 이동
+      router.push('/');
+    } catch (error) {
+      console.error('Error leaving room:', error);
+      // 에러가 발생해도 홈페이지로 이동
+      router.push('/');
+    }
+  };
 
   useEffect(() => {
     const player = getPlayer();
@@ -66,6 +85,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
 
       if (message.type === 'gameStateUpdate') {
         const data = message.data;
+        console.log('gameStateUpdate received:', data); // 디버그 로그 추가
         if (data.state) setGameState(data.state);
         if (data.topic) {
           console.log('topic', data.topic)
@@ -73,8 +93,32 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
         }
         if (data.countdown !== undefined) setCountdown(data.countdown);
         if (data.timeLeft !== undefined) setTimeLeft(data.timeLeft);
+        
+        // gameStateUpdate에 players 정보가 있으면 업데이트
+        if (data.players && Array.isArray(data.players)) {
+          console.log('Players from gameStateUpdate:', data.players);
+          setPlayers(data.players);
+          setPlayerCount(data.players.length);
+        }
       } else if (message.type === 'playerUpdate') {
-        setPlayerCount(message.data.playerCount);
+        const newPlayerCount = message.data.playerCount;
+        setPlayerCount(newPlayerCount);
+        
+        // playerCount에 따라 플레이어 목록 생성
+        const updatedPlayers: PlayerInfo[] = Array.from({ length: newPlayerCount }, (_, index) => ({
+          id: `player_${index + 1}`,
+          name: `플레이어 ${index + 1}`,
+          joinedAt: Date.now().toString()
+        }));
+        setPlayers(updatedPlayers);
+      } else if (message.type === 'roomJoined') {
+        console.log('roomJoined received:', message.data);
+        if (message.data.players && Array.isArray(message.data.players)) {
+          setPlayers(message.data.players);
+          setPlayerCount(message.data.players.length);
+        } else {
+          setPlayerCount(message.data.playerCount);
+        }
       } else if (message.type === 'gameEnded') {
         window.location.href = message.data.redirectTo;
       } else if (message.type === 'kickRoom') {
@@ -313,7 +357,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
                     }}>
                       <Button 
                         variant="outline" 
-                        onClick={console.log}
+                        onClick={handleLeaveRoom}
                         style={{
                           borderRadius: '12px',
                           padding: '12px 24px',
@@ -329,65 +373,6 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
                   </div>
                 </div>
 
-            {/* Center Text */}
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: SPACING.xs }}>
-                Players: {playerCount}/{GAME_CONFIG.MAX_PLAYERS}
-              </div>
-              {playerCount < GAME_CONFIG.MAX_PLAYERS && (
-                <div style={{ fontSize: '16px', color: COLORS.neutral.text }}>
-                  Waiting for more players...
-                </div>
-              )}
-            </div>
-
-            {/* Right Characters */}
-            <div style={{ display: 'flex', gap: SPACING.sm }}>
-              {[3, 4].map((charNumber) => {
-                const isActive = charNumber <= playerCount;
-                return (
-                  <div
-                    key={charNumber}
-                    style={{
-                      position: 'relative',
-                      opacity: isActive ? 1 : 0.3,
-                      transition: 'opacity 0.3s ease'
-                    }}
-                  >
-                    <img
-                      src={`https://drawtogether-test-1757052413482.s3.us-east-1.amazonaws.com/images/char_${charNumber}.png`}
-                      alt={`Character ${charNumber}`}
-                      style={{
-                        width: '90px',
-                        height: '90px',
-                        border: isActive ? `3px solid ${COLORS.primary.main}` : '3px solid transparent',
-                        objectFit: 'contain',
-                        transition: 'border 0.3s ease'
-                      }}
-                    />
-                    {isActive && (
-                      <div style={{
-                        position: 'absolute',
-                        bottom: '-5px',
-                        right: '-5px',
-                        width: '20px',
-                        height: '20px',
-                        backgroundColor: COLORS.primary.accent,
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '12px',
-                        color: 'white',
-                        fontWeight: 'bold'
-                      }}>
-                        ✓
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
           </div>
         ) : gameState === 'topicSelection' ? (
           <TopicSelection

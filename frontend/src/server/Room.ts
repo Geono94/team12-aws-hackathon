@@ -188,7 +188,13 @@ export class Room {
   }
 
   public broadcastGameState() {
-    this.broadcast({ type: 'gameStateUpdate', data: this.state }); 
+    this.broadcast({ 
+      type: 'gameStateUpdate', 
+      data: {
+        ...this.state,
+        players: this.getPlayersArray()
+      }
+    }); 
   }
 
   private async endGame(docs: Map<string, any>) {
