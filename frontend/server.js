@@ -6,7 +6,7 @@ const Y = require('yjs');
 const { setupWSConnection } = require('y-websocket/bin/utils');
 
 const dev = process.env.NODE_ENV !== 'production';
-const hostname = 'localhost';
+const hostname = '0.0.0.0';
 const port = process.env.PORT || 3000;
 
 const app = next({ dev, hostname, port });

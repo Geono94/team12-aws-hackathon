@@ -1,0 +1,210 @@
+{
+  "version": "32.0.0",
+  "artifacts": {
+    "DrawTogetherStack.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "DrawTogetherStack.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "DrawTogetherStack": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://339712932307/us-east-1",
+      "properties": {
+        "templateFile": "DrawTogetherStack.template.json",
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::339712932307:role/cdk-hnb659fds-deploy-role-339712932307-us-east-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::339712932307:role/cdk-hnb659fds-cfn-exec-role-339712932307-us-east-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-339712932307-us-east-1/8dabc5aa9f82f6aa98824800890f4089981184b7dec5b25dc1701a4df9c649ae.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "DrawTogetherStack.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::339712932307:role/cdk-hnb659fds-lookup-role-339712932307-us-east-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "DrawTogetherStack.assets"
+      ],
+      "metadata": {
+        "/DrawTogetherStack/ImagesBucket/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ImagesBucket1E86AFB2"
+          }
+        ],
+        "/DrawTogetherStack/ImagesBucket/Policy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ImagesBucketPolicy5ED12B6C"
+          }
+        ],
+        "/DrawTogetherStack/ImagesBucket/AutoDeleteObjectsCustomResource/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ImagesBucketAutoDeleteObjectsCustomResource1A749259"
+          }
+        ],
+        "/DrawTogetherStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+          }
+        ],
+        "/DrawTogetherStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F"
+          }
+        ],
+        "/DrawTogetherStack/GamesTable": [
+          {
+            "type": "aws:cdk:hasPhysicalName",
+            "data": {
+              "Ref": "GamesTableB32AB610"
+            }
+          }
+        ],
+        "/DrawTogetherStack/GamesTable/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GamesTableB32AB610"
+          }
+        ],
+        "/DrawTogetherStack/AIHandler/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AIHandlerServiceRoleBE6AA9D7"
+          }
+        ],
+        "/DrawTogetherStack/AIHandler/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AIHandlerServiceRoleDefaultPolicy16378EA4"
+          }
+        ],
+        "/DrawTogetherStack/AIHandler/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AIHandler5D68B6F1"
+          }
+        ],
+        "/DrawTogetherStack/RestApi/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RestApi0C43BF4B"
+          }
+        ],
+        "/DrawTogetherStack/RestApi/Deployment/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RestApiDeployment180EC50303d9c1cba800499cb63dced62b26312f"
+          }
+        ],
+        "/DrawTogetherStack/RestApi/DeploymentStage.prod/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RestApiDeploymentStageprod3855DE66"
+          }
+        ],
+        "/DrawTogetherStack/RestApi/Endpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RestApiEndpoint0551178A"
+          }
+        ],
+        "/DrawTogetherStack/RestApi/Default/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RestApiOPTIONS6AA64D2D"
+          }
+        ],
+        "/DrawTogetherStack/RestApi/Default/ai/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RestApiaiABF7C912"
+          }
+        ],
+        "/DrawTogetherStack/RestApi/Default/ai/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RestApiaiOPTIONS9E8CCAAB"
+          }
+        ],
+        "/DrawTogetherStack/RestApi/Default/ai/generate/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RestApiaigenerate3434C73B"
+          }
+        ],
+        "/DrawTogetherStack/RestApi/Default/ai/generate/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RestApiaigenerateOPTIONSCDD4B6F0"
+          }
+        ],
+        "/DrawTogetherStack/RestApi/Default/ai/generate/POST/ApiPermission.DrawTogetherStackRestApiAFE6B831.POST..ai.generate": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RestApiaigeneratePOSTApiPermissionDrawTogetherStackRestApiAFE6B831POSTaigenerate2BBBFF2D"
+          }
+        ],
+        "/DrawTogetherStack/RestApi/Default/ai/generate/POST/ApiPermission.Test.DrawTogetherStackRestApiAFE6B831.POST..ai.generate": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RestApiaigeneratePOSTApiPermissionTestDrawTogetherStackRestApiAFE6B831POSTaigenerate74CA3287"
+          }
+        ],
+        "/DrawTogetherStack/RestApi/Default/ai/generate/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RestApiaigeneratePOST7B5A5A6B"
+          }
+        ],
+        "/DrawTogetherStack/RestApiURL": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "RestApiURL"
+          }
+        ],
+        "/DrawTogetherStack/ImagesBucketName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ImagesBucketName"
+          }
+        ],
+        "/DrawTogetherStack/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/DrawTogetherStack/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/DrawTogetherStack/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "DrawTogetherStack"
+    },
+    "Tree": {
+      "type": "cdk:tree",
+      "properties": {
+        "file": "tree.json"
+      }
+    }
+  }
+}

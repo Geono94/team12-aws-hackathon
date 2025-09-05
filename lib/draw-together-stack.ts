@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as apigateway from 'aws-cdk-lib/aws-apigatewayv2';
-import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -31,20 +30,6 @@ export class DrawTogetherStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // Next.js Lambda Function
-    const nextjsHandler = new lambda.Function(this, 'NextjsHandler', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'server.handler',
-      code: lambda.Code.fromAsset('frontend/.next/standalone'),
-      timeout: cdk.Duration.seconds(30),
-      memorySize: 1024,
-      environment: {
-        GAMES_TABLE: gamesTable.tableName,
-        IMAGES_BUCKET: imagesBucket.bucketName,
-        AWS_REGION: 'us-east-1',
-      },
-    });
-
     // AI Handler Lambda
     const aiHandler = new lambda.Function(this, 'AIHandler', {
       runtime: lambda.Runtime.NODEJS_18_X,
@@ -58,10 +43,7 @@ export class DrawTogetherStack extends cdk.Stack {
     });
 
     // Grant permissions
-    gamesTable.grantReadWriteData(nextjsHandler);
     gamesTable.grantReadWriteData(aiHandler);
-    
-    imagesBucket.grantReadWrite(nextjsHandler);
     imagesBucket.grantReadWrite(aiHandler);
 
     // Bedrock permissions
@@ -74,34 +56,25 @@ export class DrawTogetherStack extends cdk.Stack {
       resources: ['*'],
     }));
 
-    // HTTP API
-    const httpApi = new apigateway.HttpApi(this, 'HttpApi', {
-      apiName: 'DrawTogether-API',
-      corsPreflight: {
-        allowOrigins: ['*'],
-        allowMethods: [apigateway.CorsHttpMethod.ANY],
+    // REST API
+    const restApi = new apigateway.RestApi(this, 'RestApi', {
+      restApiName: 'DrawTogether-API',
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+        allowMethods: apigateway.Cors.ALL_METHODS,
         allowHeaders: ['*'],
       },
     });
 
-    // Next.js routes
-    httpApi.addRoutes({
-      path: '/{proxy+}',
-      methods: [apigateway.HttpMethod.ANY],
-      integration: new integrations.HttpLambdaIntegration('NextjsIntegration', nextjsHandler),
-    });
-
     // AI endpoint
-    httpApi.addRoutes({
-      path: '/api/ai/generate',
-      methods: [apigateway.HttpMethod.POST],
-      integration: new integrations.HttpLambdaIntegration('AIIntegration', aiHandler),
-    });
+    const aiResource = restApi.root.addResource('ai');
+    const generateResource = aiResource.addResource('generate');
+    generateResource.addMethod('POST', new apigateway.LambdaIntegration(aiHandler));
 
     // Outputs
-    new cdk.CfnOutput(this, 'ApiURL', {
-      value: httpApi.url!,
-      description: 'API Gateway URL',
+    new cdk.CfnOutput(this, 'RestApiURL', {
+      value: restApi.url,
+      description: 'REST API URL',
     });
 
     new cdk.CfnOutput(this, 'ImagesBucketName', {
