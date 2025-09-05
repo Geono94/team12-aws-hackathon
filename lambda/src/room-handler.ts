@@ -124,13 +124,13 @@ async function findAvailableRoom(): Promise<Room | null> {
   const command = new QueryCommand({
     TableName: ROOMS_TABLE,
     IndexName: 'StatusIndex',
-    KeyConditionExpression: '#status = :status',
-    FilterExpression: 'playerCount < maxPlayers',
+    KeyConditionExpression: '#status = :status AND playerCount < :maxPlayers',
     ExpressionAttributeNames: {
       '#status': 'status',
     },
     ExpressionAttributeValues: {
       ':status': 'waiting',
+      ':maxPlayers': 4,
     },
     ScanIndexForward: true,
     Limit: 1,

@@ -12,7 +12,7 @@ export class DrawTogetherStack extends cdk.Stack {
 
     // S3 Bucket for images
     const imagesBucket = new s3.Bucket(this, 'ImagesBucket', {
-      bucketName: `drawtogether-images-${this.account}`,
+      bucketName: `drawtogether-images-${this.account}-${Date.now()}`,
       cors: [{
         allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.PUT, s3.HttpMethods.POST],
         allowedOrigins: ['*'],
@@ -47,8 +47,8 @@ export class DrawTogetherStack extends cdk.Stack {
     // Room Handler Lambda
     const roomHandler = new lambda.Function(this, 'RoomHandler', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'src/room-handler.handler',
-      code: lambda.Code.fromAsset('lambda'),
+      handler: 'room-handler.handler',
+      code: lambda.Code.fromAsset('lambda/dist'),
       timeout: cdk.Duration.seconds(30),
       environment: {
         ROOMS_TABLE: roomsTable.tableName,

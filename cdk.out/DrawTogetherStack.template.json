@@ -3,7 +3,7 @@
   "ImagesBucket1E86AFB2": {
    "Type": "AWS::S3::Bucket",
    "Properties": {
-    "BucketName": "drawtogether-images-339712932307",
+    "BucketName": "drawtogether-images-339712932307-1757057469094",
     "CorsConfiguration": {
      "CorsRules": [
       {
@@ -346,7 +346,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339712932307-us-east-1",
-     "S3Key": "790b65993e73cdf2db1e2ae3d5af1dcefe8be3c61758ae4c98f99f86ae795c73.zip"
+     "S3Key": "e71fc96a4f7a3167baf69942ed5b7db0f4948a7cc3dbdc19677bb8734afb3ba5.zip"
     },
     "Environment": {
      "Variables": {
@@ -355,7 +355,7 @@
       }
      }
     },
-    "Handler": "src/room-handler.handler",
+    "Handler": "room-handler.handler",
     "Role": {
      "Fn::GetAtt": [
       "RoomHandlerServiceRole1ABC2E17",
@@ -371,7 +371,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "DrawTogetherStack/RoomHandler/Resource",
-    "aws:asset:path": "asset.790b65993e73cdf2db1e2ae3d5af1dcefe8be3c61758ae4c98f99f86ae795c73",
+    "aws:asset:path": "asset.e71fc96a4f7a3167baf69942ed5b7db0f4948a7cc3dbdc19677bb8734afb3ba5",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -507,7 +507,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-339712932307-us-east-1",
-     "S3Key": "790b65993e73cdf2db1e2ae3d5af1dcefe8be3c61758ae4c98f99f86ae795c73.zip"
+     "S3Key": "6b255718d237d345cf791a47990cf0fd80b53b0cf64acc3fae87bbb1753231f1.zip"
     },
     "Environment": {
      "Variables": {
@@ -535,7 +535,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "DrawTogetherStack/AIHandler/Resource",
-    "aws:asset:path": "asset.790b65993e73cdf2db1e2ae3d5af1dcefe8be3c61758ae4c98f99f86ae795c73",
+    "aws:asset:path": "asset.6b255718d237d345cf791a47990cf0fd80b53b0cf64acc3fae87bbb1753231f1",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -1223,7 +1223,7 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/22PQW/CMAyFfwv34EHZYVdg4jYNld2R23jM0CRVnYCqKP99atoJNu30PvvFz3EBxfIZFjO8ybzWl3nDFcSDx/qi8CbHKCuIm1BfyKvtp51olL1ruO7v7akeiw0KJaV7i8bpCuIHVg0NbzMk1aCpNELcBVt7dnawHnlPnWERdjYpRgOxdON81vvqkZKS1RFFyAusB1HY8gk93bCHWJL4dct5esJXahvXG7L5rIfq4PGU94xQkrjQ1TSco97Ifzk9mBP9uFNy5pTUNoh35j/zj7Xv3JU1dTk9/3vYyvb0K/k9+Db4pKzTBGd5uhYFLF9gMTsL87wL1rMhKEf9BsBP2IrQAQAA"
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/22PT2/CMAzFPwv34PFnB67AtNs0VHZHbuMx0yap6gRURfnuU9NOsGmn97Nf/ByvYLV8hsUMbzKvdD1vuIR49FjVCm9yirKGuAtVTV7tP+1Eoxxcw1V/b0/1WOxQKCndWzROlxA/sGxoeJshqQZNqRHia7CVZ2cH65EP1BkWYWeTYjQQCzfOZ72vHikpWZ9QhLzAdhCFLZ/R0w17iAWJ37acpyd8obZxvSGbz3qojh7Pec8IBYkLXUXDOeqN/JfTgznRjzslZ05J7YN4Z/4z/1iHzl1ZU5fT87+HrWzPv5Lfg2+DT8o6TXCRp+tyA6sFbGYXYZ53wXo2BMWo3wIEP8nQAQAA"
    },
    "Metadata": {
     "aws:cdk:path": "DrawTogetherStack/CDKMetadata/Default"
