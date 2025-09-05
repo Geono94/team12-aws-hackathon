@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useResults } from '@/hooks/useResults';
 
 export default function ResultsPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const roomId = searchParams.get('roomId');
   
   const { originalImage, aiImage, isLoading, loadingMessage } = useResults(roomId);
@@ -14,12 +15,8 @@ export default function ResultsPage() {
   const [topic] = useState('자유 주제');
   const [activeTab, setActiveTab] = useState<'original' | 'ai'>('original');
 
-  const onPlayAgain = () => {
-    window.location.href = '/';
-  };
-
   const onGoHome = () => {
-    window.location.href = '/';
+    router.push('/');
   };
 
   return (
@@ -245,35 +242,6 @@ export default function ResultsPage() {
           maxWidth: '400px',
           marginTop: '32px'
         }}>
-          <button
-            onClick={onPlayAgain}
-            style={{
-              padding: '16px 32px',
-              border: '2px solid #FF6B6B',
-              borderRadius: '16px',
-              fontSize: '18px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              background: 'linear-gradient(135deg, #FF6B6B, #4ECDC4)',
-              color: 'white',
-              boxShadow: '0 4px 12px rgba(255, 107, 107, 0.3)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 16px rgba(255, 107, 107, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 107, 107, 0.3)';
-            }}
-          >
-            🔄 다시 하기
-          </button>
           <button
             onClick={onGoHome}
             style={{
