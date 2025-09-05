@@ -13,14 +13,13 @@
     "resolveJsonModule": true,
     "sourceMap": false,
     "declaration": false,
-    "types": ["node", "@types/aws-lambda"]
+    "types": ["node", "@types/aws-lambda", "jest"]
   },
   "include": [
     "src/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "**/*.test.ts"
+    "dist"
   ]
 }
