@@ -12,6 +12,13 @@ import { PlayerInfo } from '@/server/Room';
 import Button from '@/components/ui/Button';
 import { getPlayer } from '@/lib/player';
 import { leaveRoom } from '@/lib/api/room';
+import { getStroke } from 'perfect-freehand';
+
+interface StrokeData {
+  color: string;
+  size: number;
+  pathData: string;
+}
 
 interface DrawingCanvasProps {
   roomId: string;
@@ -20,9 +27,12 @@ interface DrawingCanvasProps {
 export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const previewRef = useRef<SVGSVGElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentColor, setCurrentColor] = useState<string>(COLORS.primary.main);
   const [brushSize, setBrushSize] = useState(5);
+  const [currentStroke, setCurrentStroke] = useState<number[][]>([]);
   const [gameState, setGameState] = useState<GameStateType>('waiting');
   const [topic, setTopic] = useState<string>('고양이');
   const [countdown, setCountdown] = useState<number>(0);
@@ -33,39 +43,32 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   const { doc, connected, onMessage, sendMessage } = useYjs();
   const { clearDrawing } = useGameRoom(roomId);
 
-  // 나가기 함수
   const handleLeaveRoom = async () => {
     try {
-      // 백엔드에 룸 나가기 API 호출
       const playerId = getPlayer().id;
       await leaveRoom(roomId, playerId);
-      
-      // 홈페이지로 이동
       router.push('/');
     } catch (error) {
       console.error('Error leaving room:', error);
-      // 에러가 발생해도 홈페이지로 이동
       router.push('/');
     }
   };
 
   useEffect(() => {
     const player = getPlayer();
-    if (!player) {
-      return;
-    }
+    if (!player) return;
 
     sendMessage({
       type: 'joinRoom',
       data: {
         roomId,
-        playerId : player.id,
+        playerId: player.id,
         playerName: player.name,
       }
     })
   }, [])
 
-  const drawingArray = doc?.getArray('drawing');
+  const strokesArray = doc?.getArray<StrokeData>('strokes');
 
   const colors = [
     COLORS.primary.main,
@@ -78,25 +81,18 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     '#2D3748'
   ];
 
-  // Sync local state with server messages
   useEffect(() => {
     return onMessage((message: ServerToClientMessage) => {
       console.log('Received message:', message);
 
       if (message.type === 'gameStateUpdate') {
         const data = message.data;
-        console.log('gameStateUpdate received:', data); // 디버그 로그 추가
         if (data.state) setGameState(data.state);
-        if (data.topic) {
-          console.log('topic', data.topic)
-          setTopic(data.topic);
-        }
+        if (data.topic) setTopic(data.topic);
         if (data.countdown !== undefined) setCountdown(data.countdown);
         if (data.timeLeft !== undefined) setTimeLeft(data.timeLeft);
         
-        // gameStateUpdate에 players 정보가 있으면 업데이트
         if (data.players && Array.isArray(data.players)) {
-          console.log('Players from gameStateUpdate:', data.players);
           setPlayers(data.players);
           setPlayerCount(data.players.length);
         }
@@ -104,7 +100,6 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
         const newPlayerCount = message.data.playerCount;
         setPlayerCount(newPlayerCount);
         
-        // playerCount에 따라 플레이어 목록 생성
         const updatedPlayers: PlayerInfo[] = Array.from({ length: newPlayerCount }, (_, index) => ({
           id: `player_${index + 1}`,
           name: `플레이어 ${index + 1}`,
@@ -112,7 +107,6 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
         }));
         setPlayers(updatedPlayers);
       } else if (message.type === 'roomJoined') {
-        console.log('roomJoined received:', message.data);
         if (message.data.players && Array.isArray(message.data.players)) {
           setPlayers(message.data.players);
           setPlayerCount(message.data.players.length);
@@ -126,7 +120,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
       }
     });
   }, [onMessage]);
- 
+
   const resizeCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -134,82 +128,71 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Get actual display size
     const displayWidth = GAME_CONFIG.CANVAS_SIZE.width;
     const displayHeight = GAME_CONFIG.CANVAS_SIZE.height;
-    
-    // Scale for high DPI displays
     const dpr = window.devicePixelRatio || 1;
     
-    // Set canvas size
     canvas.width = displayWidth * dpr;
     canvas.height = displayHeight * dpr;
     canvas.style.width = displayWidth + 'px';
     canvas.style.height = displayHeight + 'px';
     
-    // Scale context
     ctx.scale(dpr, dpr);
-    
-    // Fill background
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, displayWidth, displayHeight);
-    
-    // Redraw existing points
-    if (drawingArray) {
-      drawingArray.forEach((point: DrawPoint) => {
-        ctx.fillStyle = point.color;
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, point.size, 0, 2 * Math.PI);
-        ctx.fill();
-      });
-    }
   };
 
   useEffect(() => {
     resizeCanvas();
     
-    // Listen for window resize
     const handleResize = () => {
       setTimeout(resizeCanvas, 100);
     };
     
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [drawingArray]);
+  }, [strokesArray]);
 
-  // Handle drawing with Yjs document
   useEffect(() => {
-    if (!drawingArray) return;
+    if (!strokesArray || !svgRef.current) return;
 
     const observer = () => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
+      const svg = svgRef.current;
+      if (!svg) return;
 
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      drawingArray.forEach((point: DrawPoint) => {
-        ctx.fillStyle = point.color;
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, point.size, 0, 2 * Math.PI);
-        ctx.fill();
+      svg.innerHTML = '';
+      
+      strokesArray.forEach((strokeData: StrokeData) => {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', strokeData.pathData);
+        path.setAttribute('fill', strokeData.color);
+        svg.appendChild(path);
       });
     };
 
-    drawingArray.observe(observer);
-    return () => drawingArray.unobserve(observer);
-  }, [drawingArray]);
- 
+    strokesArray.observe(observer);
+    return () => strokesArray.unobserve(observer);
+  }, [strokesArray]);
 
-  const getEventPos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
+  const getSvgPathFromStroke = (stroke: number[][]) => {
+    if (!stroke.length) return '';
+    
+    const d = stroke.reduce(
+      (acc, [x0, y0], i, arr) => {
+        const [x1, y1] = arr[(i + 1) % arr.length];
+        acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
+        return acc;
+      },
+      ['M', ...stroke[0], 'Q']
+    );
+    
+    d.push('Z');
+    return d.join(' ');
+  };
 
-    const rect = canvas.getBoundingClientRect();
+  const getEventPos = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const rect = container.getBoundingClientRect();
     
     let clientX, clientY;
     if ('touches' in e) {
@@ -220,46 +203,85 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
       clientY = e.clientY;
     }
     
-    // Simple coordinate mapping
     const x = (clientX - rect.left) * (GAME_CONFIG.CANVAS_SIZE.width / rect.width);
     const y = (clientY - rect.top) * (GAME_CONFIG.CANVAS_SIZE.height / rect.height);
     
-    return { x, y };
+    return [x, y, Date.now()];
   };
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+  const startDrawing = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (gameState !== 'playing') return;
     e.preventDefault();
     setIsDrawing(true);
-    draw(e);
+    
+    const point = getEventPos(e);
+    setCurrentStroke([point]);
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+  const draw = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (!isDrawing || gameState !== 'playing') return;
     e.preventDefault();
 
-    const { x, y } = getEventPos(e);
-
-    const point: DrawPoint = {
-      x,
-      y,
-      color: currentColor,
-      size: brushSize,
-    };
-
-    if (drawingArray) {
-      drawingArray.push([point]);
+    const point = getEventPos(e);
+    const newStroke = [...currentStroke, point];
+    setCurrentStroke(newStroke);
+    
+    // Real-time preview
+    if (previewRef.current && newStroke.length > 1) {
+      const stroke = getStroke(newStroke, {
+        size: brushSize * 2,
+        thinning: 0.5,
+        smoothing: 0.5,
+        streamline: 0.5,
+      });
+      
+      const pathData = getSvgPathFromStroke(stroke);
+      
+      previewRef.current.innerHTML = '';
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', pathData);
+      path.setAttribute('fill', currentColor);
+      path.setAttribute('opacity', '0.8');
+      previewRef.current.appendChild(path);
     }
   };
 
-  const stopDrawing = (e?: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+  const stopDrawing = (e?: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (e) e.preventDefault();
+    if (!isDrawing || currentStroke.length === 0) return;
+    
     setIsDrawing(false);
+    
+    const stroke = getStroke(currentStroke, {
+      size: brushSize * 2,
+      thinning: 0.5,
+      smoothing: 0.5,
+      streamline: 0.5,
+    });
+    
+    const pathData = getSvgPathFromStroke(stroke);
+    
+    const strokeData: StrokeData = {
+      color: currentColor,
+      size: brushSize,
+      pathData
+    };
+    
+    if (strokesArray) {
+      strokesArray.push([strokeData]);
+    }
+    
+    // Clear preview
+    if (previewRef.current) {
+      previewRef.current.innerHTML = '';
+    }
+    
+    setCurrentStroke([]);
   };
 
   const clearCanvas = () => {
-    if (gameState === 'playing') {
-      clearDrawing();
+    if (gameState === 'playing' && strokesArray) {
+      strokesArray.delete(0, strokesArray.length);
     }
   };
 
@@ -286,7 +308,6 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
       alignItems: 'center',
       gap: SPACING.md
     }}>
-      {/* Game Status */}
       <div style={{ textAlign: 'center', marginBottom: SPACING.md }}>
         {gameState === 'waiting' ? (
           <div style={{
@@ -305,7 +326,6 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
                   justifyContent: 'center',
                   padding: SPACING.lg
                 }}>
-                  {/* Header */}
                   <div style={{ 
                     display: 'flex',
                     alignItems: 'center',
@@ -328,7 +348,6 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
                     </h1>
                   </div>
 
-                  {/* Main Card */}
                   <div style={{
                     background: 'rgba(255,255,255,0.05)',
                     border: '1px solid rgba(255,255,255,0.1)',
@@ -338,7 +357,6 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
                     minWidth: '400px',
                     maxWidth: '500px'
                   }}>
-                    {/* Player Count */}
                     <div style={{ 
                       textAlign: 'center',
                       marginBottom: SPACING.xl,
@@ -355,7 +373,6 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
                       </p>
                     </div>
 
-                    {/* Players Grid */}
                     <div style={{ 
                       display: 'grid',
                       gridTemplateColumns: 'repeat(2, 1fr)',
@@ -407,7 +424,6 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
                       })}
                     </div>
 
-                    {/* Action Buttons */}
                     <div style={{ 
                       display: 'flex',
                       gap: SPACING.md,
@@ -426,16 +442,12 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
                       >
                         🚪 나가기
                       </Button>
-                 
                     </div>
                   </div>
                 </div>
-
           </div>
         ) : gameState === 'topicSelection' ? (
-          <TopicSelection
-            selectedTopic={topic}
-          />
+          <TopicSelection selectedTopic={topic} />
         ) : (
           <div style={{ marginBottom: SPACING.sm }}>
             <span style={{ fontSize: '18px', fontWeight: '600' }}>Players: {playerCount}/{GAME_CONFIG.MAX_PLAYERS}</span>
@@ -457,7 +469,6 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
         )}
       </div>
 
-      {/* Drawing Tools */}
       {gameState === 'playing' && (
         <div style={{
           display: 'flex',
@@ -467,7 +478,6 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
           flexWrap: 'wrap',
           justifyContent: 'center'
         }}>
-          {/* Color Palette */}
           <div style={{ display: 'flex', gap: SPACING.xs }}>
             {colors.map((color) => (
               <button
@@ -514,26 +524,65 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
           </button>
         </div>
       )}
+
+      <div
+        onMouseDown={startDrawing}
+        onMouseMove={draw}
+        onMouseUp={stopDrawing}
+        onMouseLeave={stopDrawing}
+        onTouchStart={startDrawing}
+        onTouchMove={draw}
+        onTouchEnd={stopDrawing}
+        onTouchCancel={stopDrawing}
+        style={{
+          position: 'relative',
+          border: `2px solid ${COLORS.neutral.border}`,
+          borderRadius: BORDER_RADIUS.sm,
+          cursor: gameState === 'playing' ? 'crosshair' : 'not-allowed',
+          background: 'white',
+          width: GAME_CONFIG.CANVAS_SIZE.width,
+          height: GAME_CONFIG.CANVAS_SIZE.height,
+          touchAction: 'none'
+        }}
+      >
         <canvas
           ref={canvasRef}
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
-          onTouchStart={startDrawing}
-          onTouchMove={draw}
-          onTouchEnd={stopDrawing}
-          onTouchCancel={stopDrawing}
-          width={GAME_CONFIG.CANVAS_SIZE.width}
-          height={GAME_CONFIG.CANVAS_SIZE.height}
           style={{
-            border: `2px solid ${COLORS.neutral.border}`,
-            borderRadius: BORDER_RADIUS.sm,
-            cursor: gameState === 'playing' ? 'crosshair' : 'not-allowed',
-            background: 'white',
-            touchAction: 'none'
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none'
           }}
-        /> 
+        />
+        <svg
+          ref={svgRef}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 1
+          }}
+          viewBox={`0 0 ${GAME_CONFIG.CANVAS_SIZE.width} ${GAME_CONFIG.CANVAS_SIZE.height}`}
+        />
+        <svg
+          ref={previewRef}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 2
+          }}
+          viewBox={`0 0 ${GAME_CONFIG.CANVAS_SIZE.width} ${GAME_CONFIG.CANVAS_SIZE.height}`}
+        />
+      </div>
     </div>
   );
 }

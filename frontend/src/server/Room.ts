@@ -3,6 +3,7 @@ import { createCanvas } from 'canvas';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { GAME_CONFIG, S3_BUCKET_NAME, TOPICS } from './config';
 import { ServerToClientMessage } from '@/types';
+import { drawSvgPath } from './svgDrawing';
 
 export class PlayerInfo {
   id: string;
@@ -96,32 +97,31 @@ export class Room {
     return this.players.size === 0;
   }
 
-  private async createPngFromDrawingData(drawingData: any[]) {
-    const canvas = createCanvas(800, 600);
+  private async createPngFromStrokeData(strokesData: any[]) {
+    console.log(JSON.stringify(strokesData, null, 2))
+    const canvas = createCanvas(GAME_CONFIG.CANVAS_SIZE.width, GAME_CONFIG.CANVAS_SIZE.height);
+    console.log(strokesData);
     const ctx = canvas.getContext('2d');
     
     // White background
     ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, 800, 600);
+    ctx.fillRect(0, 0, GAME_CONFIG.CANVAS_SIZE.width, GAME_CONFIG.CANVAS_SIZE.height);
     
-    // Draw points
-    drawingData.forEach((point: any) => {
-      if (point.x && point.y) {
-        ctx.fillStyle = point.color || '#000000';
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, (point.size || 5) / 2, 0, Math.PI * 2);
-        ctx.fill();
+    // Draw each stroke
+    strokesData.forEach((strokeData: any) => {
+      if (strokeData.pathData) {
+        drawSvgPath(ctx, strokeData.pathData, strokeData.color, strokeData.size);
       }
     });
     
     const buffer = canvas.toBuffer('image/png');
     const filename = `${this.id}.png`;
     
-    // Upload to S3
     await this.uploadToS3(buffer, filename);
-    
     console.log(`[${this.id}] PNG created and uploaded: ${filename}`);
   }
+
+ 
 
   private async uploadToS3(buffer: Buffer, filename: string) {
     const s3Client = new S3Client({ region: 'us-east-1' });
@@ -214,12 +214,22 @@ export class Room {
     
     const doc = docs.get(this.id);
     if (doc) {
-      const drawingArray = doc.getArray('drawing');
-      const drawingData = drawingArray.toArray();
-      console.log(`[${this.id}] Drawing data:`, drawingData);
-      
-      // Create bitmap and save as PNG
-      await this.createPngFromDrawingData(drawingData);
+      const strokesArray = doc.getArray('strokes'); 
+      console.log(strokesArray)
+
+      if (strokesArray) {
+
+        const strokesData = strokesArray.toArray();
+        console.log(`[${this.id}] Found ${strokesData.length} strokes`);
+        
+        // Save JSON for debugging
+        const fs = require('fs');
+        const jsonFilename = `debug_${this.id}.json`;
+        fs.writeFileSync(jsonFilename, JSON.stringify(strokesData, null, 2));
+        console.log(`[${this.id}] Debug JSON saved: ${jsonFilename}`);
+        
+        await this.createPngFromStrokeData(strokesData);
+      }
     }
     
     this.updateState({ state: 'ended' });
