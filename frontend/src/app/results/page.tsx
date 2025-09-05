@@ -24,7 +24,7 @@ export default function Results() {
 
   const handlePlayAgain = () => {
     localStorage.removeItem('drawingResult');
-    window.location.href = '/matching';
+    window.location.href = '/';
   };
 
   const handleGoHome = () => {

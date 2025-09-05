@@ -64,7 +64,7 @@ export class GameManager {
     const roomId = availableRoom.id;
     availableRoom.addPlayer(playerInfo);
     
-    console.log(`[${roomId}] Player joined: ${playerInfo.name} (${playerInfo.id}), total: ${availableRoom.players.size}/${GAME_CONFIG.MAX_PLAYERS_PER_ROOM}`);
+    console.log(`[${roomId}] Player joined: ${playerInfo.name} (${playerInfo.id}), total: ${availableRoom.players.size}/${GAME_CONFIG.MAX_PLAYERS}`);
     const joinedRoom = availableRoom;
 
     // Save to database

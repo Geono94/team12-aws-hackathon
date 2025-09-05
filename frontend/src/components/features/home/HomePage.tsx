@@ -7,14 +7,13 @@ import ArtworkCard from '@/components/features/feed/ArtworkCard';
 import { COLORS, SPACING } from '@/constants/design';
 import { getPlayer, savePlayer } from '@/lib/player';
 import { ArtworkItem, Reaction } from '@/types/ui';
+import { useYjs } from '@/contexts/YjsContext';
 
-interface HomePageProps {
-  onStartGame: (playerName: string) => void;
-  isLoading?: boolean;
+interface HomePageProps { 
   artworks?: ArtworkItem[];
 }
 
-export default function HomePage({ onStartGame, isLoading = false, artworks = [] }: HomePageProps) {
+export default function HomePage({   artworks = [] }: HomePageProps) {
   const router = useRouter();
   const [playerName, setPlayerName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -44,6 +43,16 @@ export default function HomePage({ onStartGame, isLoading = false, artworks = []
     }
   }, []);
 
+  const {  onMessage, sendMessage } = useYjs();
+
+  useEffect(() => {
+    return onMessage((message) => {
+      if (message.type === 'roomJoined') {
+        window.location.href = '/drawing/' + message.data.roomId;
+      }
+    })
+  }, [])
+  
   const handleQuickMatch = () => {
     if (!playerName.trim()) {
       setIsEditing(true);
@@ -52,18 +61,13 @@ export default function HomePage({ onStartGame, isLoading = false, artworks = []
     
     savePlayer(playerName, profileImage);
     setIsMatching(true);
-    
-    const interval = setInterval(() => {
-      setMatchingCount(prev => {
-        if (prev >= 4) {
-          clearInterval(interval);
-          setIsMatching(false);
-          window.location.href = '/matching';
-          return 4;
-        }
-        return prev + 1;
-      });
-    }, 1500);
+    sendMessage({
+      type: 'joinRoom',
+      data: {
+        playerId: playerName,
+        playerName,
+      }
+    });
   };
 
   const handleNameSave = () => {

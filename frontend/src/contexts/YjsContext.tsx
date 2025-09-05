@@ -4,13 +4,14 @@ import { createContext, useContext, ReactNode } from 'react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { ClientToServerMessage, ServerToClientMessage } from '@/types';
 
 interface YjsContextType {
   doc: Y.Doc | null;
   provider: WebsocketProvider | null;
   connected: boolean;
-  sendMessage: (message: any) => void;
-  onMessage: (callback: (message: any) => void) => (() => void) | undefined;
+  sendMessage: (message: ClientToServerMessage) => void;
+  onMessage: (callback: (message: ServerToClientMessage) => void) => (() => void) | undefined;
   messages: any[];
   roomId: string;
 }
@@ -38,6 +39,10 @@ export function YjsProvider({ children, roomId = 'default' }: YjsProviderProps) 
     : `ws://172.30.3.57:3001`;
     
   const { doc, provider, connected, sendMessage, onMessage, messages, roomId: currentRoomId } = useWebSocket(roomId, wsUrl);
+
+  if (!connected) {
+    return null;
+  }
 
   return (
     <YjsContext.Provider value={{ doc, provider, connected, sendMessage, onMessage, messages, roomId: currentRoomId }}>
