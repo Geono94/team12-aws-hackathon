@@ -39,25 +39,42 @@ export const useWebSocket = (roomId: string, wsUrl: string) => {
   useEffect(() => {
     if (!roomId || !wsUrl || typeof window === 'undefined') return;
 
-    const wsProvider = new WebsocketProvider(wsUrl, roomId, doc, {
-      connect: true,
-      params: {}
-    });
-    
-    wsProvider.on('status', (event: any) => {
-      console.log('WebSocket status:', event.status);
-      setConnected(event.status === 'connected');
-    });
+    try {
+      const wsProvider = new WebsocketProvider(wsUrl, roomId, doc, {
+        connect: true,
+        params: {},
+        resyncInterval: 5000,
+        maxBackoffTime: 2500
+      });
+      
+      wsProvider.on('status', (event: any) => {
+        console.log('WebSocket status:', event.status);
+        setConnected(event.status === 'connected');
+      });
 
-    wsProvider.on('connection-error', (error: any) => {
-      console.error('WebSocket connection error:', error);
-    });
- 
-    setProvider(wsProvider);
+      wsProvider.on('connection-error', (error: any) => {
+        console.error('WebSocket connection error:', error);
+        setConnected(false);
+      });
 
-    return () => {
-      wsProvider.destroy();
-    };
+      wsProvider.on('connection-close', () => {
+        console.log('WebSocket connection closed');
+        setConnected(false);
+      });
+   
+      setProvider(wsProvider);
+
+      return () => {
+        try {
+          wsProvider.destroy();
+        } catch (error) {
+          console.error('Error destroying WebSocket provider:', error);
+        }
+      };
+    } catch (error) {
+      console.error('Error creating WebSocket provider:', error);
+      setConnected(false);
+    }
   }, [roomId, wsUrl, doc]);
 
   return { doc, provider, connected, sendMessage, onMessage, messages, roomId };

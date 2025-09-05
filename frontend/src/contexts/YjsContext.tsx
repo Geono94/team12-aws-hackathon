@@ -39,10 +39,6 @@ export function YjsProvider({ children, roomId = 'default' }: YjsProviderProps) 
     
   const { doc, provider, connected, sendMessage, onMessage, messages, roomId: currentRoomId } = useWebSocket(roomId, wsUrl);
 
-  if (!connected) {
-    return;
-  }
-
   return (
     <YjsContext.Provider value={{ doc, provider, connected, sendMessage, onMessage, messages, roomId: currentRoomId }}>
       {children}

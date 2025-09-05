@@ -23,7 +23,7 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
   const [timeLeft, setTimeLeft] = useState<number>(30);
   const [playerCount, setPlayerCount] = useState<number>(1);
   
-  const { doc, onMessage, sendMessage } = useYjs();
+  const { doc, connected, onMessage, sendMessage } = useYjs();
   const { clearDrawing } = useGameRoom(roomId);
   
   const drawingArray = doc?.getArray('drawing');
@@ -170,6 +170,22 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
       clearDrawing();
     }
   };
+
+  if (!connected || !doc) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '400px',
+        background: '#f5f5f5',
+        borderRadius: '8px',
+        color: '#666'
+      }}>
+        연결 중...
+      </div>
+    );
+  }
 
   return (
     <div style={{

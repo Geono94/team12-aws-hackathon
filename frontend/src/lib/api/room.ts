@@ -4,6 +4,7 @@ export interface RoomResponse {
   roomId: string;
   playerCount: number;
   maxPlayers: number;
+  status?: 'waiting' | 'playing' | 'finished';
   players?: Array<{
     playerId: string;
     name: string;
