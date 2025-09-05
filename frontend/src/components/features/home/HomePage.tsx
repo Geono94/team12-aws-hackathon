@@ -312,7 +312,7 @@ export default function HomePage({   artworks = [] }: HomePageProps) {
               display: 'flex', 
               gap: SPACING.sm, 
               alignItems: 'center',
-              marginBottom: SPACING.md 
+              marginBottom: SPACING.md,
             }}>
               <input
                 type="text"
@@ -383,22 +383,11 @@ export default function HomePage({   artworks = [] }: HomePageProps) {
         </div>
 
         {/* Quick Match Section */}
-        <div style={{ marginBottom: SPACING.lg, width: '320px' }}>
+        <div style={{ marginBottom: SPACING.lg, width: '320px' }} className={"w-full"}>
           <Button 
             onClick={handleQuickMatch}
             disabled={!playerName.trim()}
-            style={{
-              width: '100%',
-              fontSize: '18px',
-              padding: '16px',
-              background: playerName.trim() ? COLORS.primary.main : '#666',
-              border: 'none',
-              borderRadius: '12px',
-              color: 'white',
-              fontWeight: 'bold',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              cursor: playerName.trim() ? 'pointer' : 'not-allowed'
-            }}
+            className="w-full text-lg px-4 py-4 border-none rounded-xl text-white font-bold shadow-lg cursor-pointer"
           >
             게임 시작하기
           </Button>

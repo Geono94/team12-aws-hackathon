@@ -7,7 +7,8 @@ export default function Button({
   disabled = false,
   loading = false,
   children, 
-  onClick 
+  onClick,
+  className,
 }: ButtonProps) {
   const baseStyles = {
     borderRadius: BORDER_RADIUS.md,
@@ -55,6 +56,7 @@ export default function Button({
       }}
       disabled={disabled || loading}
       onClick={onClick}
+      className={className}
     >
       {loading ? 'Loading...' : children}
     </button>

@@ -5,6 +5,7 @@ export interface ButtonProps {
   loading?: boolean;
   children: React.ReactNode;
   onClick?: () => void;
+  className?: string;
 }
 
 export interface CardProps {
