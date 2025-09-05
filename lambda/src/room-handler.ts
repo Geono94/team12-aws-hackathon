@@ -21,6 +21,8 @@ interface Room {
   players: Player[];
   createdAt: number;
   updatedAt: number;
+  topic?: string;
+  finishedAt?: number;
 }
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -36,8 +38,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     if (path.startsWith('/rooms/') && path.endsWith('/status') && method === 'PUT') {
       const roomId = path.split('/')[2];
-      const { status } = JSON.parse(event.body || '{}');
-      return await updateRoomStatus(roomId, status);
+      const { status, topic } = JSON.parse(event.body || '{}');
+      return await updateRoomStatus(roomId, status, topic);
     }
 
     if (path === '/rooms/finished' && method === 'GET') {
@@ -132,19 +134,33 @@ async function createRoom(roomId: string, playerId: string, playerName: string):
   }
 }
 
-async function updateRoomStatus(roomId: string, status: 'waiting' | 'playing' | 'finished'): Promise<APIGatewayProxyResult> {
+async function updateRoomStatus(roomId: string, status: 'waiting' | 'playing' | 'finished', topic?: string): Promise<APIGatewayProxyResult> {
   try {
+    let updateExpression = 'SET #status = :status, updatedAt = :time';
+    
+    const expressionAttributeValues: any = {
+      ':status': status,
+      ':time': Date.now(),
+    };
+    
+    if (topic) {
+      updateExpression += ', topic = :topic';
+      expressionAttributeValues[':topic'] = topic;
+    }
+    
+    // Add finishedAt timestamp when status is finished
+    if (status === 'finished') {
+      updateExpression += ', finishedAt = :time';
+    }
+
     await docClient.send(new UpdateCommand({
       TableName: ROOMS_TABLE,
       Key: { roomId },
-      UpdateExpression: 'SET #status = :status, updatedAt = :time',
+      UpdateExpression: updateExpression,
       ExpressionAttributeNames: {
         '#status': 'status'
       },
-      ExpressionAttributeValues: {
-        ':status': status,
-        ':time': Date.now(),
-      },
+      ExpressionAttributeValues: expressionAttributeValues,
     }));
 
     return {
