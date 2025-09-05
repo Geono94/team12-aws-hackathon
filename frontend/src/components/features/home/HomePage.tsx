@@ -1,195 +1,483 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
+import ArtworkCard from '@/components/features/feed/ArtworkCard';
 import { COLORS, SPACING } from '@/constants/design';
-import { getPlayer } from '@/lib/player';
+import { getPlayer, savePlayer } from '@/lib/player';
+import { ArtworkItem, Reaction } from '@/types/ui';
 
 interface HomePageProps {
   onStartGame: (playerName: string) => void;
   isLoading?: boolean;
+  artworks?: ArtworkItem[];
 }
 
-export default function HomePage({ onStartGame, isLoading = false }: HomePageProps) {
+export default function HomePage({ onStartGame, isLoading = false, artworks = [] }: HomePageProps) {
+  const router = useRouter();
   const [playerName, setPlayerName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [feedArtworks, setFeedArtworks] = useState(artworks);
+  const [profileImage, setProfileImage] = useState('/characters/character1.svg');
+  const [isMatching, setIsMatching] = useState(false);
+  const [matchingCount, setMatchingCount] = useState(1);
+  const [showProfileSelector, setShowProfileSelector] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const defaultAvatars = [
+    '/characters/character1.svg', // 기본 캐릭터 1 (디폴트) - 빨간색 웃는 얼굴
+    '/characters/character2.svg', // 기본 캐릭터 2 - 청록색 동그란 입
+    '/characters/character3.svg', // 기본 캐릭터 3 - 파란색 네모 입
+    '/characters/character4.svg', // 기본 캐릭터 4 - 초록색 뿔 달린 캐릭터
+    '/characters/character5.svg'  // 기본 캐릭터 5 - 보라색 안테나 캐릭터
+  ];
 
   useEffect(() => {
     const player = getPlayer();
     if (player) {
       setPlayerName(player.name);
+      setProfileImage(player.profileImage || defaultAvatars[0]);
       setIsEditing(false);
     } else {
       setIsEditing(true);
     }
   }, []);
 
-  const handleStartClick = () => {
+  const handleQuickMatch = () => {
+    if (!playerName.trim()) {
+      setIsEditing(true);
+      return;
+    }
+    
+    savePlayer(playerName, profileImage);
+    setIsMatching(true);
+    
+    const interval = setInterval(() => {
+      setMatchingCount(prev => {
+        if (prev >= 4) {
+          clearInterval(interval);
+          setIsMatching(false);
+          window.location.href = '/matching';
+          return 4;
+        }
+        return prev + 1;
+      });
+    }, 1500);
+  };
+
+  const handleNameSave = () => {
     if (playerName.trim()) {
-      // MatchingPage로 이동
-      window.location.href = '/matching';
+      savePlayer(playerName, profileImage);
+      setIsEditing(false);
     }
   };
 
-  const handleNameChange = () => {
-    setIsEditing(true);
+  const handleProfileImageClick = () => {
+    setShowProfileSelector(true);
   };
 
-  const handleViewFeed = () => {
-    window.location.href = '/feed';
+  const handleAvatarSelect = (avatar: string) => {
+    setProfileImage(avatar);
+    setShowProfileSelector(false);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setProfileImage(result);
+        setShowProfileSelector(false);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleReaction = (artworkId: string, reactionType: Reaction['type']) => {
+    setFeedArtworks(prev => prev.map(artwork => {
+      if (artwork.id === artworkId) {
+        return {
+          ...artwork,
+          reactions: artwork.reactions.map(reaction => {
+            if (reaction.type === reactionType) {
+              return {
+                ...reaction,
+                count: reaction.userReacted ? reaction.count - 1 : reaction.count + 1,
+                userReacted: !reaction.userReacted
+              };
+            }
+            return reaction;
+          })
+        };
+      }
+      return artwork;
+    }));
+  };
+
+  const handleViewDetail = (artworkId: string) => {
+    router.push(`/feed/${artworkId}`);
   };
 
   return (
     <div style={{ 
       background: '#000000',
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: SPACING.lg,
-      textAlign: 'center'
+      minHeight: '100vh'
     }}>
-      {/* Logo & Title */}
-      <div style={{ marginBottom: SPACING.xl }}>
+      {/* Profile Selector Modal */}
+      {showProfileSelector && (
         <div style={{
-          fontSize: '64px',
-          marginBottom: SPACING.sm
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
         }}>
-          🎨
-        </div>
-        <h1 style={{ 
-          fontSize: '36px',
-          fontWeight: 'bold',
-          color: '#FFFFFF',
-          marginBottom: SPACING.sm
-        }}>
-          DrawTogether
-        </h1>
-        <p style={{
-          fontSize: '18px',
-          color: '#888888',
-          marginBottom: SPACING.xl
-        }}>
-          친구들과 함께 그리고 AI가 변환해주는 재미있는 게임
-        </p>
-      </div>
+          <div style={{
+            background: '#1a1a1a',
+            borderRadius: '16px',
+            padding: SPACING.lg,
+            maxWidth: '400px',
+            width: '90%'
+          }}>
+            <h3 style={{ color: '#FFFFFF', marginBottom: SPACING.md, textAlign: 'center' }}>
+              프로필 이미지 선택
+            </h3>
+            
+            {/* Default Avatars */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: SPACING.sm,
+              marginBottom: SPACING.md
+            }}>
+              {defaultAvatars.map((avatar, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleAvatarSelect(avatar)}
+                  style={{
+                    background: 'rgba(255,255,255,0.1)',
+                    border: profileImage === avatar ? `2px solid ${COLORS.primary.main}` : '2px solid transparent',
+                    borderRadius: '12px',
+                    padding: SPACING.sm,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <img 
+                    src={avatar} 
+                    alt={`캐릭터 ${index + 1}`}
+                    style={{
+                      width: '60px',
+                      height: '60px',
+                      borderRadius: '8px',
+                      objectFit: 'cover'
+                    }}
+                  />
+                </button>
+              ))}
+            </div>
 
-      {/* Player Name Section */}
-      <div style={{ marginBottom: SPACING.xl, minWidth: '300px' }}>
-        {isEditing ? (
-          <div>
-            <input
-              type="text"
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              placeholder="플레이어 이름을 입력하세요"
-              maxLength={20}
+            {/* Upload Button */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
               style={{
                 width: '100%',
-                padding: '12px 16px',
-                fontSize: '18px',
-                border: '2px solid #444',
+                background: 'rgba(255,255,255,0.1)',
+                border: '2px dashed rgba(255,255,255,0.3)',
                 borderRadius: '12px',
-                background: '#1a1a1a',
+                padding: SPACING.md,
                 color: '#FFFFFF',
-                marginBottom: SPACING.md,
-                outline: 'none',
-                textAlign: 'center'
-              }}
-              autoFocus
-            />
-          </div>
-        ) : (
-          <div style={{
-            background: 'rgba(255,255,255,0.1)',
-            padding: SPACING.md,
-            borderRadius: '12px',
-            marginBottom: SPACING.md,
-            color: '#FFFFFF',
-            fontSize: '18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}>
-            <span>환영합니다, {playerName}님!</span>
-            <button
-              onClick={handleNameChange}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#888',
                 cursor: 'pointer',
-                fontSize: '14px'
+                marginBottom: SPACING.md
               }}
             >
-              변경
+              📁 이미지 업로드
+            </button>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              style={{ display: 'none' }}
+            />
+
+            {/* Close Button */}
+            <button
+              onClick={() => setShowProfileSelector(false)}
+              style={{
+                width: '100%',
+                background: 'rgba(255,255,255,0.1)',
+                border: 'none',
+                borderRadius: '8px',
+                padding: SPACING.sm,
+                color: '#888',
+                cursor: 'pointer'
+              }}
+            >
+              취소
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Main Action Button */}
-      <div style={{ marginBottom: SPACING.xl }}>
-        <Button 
-          size="lg" 
-          onClick={handleStartClick}
-          disabled={!playerName.trim() || isLoading}
-          style={{
-            fontSize: '24px',
-            padding: '20px 40px',
-            background: (playerName.trim() && !isLoading) ? COLORS.primary.main : '#666',
-            border: 'none',
-            borderRadius: '12px',
-            color: 'white',
-            fontWeight: 'bold',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            transform: 'scale(1)',
-            transition: 'all 0.3s ease',
-            cursor: (playerName.trim() && !isLoading) ? 'pointer' : 'not-allowed'
-          }}
-          onMouseEnter={(e) => {
-            if (playerName.trim() && !isLoading) {
-              e.currentTarget.style.transform = 'scale(1.05)';
-              e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.4)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
-          }}
-        >
-          {isLoading ? '🔄 연결 중...' : '🚀 게임 시작하기'}
-        </Button>
-      </div>
-
-      {/* Secondary Action */}
-      <div>
-        <Button 
-          variant="outline" 
-          onClick={handleViewFeed}
-          style={{
-            background: 'rgba(255,255,255,0.1)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            color: '#FFFFFF',
-            borderRadius: '12px',
-            padding: '12px 24px',
-            fontSize: '16px'
-          }}
-        >
-          📱 작품 피드 보기
-        </Button>
-      </div>
-
-      {/* Bottom decoration */}
+      {/* Hero Section */}
       <div style={{
-        position: 'absolute',
-        bottom: '20px',
-        fontSize: '14px',
-        color: '#666666'
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: SPACING.lg,
+        textAlign: 'center',
+        minHeight: '100vh'
       }}>
-        최대 4명까지 함께 플레이 가능
+        {/* Logo & Title */}
+        <div style={{ marginBottom: SPACING.lg }}>
+          <div style={{
+            fontSize: '48px',
+            marginBottom: SPACING.sm
+          }}>
+            🎨
+          </div>
+          <h1 style={{ 
+            fontSize: '32px',
+            fontWeight: 'bold',
+            color: '#FFFFFF',
+            marginBottom: SPACING.sm
+          }}>
+            DrawTogether
+          </h1>
+          <p style={{
+            fontSize: '16px',
+            color: '#888888',
+            marginBottom: SPACING.lg
+          }}>
+            친구들과 함께 그리고 AI가 변환해주는 재미있는 게임
+          </p>
+        </div>
+
+        {/* Profile Section */}
+        <div style={{
+          background: 'rgba(255,255,255,0.05)',
+          borderRadius: '16px',
+          padding: SPACING.lg,
+          marginBottom: SPACING.lg,
+          minWidth: '320px',
+          border: '1px solid rgba(255,255,255,0.1)'
+        }}>
+          {/* Profile Image - Center */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            marginBottom: SPACING.md 
+          }}>
+            <button
+              onClick={handleProfileImageClick}
+              style={{
+                background: 'none',
+                border: '3px solid rgba(255,255,255,0.2)',
+                borderRadius: '50%',
+                padding: '4px',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              <img 
+                src={profileImage} 
+                alt="프로필"
+                style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  objectFit: 'cover'
+                }}
+              />
+            </button>
+          </div>
+
+          {/* Name Input & Save Button - Same Line */}
+          {isEditing ? (
+            <div style={{ 
+              display: 'flex', 
+              gap: SPACING.sm, 
+              alignItems: 'center',
+              marginBottom: SPACING.md 
+            }}>
+              <input
+                type="text"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                placeholder="닉네임을 입력하세요"
+                maxLength={20}
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  fontSize: '16px',
+                  border: '2px solid #444',
+                  borderRadius: '8px',
+                  background: '#1a1a1a',
+                  color: '#FFFFFF',
+                  outline: 'none',
+                  textAlign: 'center'
+                }}
+                autoFocus
+              />
+              <Button
+                onClick={handleNameSave}
+                disabled={!playerName.trim()}
+                style={{
+                  background: playerName.trim() ? COLORS.primary.main : '#666',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: 'white',
+                  padding: '12px 16px',
+                  fontSize: '14px'
+                }}
+              >
+                저장
+              </Button>
+            </div>
+          ) : (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: SPACING.md,
+              padding: SPACING.sm,
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: '8px'
+            }}>
+              <div>
+                <div style={{ color: '#FFFFFF', fontSize: '16px', fontWeight: '500' }}>
+                  {playerName}
+                </div>
+                <div style={{ color: '#888', fontSize: '12px' }}>
+                  🟢 온라인
+                </div>
+              </div>
+              <button
+                onClick={() => setIsEditing(true)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#888',
+                  cursor: 'pointer',
+                  fontSize: '12px'
+                }}
+              >
+                수정
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Quick Match Section */}
+        <div style={{ marginBottom: SPACING.lg, width: '320px' }}>
+          {isMatching ? (
+            <div style={{
+              background: 'rgba(255,255,255,0.05)',
+              borderRadius: '12px',
+              padding: SPACING.lg,
+              textAlign: 'center',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}>
+              <div style={{ fontSize: '24px', marginBottom: SPACING.sm }}>
+                🔄
+              </div>
+              <div style={{ color: '#FFFFFF', fontSize: '16px', marginBottom: SPACING.xs }}>
+                매칭 중...
+              </div>
+              <div style={{ color: '#888', fontSize: '14px' }}>
+                {matchingCount}/4명 모이는 중
+              </div>
+              <div style={{
+                background: 'rgba(255,255,255,0.1)',
+                height: '4px',
+                borderRadius: '2px',
+                marginTop: SPACING.sm,
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  background: COLORS.primary.main,
+                  height: '100%',
+                  width: `${(matchingCount / 4) * 100}%`,
+                  transition: 'width 0.3s ease'
+                }} />
+              </div>
+            </div>
+          ) : (
+            <Button 
+              onClick={handleQuickMatch}
+              disabled={!playerName.trim()}
+              style={{
+                width: '100%',
+                fontSize: '18px',
+                padding: '16px',
+                background: playerName.trim() ? COLORS.primary.main : '#666',
+                border: 'none',
+                borderRadius: '12px',
+                color: 'white',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                cursor: playerName.trim() ? 'pointer' : 'not-allowed'
+              }}
+            >
+              게임 시작하기
+            </Button>
+          )}
+        </div>
+
+        {/* Info */}
+        <div style={{
+          marginTop: SPACING.lg,
+          fontSize: '12px',
+          color: '#666666'
+        }}>
+          최대 4명까지 함께 플레이 가능
+        </div>
       </div>
+
+      {/* Feed Section */}
+      {feedArtworks.length > 0 && (
+        <div style={{ 
+          padding: SPACING.lg,
+          borderTop: '1px solid #333333'
+        }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <h2 style={{
+              fontSize: '20px',
+              fontWeight: 'bold',
+              color: '#FFFFFF',
+              margin: `0 0 ${SPACING.lg} 0`,
+              textAlign: 'center'
+            }}>
+              🎨 최근 작품들
+            </h2>
+
+            <div style={{ 
+              display: 'grid',
+              gap: SPACING.md,
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))'
+            }}>
+              {feedArtworks.slice(0, 4).map((artwork) => (
+                <ArtworkCard
+                  key={artwork.id}
+                  artwork={artwork}
+                  onReaction={handleReaction}
+                  onViewDetail={handleViewDetail}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,16 +1,18 @@
 export interface Player {
   id: string;
   name: string;
+  profileImage?: string;
   joinedAt: string;
   currentRoomId?: string;
 }
 
 const PLAYER_STORAGE_KEY = 'drawtogether_player';
 
-export function savePlayer(name: string, roomId?: string): Player {
+export function savePlayer(name: string, profileImage?: string, roomId?: string): Player {
   const player: Player = {
     id: `player_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
     name,
+    profileImage: profileImage || '🎨',
     joinedAt: new Date().toISOString(),
     currentRoomId: roomId
   };
