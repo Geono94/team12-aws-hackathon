@@ -1,6 +1,6 @@
 export const GAME_CONFIG = {
   MAX_PLAYERS: 1,
-  DRAWING_TIME: 30, // 30 seconds
+  GAME_TIME: 30, // 30 seconds
   COUNTDOWN_TIME: 3, // 3 seconds
   CANVAS_SIZE: {
     width: 800,
