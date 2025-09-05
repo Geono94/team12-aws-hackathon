@@ -5,6 +5,9 @@ export interface RoomResponse {
   playerCount: number;
   maxPlayers: number;
   status?: 'waiting' | 'playing' | 'finished';
+  topic?: string;
+  createdAt?: number;
+  finishedAt?: number;
   players?: Array<{
     playerId: string;
     name: string;
@@ -101,5 +104,25 @@ export async function leaveRoom(roomId: string, playerId: string): Promise<void>
   } catch (error) {
     console.error('Leave room failed:', error);
     // 에러 무시하고 계속 진행
+  }
+}
+
+export async function getFinishedRooms(): Promise<RoomResponse[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/rooms/finished`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Get finished rooms failed:', error);
+    return [];
   }
 }

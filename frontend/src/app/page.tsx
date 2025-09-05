@@ -6,7 +6,7 @@ import { clearPlayer, savePlayer } from '@/lib/player';
 import { ArtworkItem } from '@/types/ui';
 
 // Sample artworks for feed section
-const S3_BUCKET_URL = 'https://drawtogether-test-1757052413482.s3.amazonaws.com';
+const S3_BUCKET_URL = process.env.NEXT_PUBLIC_S3_BUCKET_URL || 'https://drawtogether-test-1757052413482.s3.amazonaws.com';
 
 const mockArtworks: ArtworkItem[] = [
   {

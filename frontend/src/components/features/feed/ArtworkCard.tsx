@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { COLORS, SPACING, BORDER_RADIUS } from '@/constants/design';
 import { ArtworkItem } from '@/types/ui';
 
@@ -10,6 +11,7 @@ interface ArtworkCardProps {
 }
 
 export default function ArtworkCard({ artwork, onReaction, onViewDetail }: ArtworkCardProps) {
+  const [imageError, setImageError] = useState(false);
   const likeReaction = artwork.reactions.find(r => r.type === 'like');
   const isLiked = likeReaction?.userReacted || false;
   const likeCount = likeReaction?.count || 0;
@@ -17,6 +19,13 @@ export default function ArtworkCard({ artwork, onReaction, onViewDetail }: Artwo
   const handleDoubleClick = () => {
     onReaction(artwork.id, 'like');
   };
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  // Use original image if AI image fails to load
+  const displayImage = imageError ? artwork.originalImage : artwork.aiImage;
 
   return (
     <div 
@@ -45,8 +54,9 @@ export default function ArtworkCard({ artwork, onReaction, onViewDetail }: Artwo
         onDoubleClick={handleDoubleClick}
       >
         <img
-          src={artwork.aiImage}
-          alt={`${artwork.topic} AI artwork`}
+          src={displayImage}
+          alt={`${artwork.topic} ${imageError ? 'original' : 'AI'} artwork`}
+          onError={handleImageError}
           style={{
             width: '100%',
             height: '240px',
@@ -56,23 +66,21 @@ export default function ArtworkCard({ artwork, onReaction, onViewDetail }: Artwo
         />
 
         {/* AI Model Tag - Semi-transparent overlay */}
-        {artwork.aiModel && (
-          <div style={{
-            position: 'absolute',
-            top: SPACING.sm,
-            left: SPACING.sm,
-            background: 'rgba(0,0,0,0.6)',
-            color: 'white',
-            padding: `4px ${SPACING.sm}`,
-            borderRadius: '12px',
-            fontSize: '11px',
-            fontWeight: '500',
-            backdropFilter: 'blur(10px)',
-            pointerEvents: 'none'
-          }}>
-            {artwork.aiModel}
-          </div>
-        )}
+        <div style={{
+          position: 'absolute',
+          top: SPACING.sm,
+          left: SPACING.sm,
+          background: 'rgba(0,0,0,0.6)',
+          color: 'white',
+          padding: `4px ${SPACING.sm}`,
+          borderRadius: '12px',
+          fontSize: '11px',
+          fontWeight: '500',
+          backdropFilter: 'blur(10px)',
+          pointerEvents: 'none'
+        }}>
+          {imageError ? '원본' : artwork.aiModel || 'AI'}
+        </div>
 
         {/* Topic Badge */}
         <div style={{

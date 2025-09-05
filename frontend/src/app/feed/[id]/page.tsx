@@ -1,8 +1,13 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import ArtworkDetailPage from '@/components/features/feed/ArtworkDetailPage';
 import { ArtworkItem } from '@/types/ui';
+import { getRoomInfo } from '@/lib/api/room';
+import { getOriginalImageUrl, getAiImageUrl } from '@/lib/utils/s3';
 
 // Sample images from S3 bucket
-const S3_BUCKET_URL = 'https://drawtogether-test-1757052413482.s3.amazonaws.com';
+const S3_BUCKET_URL = process.env.NEXT_PUBLIC_S3_BUCKET_URL || 'https://drawtogether-test-1757052413482.s3.amazonaws.com';
 
 const mockArtworks: ArtworkItem[] = [
   {
@@ -208,10 +213,97 @@ const mockArtworks: ArtworkItem[] = [
 ];
 
 export default function ArtworkDetail({ params }: { params: { id: string } }) {
-  const artwork = mockArtworks.find(a => a.id === params.id);
-  
-  if (!artwork) {
-    return <div>작품을 찾을 수 없습니다.</div>;
+  const [artwork, setArtwork] = useState<ArtworkItem | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadArtwork();
+  }, []);
+
+  const loadArtwork = async () => {
+    try {
+      const roomId = params.id;
+      const room = await getRoomInfo(roomId);
+      
+      if (!room || room.status !== 'finished') {
+        setError('작품을 찾을 수 없습니다.');
+        return;
+      }
+
+      const artworkItem: ArtworkItem = {
+        id: room.roomId,
+        originalImage: getOriginalImageUrl(room.roomId),
+        aiImage: getAiImageUrl(room.roomId),
+        topic: room.topic || '알 수 없음',
+        playerCount: room.playerCount,
+        createdAt: formatTimeAgo(room.finishedAt || room.createdAt || Date.now()),
+        aiModel: 'Amazon Bedrock',
+        reactions: [{ type: 'like', count: Math.floor(Math.random() * 100), userReacted: Math.random() > 0.5 }]
+      };
+      
+      setArtwork(artworkItem);
+    } catch (error) {
+      console.error('Failed to load artwork:', error);
+      // Fallback to mock data
+      const mockArtwork = mockArtworks.find(a => a.id === params.id);
+      if (mockArtwork) {
+        setArtwork(mockArtwork);
+      } else {
+        setError('작품을 찾을 수 없습니다.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatTimeAgo = (timestamp: number): string => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days > 0) return `${days}일 전`;
+    if (hours > 0) return `${hours}시간 전`;
+    if (minutes > 0) return `${minutes}분 전`;
+    return '방금 전';
+  };
+
+  if (isLoading) {
+    return (
+      <div style={{
+        background: '#000000',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#FFFFFF'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎨</div>
+          <p>작품 로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !artwork) {
+    return (
+      <div style={{
+        background: '#000000',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#FFFFFF'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>😞</div>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
   }
 
   return <ArtworkDetailPage artwork={artwork} />;

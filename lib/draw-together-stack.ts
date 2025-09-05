@@ -8,6 +8,9 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
 export class DrawTogetherStack extends cdk.Stack {
+  public readonly restApiUrl: string;
+  public readonly bucketName: string;
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -104,11 +107,13 @@ export class DrawTogetherStack extends cdk.Stack {
     const roomsResource = restApi.root.addResource('rooms');
     const createResource = roomsResource.addResource('create');
     const leaveResource = roomsResource.addResource('leave');
+    const finishedResource = roomsResource.addResource('finished');
     const roomIdResource = roomsResource.addResource('{roomId}');
     const statusResource = roomIdResource.addResource('status');
     
     createResource.addMethod('POST', new apigateway.LambdaIntegration(roomHandler));
     leaveResource.addMethod('POST', new apigateway.LambdaIntegration(roomHandler));
+    finishedResource.addMethod('GET', new apigateway.LambdaIntegration(roomHandler));
     roomIdResource.addMethod('GET', new apigateway.LambdaIntegration(roomHandler));
     statusResource.addMethod('PUT', new apigateway.LambdaIntegration(roomHandler));
 
@@ -171,5 +176,9 @@ export class DrawTogetherStack extends cdk.Stack {
       value: imagesBucket.bucketName,
       description: 'S3 Images Bucket Name',
     });
+
+    // Export values for Amplify stack
+    this.restApiUrl = restApi.url;
+    this.bucketName = imagesBucket.bucketName;
   }
 }

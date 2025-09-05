@@ -22,4 +22,4 @@ export const GAME_STATES = {
   RESULTS: 'results',
 } as const;
 
-export const S3_BUCKET_NAME = 'drawtogether-test-1757052413482';
+export const S3_BUCKET_NAME = process.env.NEXT_PUBLIC_S3_BUCKET_NAME || 'drawtogether-test-1757052413482';
