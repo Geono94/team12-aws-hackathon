@@ -127,34 +127,55 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     });
   }, [onMessage]);
  
-  useEffect(() => {
+  const resizeCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Responsive canvas sizing
-    const container = canvas.parentElement;
-    if (container) {
-      const containerWidth = container.clientWidth;
-      const containerHeight = container.clientHeight;
-      
-      canvas.width = containerWidth;
-      canvas.height = containerHeight;
-      
-      // Scale for high DPI displays
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = containerWidth * dpr;
-      canvas.height = containerHeight * dpr;
-      canvas.style.width = containerWidth + 'px';
-      canvas.style.height = containerHeight + 'px';
-      ctx.scale(dpr, dpr);
-    }
-
+    // Get actual display size
+    const displayWidth = GAME_CONFIG.CANVAS_SIZE.width;
+    const displayHeight = GAME_CONFIG.CANVAS_SIZE.height;
+    
+    // Scale for high DPI displays
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Set canvas size
+    canvas.width = displayWidth * dpr;
+    canvas.height = displayHeight * dpr;
+    canvas.style.width = displayWidth + 'px';
+    canvas.style.height = displayHeight + 'px';
+    
+    // Scale context
+    ctx.scale(dpr, dpr);
+    
+    // Fill background
     ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width / (window.devicePixelRatio || 1), canvas.height / (window.devicePixelRatio || 1));
-  }, []);
+    ctx.fillRect(0, 0, displayWidth, displayHeight);
+    
+    // Redraw existing points
+    if (drawingArray) {
+      drawingArray.forEach((point: DrawPoint) => {
+        ctx.fillStyle = point.color;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, point.size, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+    }
+  };
+
+  useEffect(() => {
+    resizeCanvas();
+    
+    // Listen for window resize
+    const handleResize = () => {
+      setTimeout(resizeCanvas, 100);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [drawingArray]);
 
   // Handle drawing with Yjs document
   useEffect(() => {
@@ -189,8 +210,6 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / (window.devicePixelRatio || 1) / rect.width;
-    const scaleY = canvas.height / (window.devicePixelRatio || 1) / rect.height;
     
     let clientX, clientY;
     if ('touches' in e) {
@@ -201,8 +220,9 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
       clientY = e.clientY;
     }
     
-    const x = (clientX - rect.left) * scaleX;
-    const y = (clientY - rect.top) * scaleY;
+    // Simple coordinate mapping
+    const x = (clientX - rect.left) * (GAME_CONFIG.CANVAS_SIZE.width / rect.width);
+    const y = (clientY - rect.top) * (GAME_CONFIG.CANVAS_SIZE.height / rect.height);
     
     return { x, y };
   };
@@ -494,9 +514,6 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
           </button>
         </div>
       )}
-
-      {/* Canvas - topicSelection 상태일 때는 숨김 */}
-      {gameState !== 'topicSelection' && (
         <canvas
           ref={canvasRef}
           onMouseDown={startDrawing}
@@ -507,17 +524,16 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
           onTouchCancel={stopDrawing}
+          width={GAME_CONFIG.CANVAS_SIZE.width}
+          height={GAME_CONFIG.CANVAS_SIZE.height}
           style={{
             border: `2px solid ${COLORS.neutral.border}`,
             borderRadius: BORDER_RADIUS.sm,
             cursor: gameState === 'playing' ? 'crosshair' : 'not-allowed',
             background: 'white',
-            width: GAME_CONFIG.CANVAS_SIZE.width,
-            height: GAME_CONFIG.CANVAS_SIZE.height,
             touchAction: 'none'
           }}
-        />
-      )}
+        /> 
     </div>
   );
 }
