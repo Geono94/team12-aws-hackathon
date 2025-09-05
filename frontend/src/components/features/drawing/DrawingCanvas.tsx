@@ -371,8 +371,13 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center',
-      gap: SPACING.md
+      alignItems: 'center', 
+      touchAction: 'none',
+      userSelect: 'none',
+      overflowX: 'hidden',
+      WebkitUserSelect: 'none',
+      WebkitTouchCallout: 'none',
+      WebkitTapHighlightColor: 'transparent'
     }}>
       <div style={{ textAlign: 'center', marginBottom: SPACING.md }}>
         {gameState === 'waiting' ? (
@@ -574,7 +579,11 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
           background: 'white',
           width: GAME_CONFIG.CANVAS_SIZE.width,
           height: GAME_CONFIG.CANVAS_SIZE.height,
-          touchAction: 'none'
+          touchAction: 'none',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          WebkitTouchCallout: 'none',
+          WebkitTapHighlightColor: 'transparent'
         }}
       >
         <canvas
