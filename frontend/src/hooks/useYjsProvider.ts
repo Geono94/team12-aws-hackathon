@@ -23,7 +23,7 @@ export const useYjsProvider = (roomId: string, wsUrl: string) => {
     wsProvider.on('connection-error', (error: any) => {
       console.error('WebSocket connection error:', error);
     });
-
+ 
     setProvider(wsProvider);
 
     return () => {

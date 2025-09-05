@@ -26,8 +26,10 @@ export function YjsProvider({ children, roomId = 'default' }: YjsProviderProps) 
   const wsUrl = typeof window !== 'undefined' 
     ? (process.env.NODE_ENV === 'production' 
         ? `wss://${window.location.host}` 
-        : 'ws://localhost:3000')
-    : 'ws://localhost:3000';
+        : 'ws://localhost:3001')
+    : 'ws://localhost:3001';
+  
+  console.log('YjsProvider connecting to:', wsUrl, 'room:', roomId);
     
   const { doc, provider, connected } = useYjsProvider(roomId, wsUrl);
 

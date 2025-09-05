@@ -38,9 +38,8 @@ export default function Drawing() {
       justifyContent: 'center'
     }}>
       <DrawingCanvas
-        timeLeft={timeLeft}
-        topic={topic}
-        onDrawingChange={handleDrawingChange}
+        roomId="mockRoomId"
+        playerId="1234"
       />
     </div>
   );
