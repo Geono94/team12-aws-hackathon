@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useResults } from '@/hooks/useResults';
 
@@ -14,9 +14,73 @@ export default function ResultsPage() {
   const [playerCount] = useState(4);
   const [topic] = useState('자유 주제');
   const [activeTab, setActiveTab] = useState<'original' | 'ai'>('original');
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [funFacts] = useState([
+    "🎨 AI가 당신의 그림을 분석하고 있어요",
+    "✨ 새로운 스타일로 변환 중이에요",
+    "🤖 창의적인 요소들을 추가하고 있어요",
+    "🎭 마지막 터치를 더하고 있어요"
+  ]);
+  const [currentFactIndex, setCurrentFactIndex] = useState(0);
+
+  // AI 생성 대기시간 동안의 재미있는 효과들
+  useEffect(() => {
+    if (isLoading) {
+      const progressInterval = setInterval(() => {
+        setLoadingProgress(prev => {
+          if (prev >= 95) return prev;
+          return prev + Math.random() * 15;
+        });
+      }, 500);
+
+      const factInterval = setInterval(() => {
+        setCurrentFactIndex(prev => (prev + 1) % funFacts.length);
+      }, 2000);
+
+      return () => {
+        clearInterval(progressInterval);
+        clearInterval(factInterval);
+      };
+    } else {
+      setLoadingProgress(100);
+    }
+  }, [isLoading, funFacts.length]);
 
   const onGoHome = () => {
     router.push('/');
+  };
+
+  const handleDownloadImage = () => {
+    const imageUrl = activeTab === 'original' ? originalImage : aiImage;
+    if (!imageUrl) return;
+
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = `drawtogether-${activeTab}-${roomId}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleShareResult = async () => {
+    const imageUrl = activeTab === 'original' ? originalImage : aiImage;
+    if (!imageUrl) return;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'DrawTogether 작품',
+          text: `${playerCount}명이 함께 만든 작품을 확인해보세요!`,
+          url: window.location.href
+        });
+      } catch (error) {
+        console.log('공유 취소됨');
+      }
+    } else {
+      // 클립보드에 URL 복사
+      navigator.clipboard.writeText(window.location.href);
+      alert('링크가 클립보드에 복사되었습니다!');
+    }
   };
 
   return (
@@ -55,10 +119,23 @@ export default function ResultsPage() {
           <p style={{
             fontSize: '18px',
             color: '#FFFFFF',
-            marginBottom: '24px'
+            marginBottom: '8px'
           }}>
             함께 만든 작품을 확인해보세요
           </p>
+          {/* 게임 정보 */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '16px',
+            fontSize: '14px',
+            color: '#888',
+            marginTop: '8px'
+          }}>
+            <span>👥 {playerCount}명 참여</span>
+            <span>🎯 주제: {topic}</span>
+            <span>⏱️ 30초 드로잉</span>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -122,7 +199,8 @@ export default function ResultsPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          position: 'relative'
         }}>
           {activeTab === 'original' ? (
             <img
@@ -139,16 +217,42 @@ export default function ResultsPage() {
             <div style={{
               textAlign: 'center',
               color: '#718096',
-              fontSize: '18px'
+              fontSize: '18px',
+              width: '100%'
             }}>
+              {/* 애니메이션 로딩 */}
               <div style={{
-                fontSize: '48px',
+                fontSize: '64px',
                 marginBottom: '16px',
-                animation: 'pulse 2s infinite'
+                animation: 'float 2s ease-in-out infinite'
               }}>
                 🎨
               </div>
-              <p>{loadingMessage}</p>
+              
+              {/* 진행률 바 */}
+              <div style={{
+                width: '80%',
+                height: '8px',
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                borderRadius: '4px',
+                margin: '0 auto 16px',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  width: `${loadingProgress}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #FF6B6B, #4ECDC4)',
+                  borderRadius: '4px',
+                  transition: 'width 0.5s ease'
+                }} />
+              </div>
+              
+              <p style={{ marginBottom: '8px', fontWeight: '600' }}>
+                {funFacts[currentFactIndex]}
+              </p>
+              <p style={{ fontSize: '14px', color: '#999' }}>
+                {Math.round(loadingProgress)}% 완료
+              </p>
             </div>
           ) : aiImage ? (
             <img
@@ -172,76 +276,67 @@ export default function ResultsPage() {
           )}
         </div>
 
-        {/* Stats */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          width: '100%',
-          maxWidth: '500px',
-          marginTop: '24px'
-        }}>
-          <div style={{ textAlign: 'center', flex: 1 }}>
-            <div style={{
-              fontSize: '48px',
-              fontWeight: 'bold',
-              marginBottom: '8px',
-              color: '#FF6B6B'
-            }}>
-              {playerCount}
-            </div>
-            <div style={{
-              fontSize: '16px',
-              color: '#FFFFFF',
-              fontWeight: '500'
-            }}>
-              참여자
-            </div>
-          </div>
-          <div style={{ textAlign: 'center', flex: 1 }}>
-            <div style={{
-              fontSize: '48px',
-              fontWeight: 'bold',
-              marginBottom: '8px',
-              color: '#4ECDC4'
-            }}>
-              30
-            </div>
-            <div style={{
-              fontSize: '16px',
-              color: '#FFFFFF',
-              fontWeight: '500'
-            }}>
-              초 소요
-            </div>
-          </div>
-          <div style={{ textAlign: 'center', flex: 1 }}>
-            <div style={{
-              fontSize: '48px',
-              fontWeight: 'bold',
-              marginBottom: '8px',
-              color: '#45B7D1'
-            }}>
-              95%
-            </div>
-            <div style={{
-              fontSize: '16px',
-              color: '#FFFFFF',
-              fontWeight: '500'
-            }}>
-              AI 신뢰도
-            </div>
-          </div>
-        </div>
-
         {/* Action Buttons */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '16px',
+          gap: '12px',
           width: '100%',
           maxWidth: '400px',
-          marginTop: '32px'
+          marginTop: '24px'
         }}>
+          {/* 저장 및 공유 버튼 */}
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={handleDownloadImage}
+              disabled={!originalImage && !aiImage}
+              style={{
+                flex: 1,
+                padding: '14px 20px',
+                border: '2px solid #4ECDC4',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: (!originalImage && !aiImage) ? 'not-allowed' : 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                background: 'rgba(78,205,196,0.1)',
+                color: '#4ECDC4',
+                opacity: (!originalImage && !aiImage) ? 0.5 : 1
+              }}
+            >
+              💾 저장하기
+            </button>
+            
+            <button
+              onClick={handleShareResult}
+              disabled={!originalImage && !aiImage}
+              style={{
+                flex: 1,
+                padding: '14px 20px',
+                border: '2px solid #45B7D1',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: (!originalImage && !aiImage) ? 'not-allowed' : 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                background: 'rgba(69,183,209,0.1)',
+                color: '#45B7D1',
+                opacity: (!originalImage && !aiImage) ? 0.5 : 1
+              }}
+            >
+              📤 공유하기
+            </button>
+          </div>
+
+          {/* 홈으로 돌아가기 */}
           <button
             onClick={onGoHome}
             style={{
@@ -256,20 +351,43 @@ export default function ResultsPage() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              background: 'rgba(255,255,255,0.1)',
-              color: '#FFFFFF'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
-              e.currentTarget.style.borderColor = '#FF8C8C';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-              e.currentTarget.style.borderColor = '#FF6B6B';
+              background: 'rgba(255,107,107,0.1)',
+              color: '#FF6B6B'
             }}
           >
             🏠 홈으로 돌아가기
           </button>
+        </div>
+
+        {/* 통계 정보 (간소화) */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '32px',
+          marginTop: '16px',
+          padding: '16px',
+          backgroundColor: 'rgba(255,255,255,0.05)',
+          borderRadius: '12px',
+          width: '100%'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#FF6B6B' }}>
+              {playerCount}명
+            </div>
+            <div style={{ fontSize: '12px', color: '#888' }}>참여자</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#4ECDC4' }}>
+              30초
+            </div>
+            <div style={{ fontSize: '12px', color: '#888' }}>드로잉</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#45B7D1' }}>
+              {aiImage ? '완료' : '대기중'}
+            </div>
+            <div style={{ fontSize: '12px', color: '#888' }}>AI 변환</div>
+          </div>
         </div>
       </div>
     </div>
