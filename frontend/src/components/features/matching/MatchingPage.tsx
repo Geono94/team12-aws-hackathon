@@ -107,7 +107,18 @@ export default function MatchingPage({
               >
                 {player ? (
                   <>
-                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>👤</div>
+                    <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+                      <img 
+                        src={`https://drawtogether-test-1757052413482.s3.us-east-1.amazonaws.com/images/char_${index + 1}.gif`}
+                        alt={`Character ${index + 1}`}
+                        style={{
+                          width: '96px',
+                          height: '96px',
+                          borderRadius: '8px',
+                          objectFit: 'cover'
+                        }}
+                      />
+                    </div>
                     플레이어 {index + 1}
                   </>
                 ) : (
