@@ -125,8 +125,10 @@ export class GameManager {
     if (joinedRoom.players.size >= GAME_CONFIG.MAX_PLAYERS) {
       console.log(`[${roomId}] Max players reached! Current state: ${joinedRoom.state.state}`);
       if (joinedRoom.state.state !== 'countdown' && joinedRoom.state.state !== 'playing') {
-        console.log(`[${roomId}] Auto-starting game...`);
-        this.startAutoGame(roomId);
+        console.log(`[${roomId}] Auto-starting game in 2 seconds...`);
+        setTimeout(() => {
+          this.startAutoGame(roomId);
+        }, 4000); // 4초 지연 - 마지막 플레이어도 대기실 화면을 볼 수 있도록
       } else {
         console.log(`[${roomId}] Game already started or starting (state: ${joinedRoom.state.state})`);
       }
@@ -209,8 +211,10 @@ export class GameManager {
     if (room.players.size >= GAME_CONFIG.MAX_PLAYERS) {
       console.log(`[${roomId}] Max players reached! Current state: ${room.state.state}`);
       if (room.state.state !== 'countdown' && room.state.state !== 'playing') {
-        console.log(`[${roomId}] Auto-starting game...`);
-        this.startAutoGame(roomId);
+        console.log(`[${roomId}] Auto-starting game in 2 seconds...`);
+        setTimeout(() => {
+          this.startAutoGame(roomId);
+        }, 2000); // 2초 지연 - 마지막 플레이어도 대기실 화면을 볼 수 있도록
       } else {
         console.log(`[${roomId}] Game already started or starting (state: ${room.state.state})`);
       }
