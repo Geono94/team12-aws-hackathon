@@ -180,14 +180,127 @@ export default function DrawingCanvas({ roomId, playerId }: DrawingCanvasProps) 
     }}>
       {/* Game Status */}
       <div style={{ textAlign: 'center', marginBottom: SPACING.md }}>
-        <div style={{ marginBottom: SPACING.sm }}>
-          <span style={{ fontSize: '18px', fontWeight: '600' }}>Players: {playerCount}/4</span>
-          {gameState === 'waiting' && playerCount < 4 && (
-            <div style={{ fontSize: '16px', color: COLORS.neutral.text, marginTop: SPACING.xs }}>
-              Waiting for more players...
+        {gameState === 'waiting' ? (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: SPACING.lg,
+            marginBottom: SPACING.sm
+          }}>
+            {/* Left Characters */}
+            <div style={{ display: 'flex', gap: SPACING.sm }}>
+              {[1, 2].map((charNumber) => {
+                const isActive = charNumber <= playerCount;
+                return (
+                  <div
+                    key={charNumber}
+                    style={{
+                      position: 'relative',
+                      opacity: isActive ? 1 : 0.3,
+                      transition: 'opacity 0.3s ease'
+                    }}
+                  >
+                    <img
+                      src={`https://drawtogether-test-1757052413482.s3.us-east-1.amazonaws.com/images/char_${charNumber}.png`}
+                      alt={`Character ${charNumber}`}
+                      style={{
+                        width: '90px',
+                        height: '90px',
+                        border: isActive ? `3px solid ${COLORS.primary.main}` : '3px solid transparent',
+                        objectFit: 'contain',
+                        transition: 'border 0.3s ease'
+                      }}
+                    />
+                    {isActive && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '-5px',
+                        right: '-5px',
+                        width: '20px',
+                        height: '20px',
+                        backgroundColor: COLORS.primary.accent,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        color: 'white',
+                        fontWeight: 'bold'
+                      }}>
+                        ✓
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          )}
-        </div>
+            
+            {/* Center Text */}
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: SPACING.xs }}>
+                Players: {playerCount}/4
+              </div>
+              {playerCount < 4 && (
+                <div style={{ fontSize: '16px', color: COLORS.neutral.text }}>
+                  Waiting for more players...
+                </div>
+              )}
+            </div>
+            
+            {/* Right Characters */}
+            <div style={{ display: 'flex', gap: SPACING.sm }}>
+              {[3, 4].map((charNumber) => {
+                const isActive = charNumber <= playerCount;
+                return (
+                  <div
+                    key={charNumber}
+                    style={{
+                      position: 'relative',
+                      opacity: isActive ? 1 : 0.3,
+                      transition: 'opacity 0.3s ease'
+                    }}
+                  >
+                    <img
+                      src={`https://drawtogether-test-1757052413482.s3.us-east-1.amazonaws.com/images/char_${charNumber}.png`}
+                      alt={`Character ${charNumber}`}
+                      style={{
+                        width: '90px',
+                        height: '90px',
+                        border: isActive ? `3px solid ${COLORS.primary.main}` : '3px solid transparent',
+                        objectFit: 'contain',
+                        transition: 'border 0.3s ease'
+                      }}
+                    />
+                    {isActive && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '-5px',
+                        right: '-5px',
+                        width: '20px',
+                        height: '20px',
+                        backgroundColor: COLORS.primary.accent,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        color: 'white',
+                        fontWeight: 'bold'
+                      }}>
+                        ✓
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div style={{ marginBottom: SPACING.sm }}>
+            <span style={{ fontSize: '18px', fontWeight: '600' }}>Players: {playerCount}/4</span>
+          </div>
+        )}
         
         {gameState === 'countdown' && (
           <div style={{ fontSize: '48px', fontWeight: 'bold', color: COLORS.primary.main }}>
