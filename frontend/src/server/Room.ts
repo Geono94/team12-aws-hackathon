@@ -98,9 +98,7 @@ export class Room {
   }
 
   private async createPngFromStrokeData(strokesData: any[]) {
-    console.log(JSON.stringify(strokesData, null, 2))
     const canvas = createCanvas(GAME_CONFIG.CANVAS_SIZE.width, GAME_CONFIG.CANVAS_SIZE.height);
-    console.log(strokesData);
     const ctx = canvas.getContext('2d');
     
     // White background
@@ -218,16 +216,8 @@ export class Room {
       console.log(strokesArray)
 
       if (strokesArray) {
-
         const strokesData = strokesArray.toArray();
         console.log(`[${this.id}] Found ${strokesData.length} strokes`);
-        
-        // Save JSON for debugging
-        const fs = require('fs');
-        const jsonFilename = `debug_${this.id}.json`;
-        fs.writeFileSync(jsonFilename, JSON.stringify(strokesData, null, 2));
-        console.log(`[${this.id}] Debug JSON saved: ${jsonFilename}`);
-        
         await this.createPngFromStrokeData(strokesData);
       }
     }

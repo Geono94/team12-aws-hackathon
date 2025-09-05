@@ -33,6 +33,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   const [currentColor, setCurrentColor] = useState<string>(COLORS.primary.main);
   const [brushSize, setBrushSize] = useState(5);
   const [currentStroke, setCurrentStroke] = useState<number[][]>([]);
+  const [currentStrokeIndex, setCurrentStrokeIndex] = useState<number>(-1);
   const [gameState, setGameState] = useState<GameStateType>('waiting');
   const [topic, setTopic] = useState<string>('고양이');
   const [countdown, setCountdown] = useState<number>(0);
@@ -41,7 +42,6 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   const [players, setPlayers] = useState<PlayerInfo[]>([]);
 
   const { doc, connected, onMessage, sendMessage } = useYjs();
-  const { clearDrawing } = useGameRoom(roomId);
 
   const handleLeaveRoom = async () => {
     try {
@@ -216,6 +216,17 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     
     const point = getEventPos(e);
     setCurrentStroke([point]);
+    
+    // Create new stroke in Yjs array
+    if (strokesArray) {
+      const strokeData: StrokeData = {
+        color: currentColor,
+        size: brushSize,
+        pathData: ''
+      };
+      strokesArray.push([strokeData]);
+      setCurrentStrokeIndex(strokesArray.length - 1);
+    }
   };
 
   const draw = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
@@ -225,6 +236,27 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     const point = getEventPos(e);
     const newStroke = [...currentStroke, point];
     setCurrentStroke(newStroke);
+    
+    // Update stroke in Yjs array for real-time sync
+    if (strokesArray && currentStrokeIndex >= 0 && newStroke.length > 1) {
+      const stroke = getStroke(newStroke, {
+        size: brushSize * 2,
+        thinning: 0.5,
+        smoothing: 0.5,
+        streamline: 0.5,
+      });
+      
+      const pathData = getSvgPathFromStroke(stroke);
+      
+      const strokeData: StrokeData = {
+        color: currentColor,
+        size: brushSize,
+        pathData
+      };
+      
+      strokesArray.delete(currentStrokeIndex, 1);
+      strokesArray.insert(currentStrokeIndex, [strokeData]);
+    }
     
     // Real-time preview
     if (previewRef.current && newStroke.length > 1) {
@@ -252,23 +284,25 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     
     setIsDrawing(false);
     
-    const stroke = getStroke(currentStroke, {
-      size: brushSize * 2,
-      thinning: 0.5,
-      smoothing: 0.5,
-      streamline: 0.5,
-    });
-    
-    const pathData = getSvgPathFromStroke(stroke);
-    
-    const strokeData: StrokeData = {
-      color: currentColor,
-      size: brushSize,
-      pathData
-    };
-    
-    if (strokesArray) {
-      strokesArray.push([strokeData]);
+    // Final update to Yjs array
+    if (strokesArray && currentStrokeIndex >= 0 && currentStroke.length > 1) {
+      const stroke = getStroke(currentStroke, {
+        size: brushSize * 2,
+        thinning: 0.5,
+        smoothing: 0.5,
+        streamline: 0.5,
+      });
+      
+      const pathData = getSvgPathFromStroke(stroke);
+      
+      const strokeData: StrokeData = {
+        color: currentColor,
+        size: brushSize,
+        pathData
+      };
+      
+      strokesArray.delete(currentStrokeIndex, 1);
+      strokesArray.insert(currentStrokeIndex, [strokeData]);
     }
     
     // Clear preview
@@ -277,6 +311,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     }
     
     setCurrentStroke([]);
+    setCurrentStrokeIndex(-1);
   };
 
   const clearCanvas = () => {
