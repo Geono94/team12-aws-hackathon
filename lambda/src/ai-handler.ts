@@ -1,5 +1,28 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { GameAIProcessor } from './ai/game-ai-processor';
+import { DynamoDB } from 'aws-sdk';
+
+const dynamodb = new DynamoDB.DocumentClient();
+
+const updateRoomWithAIResult = async (roomId: string, aiResult: any) => {
+    try {
+        await dynamodb.update({
+            TableName: 'DrawTogether-Rooms',
+            Key: { roomId },
+            UpdateExpression: 'SET aiGeneratedImageUrl = :aiUrl, aiAnalysisResult = :analysis, aiProcessedAt = :timestamp, aiStatus = :status',
+            ExpressionAttributeValues: {
+                ':aiUrl': aiResult.outputUrl || '',
+                ':analysis': aiResult.analysis || {},
+                ':timestamp': Date.now(),
+                ':status': 'completed'
+            }
+        }).promise();
+        
+        console.log(`AI 결과 DynamoDB 업데이트 완료: ${roomId}`);
+    } catch (error) {
+        console.error('DynamoDB 업데이트 실패:', error);
+    }
+};
 
 const CORS_HEADERS = {
     'Content-Type': 'application/json',
@@ -32,6 +55,10 @@ export const handler = async (event: any): Promise<APIGatewayProxyResult | void>
             });
             
             console.log('S3 이미지 처리 완료:', result);
+            
+            // Update room with AI results
+            await updateRoomWithAIResult(event.roomId, result);
+            
             return;
         } catch (error) {
             console.error('S3 이미지 처리 실패:', error);
@@ -79,12 +106,25 @@ export const handler = async (event: any): Promise<APIGatewayProxyResult | void>
         const result = await Promise.race([
             gameAI.processGameRound(imageBase64),
             timeoutPromise
-        ]);
+        ]) as any;
+
+        console.log('AI 처리 완료:', {
+            hasAnalysis: !!result.analysis,
+            hasGeneratedImages: result.generatedImages?.length || 0,
+            timestamp: result.timestamp
+        });
 
         return createResponse(200, {
             success: true,
-            data: result,
-            timestamp: new Date().toISOString()
+            data: {
+                analysis: result.analysis,
+                generatedImages: result.generatedImages?.map((img: any) => ({
+                    type: img.type,
+                    success: img.success,
+                    url: img.url // base64 대신 S3 URL만 반환
+                })),
+                timestamp: result.timestamp
+            }
         });
 
     } catch (error) {

@@ -1,9 +1,9 @@
 import {BedrockImageProcessor, ImageAnalysisResult, AnalysisResponse} from './bedrock-image-processor';
 import {GeminiImageProcessor} from './gemini-image-processor';
 import {writeFileSync, unlinkSync, existsSync} from 'fs';
-import AWS from 'aws-sdk';
+import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 
-const s3 = new AWS.S3();
+const s3 = new S3Client({});
 
 export interface GameResult {
     analysis: ImageAnalysisResult;
@@ -15,7 +15,7 @@ export interface GameResult {
 
 export interface GeneratedImage {
     type: 'gemini';
-    data: string | null; // base64 데이터
+    url?: string; // S3 URL
     success: boolean;
 }
 
@@ -35,49 +35,67 @@ export class GameAIProcessor {
         this.gemini = new GeminiImageProcessor();
     }
 
-    async processS3Image(request: S3ImageProcessRequest): Promise<void> {
+    async processS3Image(request: S3ImageProcessRequest): Promise<any> {
         console.log('S3 이미지 처리 시작 (Gemini만 사용):', request);
         
         try {
             // Download image from S3
-            const s3Object = await s3.getObject({
+            const getCommand = new GetObjectCommand({
                 Bucket: request.bucketName,
                 Key: request.inputKey
-            }).promise();
+            });
+            const s3Object = await s3.send(getCommand);
 
             if (!s3Object.Body) {
                 throw new Error('S3 객체가 비어있습니다');
             }
 
-            const imageBuffer = s3Object.Body as Buffer;
+            const imageBuffer = Buffer.from(await s3Object.Body.transformToByteArray());
             const imageBase64 = imageBuffer.toString('base64');
+
+            // Save to temp file for Gemini
+            const tempPath = `/tmp/temp_${Date.now()}.png`;
+            writeFileSync(tempPath, imageBuffer);
 
             // First analyze with Claude to get prompt
             const analysisResult = await this.bedrock.analyzeImage(imageBase64);
             const prompt = analysisResult.regenerationPrompt || "Transform this drawing into a beautiful artistic style";
             
-            // Process with Gemini using Claude's analysis as prompt
+            // Process with Gemini using base64 data
             const generatedImage = await this.gemini.generateImage(prompt, imageBase64);
             
+            // Clean up temp file
+            if (existsSync(tempPath)) {
+                unlinkSync(tempPath);
+            }
+            
+            let outputUrl = '';
             if (typeof generatedImage === 'object' && generatedImage !== null && (generatedImage as any).success && (generatedImage as any).data) {
-                await s3.putObject({
+                const putCommand = new PutObjectCommand({
                     Bucket: request.bucketName,
                     Key: request.outputKey,
                     Body: Buffer.from((generatedImage as any).data, 'base64'),
                     ContentType: 'image/png'
-                }).promise();
-                
+                });
+                await s3.send(putCommand);
+                outputUrl = `https://${request.bucketName}.s3.amazonaws.com/${request.outputKey}`;
                 console.log(`AI 처리된 이미지 업로드 완료: ${request.outputKey}`);
             } else if (typeof generatedImage === 'string') {
-                await s3.putObject({
+                const putCommand = new PutObjectCommand({
                     Bucket: request.bucketName,
                     Key: request.outputKey,
                     Body: Buffer.from(generatedImage, 'base64'),
                     ContentType: 'image/png'
-                }).promise();
-                
+                });
+                await s3.send(putCommand);
+                outputUrl = `https://${request.bucketName}.s3.amazonaws.com/${request.outputKey}`;
                 console.log(`AI 처리된 이미지 업로드 완료: ${request.outputKey}`);
             }
+
+            return {
+                analysis: analysisResult, // Claude의 전체 JSON 분석 결과
+                outputUrl: outputUrl
+            };
 
         } catch (error) {
             console.error('S3 이미지 처리 실패:', error);
@@ -89,7 +107,7 @@ export class GameAIProcessor {
         let tempPath: string | null = null;
 
         try {
-            tempPath = `./temp_${Date.now()}.jpg`;
+            tempPath = `/tmp/temp_${Date.now()}.jpg`;
 
             const imageBuffer = Buffer.from(imageBase64, 'base64');
             writeFileSync(tempPath, imageBuffer);
@@ -179,13 +197,11 @@ export class GameAIProcessor {
                 console.log('✅ Nova Canvas 이미지 생성 완료');
                 return [{
                     type: 'gemini',
-                    data: result, // base64 데이터 직접 반환
                     success: true
                 }];
             } else {
                 return [{
                     type: 'gemini',
-                    data: null,
                     success: false
                 }];
             }
@@ -193,7 +209,6 @@ export class GameAIProcessor {
             console.error('Nova Canvas 생성 실패:', error.message);
             return [{
                 type: 'gemini',
-                data: null,
                 success: false
             }];
         }
@@ -204,14 +219,12 @@ export class GameAIProcessor {
             const geminiResult = await this.gemini.generateImage(prompt, imagePath);
             return [{
                 type: 'gemini',
-                data: geminiResult, // base64 데이터 또는 null
                 success: geminiResult !== null
             }];
         } catch (error: any) {
             console.error('Gemini 생성 실패:', error.message);
             return [{
                 type: 'gemini',
-                data: null,
                 success: false
             }];
         }
@@ -245,7 +258,7 @@ export class GameAIProcessor {
         console.log('🎮 게임 라운드 AI 처리 시작 (base64)...');
 
         // 임시 파일로 저장
-        const tempPath = `./temp_${Date.now()}.jpg`;
+        const tempPath = `/tmp/temp_${Date.now()}.jpg`;
         const imageBuffer = Buffer.from(drawingBase64.replace(/^data:image\/[^;]+;base64,/, ''), 'base64');
         writeFileSync(tempPath, imageBuffer);
 

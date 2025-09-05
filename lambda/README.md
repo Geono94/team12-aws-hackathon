@@ -124,14 +124,25 @@ AWS_REGION=us-east-1
 
 ## 배포
 
+### CDK 전체 배포
 ```bash
-# CDK로 배포
+# CDK로 전체 스택 배포
 cd ..
 cdk deploy
-
-# Lambda만 업데이트
-cdk deploy --hotswap
 ```
+
+### Lambda ZIP 직접 배포 (빠른 수정)
+```bash
+# Lambda 함수만 빠르게 업데이트
+./deploy-lambda.sh
+```
+
+배포 스크립트는 다음 작업을 수행합니다:
+1. TypeScript 컴파일 (`npm run build`)
+2. Lambda 코드 ZIP 압축
+3. AWS CLI로 함수 코드 업데이트
+   - AI Handler 함수
+   - S3 Trigger Handler 함수
 
 ## 주의사항
 

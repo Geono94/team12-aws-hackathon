@@ -21,6 +21,7 @@ coverage/
 
 # Lambda deployment
 lambda-deployment.zip
+lambda-code.zip
 
 # Temporary files
 temp_*.jpg
