@@ -8,22 +8,6 @@ describe('BedrockImageProcessor', () => {
     processor = new BedrockImageProcessor();
   });
 
-  describe('encodeImage', () => {
-    test('should encode image to base64', () => {
-      const mockImagePath = './test-image.jpg';
-      const mockBuffer = Buffer.from('fake-image-data');
-      
-      jest.spyOn(fs, 'readFileSync').mockReturnValue(mockBuffer);
-      
-      const result = processor.encodeImage(mockImagePath);
-      
-      expect(result).toBe(mockBuffer.toString('base64'));
-      expect(fs.readFileSync).toHaveBeenCalledWith(mockImagePath);
-      
-      (fs.readFileSync as jest.Mock).mockRestore();
-    });
-  });
-
   describe('analyzeImage', () => {
     test('should handle analysis errors gracefully', async () => {
       const mockImagePath = './non-existent.jpg';
@@ -38,13 +22,9 @@ describe('BedrockImageProcessor', () => {
     });
   });
 
-  describe('regenerateImage', () => {
-    test('should be a function that accepts prompt and style', () => {
-      expect(typeof processor.regenerateImage).toBe('function');
-      
-      // Test that it can be called with different parameter combinations
-      expect(() => processor.regenerateImage('test prompt')).not.toThrow();
-      expect(() => processor.regenerateImage('test prompt', 'cartoon')).not.toThrow();
+  describe('regenerateImageFromFileWithSettings', () => {
+    test('should be a function that accepts required parameters', () => {
+      expect(typeof processor.regenerateImageFromFileWithSettings).toBe('function');
     });
   });
 });

@@ -1,0 +1,29 @@
+# DrawTogether AI Lambda 테스트
+
+### Health Check
+GET http://localhost:3001/health
+
+### AI 이미지 분석 및 재생성 (poc1.png)
+POST http://localhost:3001/ai/generate/file
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="image"; filename="poc1.png"
+Content-Type: image/png
+
+< ./temp/poc1.png
+--boundary--
+
+### 저장된 이미지 확인
+GET http://localhost:3001/temp
+
+### 이미지 분석만 (Opus)
+POST http://localhost:3001/ai/analyze/file
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="image"; filename="poc1.png"
+Content-Type: image/png
+
+< ./temp/poc1.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--

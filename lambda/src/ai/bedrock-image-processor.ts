@@ -3,30 +3,43 @@ import { readFileSync } from 'fs';
 
 export interface ImageAnalysisResult {
     subject: string;
-    score: number;
-    mvp: string;
-    worst: string;
     style: string;
+    quality: number;
+    description: string;
+    score?: number;
+    mvp?: string;
+    worst?: string;
+}
+
+export interface AnalysisResponse {
+    evaluation: {
+        subject: string;
+        technicalEvaluation: string;
+        creativityEvaluation: string;
+        mvp: string;
+        worst: string;
+        score: number;
+        style: string;
+    };
+    regenerationPrompt: string;
 }
 
 export class BedrockImageProcessor {
     private client: BedrockRuntimeClient;
 
-    constructor(region: string = 'us-east-1') {
-        this.client = new BedrockRuntimeClient({ region });
+    constructor() {
+        this.client = new BedrockRuntimeClient({
+            region: 'us-east-1'
+        });
     }
 
-    encodeImage(imagePath: string): string {
+    async analyzeImage(imagePath: string): Promise<AnalysisResponse> {
+        const mediaType = imagePath.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
         const imageBuffer = readFileSync(imagePath);
-        return imageBuffer.toString('base64');
-    }
-
-    async analyzeImage(imagePath: string): Promise<string> {
-        const base64Image = this.encodeImage(imagePath);
         
         const payload = {
             anthropic_version: "bedrock-2023-05-31",
-            max_tokens: 1000,
+            max_tokens: 1500,
             messages: [{
                 role: "user",
                 content: [
@@ -34,21 +47,28 @@ export class BedrockImageProcessor {
                         type: "image",
                         source: {
                             type: "base64",
-                            media_type: "image/jpeg",
-                            data: base64Image
+                            media_type: mediaType,
+                            data: imageBuffer.toString('base64')
                         }
                     },
                     {
                         type: "text",
-                        text: `이 그림을 분석하고 다음 형식으로 평가해주세요:
-                        
-1. 주제/내용: 무엇을 그린 것인지
-2. 기술적 평가: 선, 색상, 구성 등
-3. 창의성 평가: 독창성, 표현력
-4. MVP (가장 좋은 점): 
-5. Worst (개선점):
-6. 전체 점수: /10점
-7. 재생성 스타일 제안: 어떤 스타일로 재생성하면 좋을지`
+                        text: `이 그림을 분석하고 다음 JSON 형식으로 응답해주세요:
+
+{
+  "evaluation": {
+    "subject": "무엇을 그린 것인지",
+    "technicalEvaluation": "선, 색상, 구성 등 기술적 평가",
+    "creativityEvaluation": "독창성, 표현력 평가",
+    "mvp": "가장 좋은 점",
+    "worst": "개선점",
+    "score": 10점 만점 점수(숫자),
+    "style": "그림의 스타일 (예: 수채화, 만화, 사실적, 추상적 등)"
+  },
+  "regenerationPrompt": "AI 이미지 재생성용 상세 프롬프트 (영어로)"
+}
+
+반드시 위 JSON 형식으로만 응답해주세요.`
                     }
                 ]
             }]
@@ -65,21 +85,33 @@ export class BedrockImageProcessor {
         }
         
         const result = JSON.parse(new TextDecoder().decode(response.body));
-        return result.content[0].text;
+        const analysisText = result.content[0].text;
+        
+        try {
+            return JSON.parse(analysisText);
+        } catch (error) {
+            console.error('JSON 파싱 실패:', analysisText);
+            throw new Error('Invalid JSON response from Claude');
+        }
     }
 
-    async regenerateImage(prompt: string, style: string = "photographic"): Promise<string> {
+    async regenerateImageFromFileWithSettings(prompt: string, originalImagePath: string, similarity: number, cfgScale: number): Promise<string> {
+        const imageBuffer = readFileSync(originalImagePath);
+        
         const payload = {
-            taskType: "TEXT_IMAGE",
-            textToImageParams: {
-                text: `${prompt}, ${style} style, high quality, detailed`,
-                negativeText: "low quality, blurry, distorted, ugly, bad anatomy"
+            taskType: "IMAGE_VARIATION",
+            imageVariationParams: {
+                text: prompt,
+                images: [imageBuffer.toString('base64')],
+                negativeText: "inappropriate content, violence, adult content",
+                similarityStrength: similarity
             },
             imageGenerationConfig: {
                 numberOfImages: 1,
+                quality: "standard",
                 height: 512,
                 width: 512,
-                cfgScale: 7.0,
+                cfgScale: cfgScale,
                 seed: Math.floor(Math.random() * 1000000)
             }
         };
