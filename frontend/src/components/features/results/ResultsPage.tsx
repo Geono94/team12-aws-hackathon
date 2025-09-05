@@ -26,13 +26,13 @@ export default function ResultsPage({
   return (
     <div style={{
       fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-      backgroundColor: '#f8f9fa',
+      backgroundColor: '#000000',
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      color: '#2D3748',
+      color: '#FFFFFF',
       padding: '24px'
     }}>
       <div style={{
@@ -58,7 +58,7 @@ export default function ResultsPage({
           </h1>
           <p style={{
             fontSize: '18px',
-            color: '#718096',
+            color: '#FFFFFF',
             marginBottom: '24px'
           }}>
             함께 만든 작품을 확인해보세요
@@ -68,7 +68,7 @@ export default function ResultsPage({
         {/* Tabs */}
         <div style={{
           display: 'flex',
-          backgroundColor: '#E2E8F0',
+          backgroundColor: 'rgba(255,255,255,0.1)',
           borderRadius: '16px',
           padding: '4px',
           marginBottom: '24px',
@@ -80,14 +80,14 @@ export default function ResultsPage({
             style={{
               flex: 1,
               padding: '12px 16px',
-              border: 'none',
+              border: activeTab === 'original' ? '2px solid #FF6B6B' : '2px solid transparent',
               borderRadius: '12px',
               fontSize: '16px',
               fontWeight: '600',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
-              background: activeTab === 'original' ? 'white' : 'transparent',
-              color: activeTab === 'original' ? '#2D3748' : '#718096',
+              background: activeTab === 'original' ? 'rgba(255,255,255,0.2)' : 'transparent',
+              color: activeTab === 'original' ? '#FFFFFF' : '#888888',
               boxShadow: activeTab === 'original' ? '0 2px 8px rgba(0,0,0,0.1)' : 'none'
             }}
           >
@@ -99,14 +99,14 @@ export default function ResultsPage({
             style={{
               flex: 1,
               padding: '12px 16px',
-              border: 'none',
+              border: activeTab === 'ai' ? '2px solid #FF6B6B' : '2px solid transparent',
               borderRadius: '12px',
               fontSize: '16px',
               fontWeight: '600',
               cursor: isLoading || !aiImage ? 'not-allowed' : 'pointer',
               transition: 'all 0.3s ease',
-              background: activeTab === 'ai' ? 'white' : 'transparent',
-              color: activeTab === 'ai' ? '#2D3748' : '#718096',
+              background: activeTab === 'ai' ? 'rgba(255,255,255,0.2)' : 'transparent',
+              color: activeTab === 'ai' ? '#FFFFFF' : '#888888',
               boxShadow: activeTab === 'ai' ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
               opacity: isLoading || !aiImage ? 0.6 : 1
             }}
@@ -195,7 +195,7 @@ export default function ResultsPage({
             </div>
             <div style={{
               fontSize: '16px',
-              color: '#718096',
+              color: '#FFFFFF',
               fontWeight: '500'
             }}>
               참여자
@@ -212,7 +212,7 @@ export default function ResultsPage({
             </div>
             <div style={{
               fontSize: '16px',
-              color: '#718096',
+              color: '#FFFFFF',
               fontWeight: '500'
             }}>
               초 소요
@@ -229,7 +229,7 @@ export default function ResultsPage({
             </div>
             <div style={{
               fontSize: '16px',
-              color: '#718096',
+              color: '#FFFFFF',
               fontWeight: '500'
             }}>
               AI 신뢰도
@@ -250,7 +250,7 @@ export default function ResultsPage({
             onClick={onPlayAgain}
             style={{
               padding: '16px 32px',
-              border: 'none',
+              border: '2px solid #FF6B6B',
               borderRadius: '16px',
               fontSize: '18px',
               fontWeight: '600',
@@ -279,7 +279,7 @@ export default function ResultsPage({
             onClick={onGoHome}
             style={{
               padding: '16px 32px',
-              border: '2px solid #E2E8F0',
+              border: '2px solid #FF6B6B',
               borderRadius: '16px',
               fontSize: '18px',
               fontWeight: '600',
@@ -289,16 +289,16 @@ export default function ResultsPage({
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              background: 'white',
-              color: '#2D3748'
+              background: 'rgba(255,255,255,0.1)',
+              color: '#FFFFFF'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#f8f9fa';
-              e.currentTarget.style.borderColor = '#CBD5E0';
+              e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+              e.currentTarget.style.borderColor = '#FF8C8C';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'white';
-              e.currentTarget.style.borderColor = '#E2E8F0';
+              e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+              e.currentTarget.style.borderColor = '#FF6B6B';
             }}
           >
             🏠 홈으로 돌아가기
