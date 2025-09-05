@@ -2,7 +2,7 @@ import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
 import WebSocket from 'ws';
-import { GameManager, setupYjsWebSocket, setupGameWebSocket } from './src/lib/websocket-server';
+import { setupYjsWebSocket } from './src/lib/websocket-server';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = 'localhost';
@@ -10,8 +10,6 @@ const port = process.env.PORT || 3000;
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
-
-const gameManager = new GameManager();
 
 app.prepare().then(() => {
   const server = createServer(async (req, res) => {
@@ -25,24 +23,20 @@ app.prepare().then(() => {
     }
   });
 
-  // Yjs WebSocket server
-  const yjsWss = new WebSocket.Server({ 
+  // Yjs WebSocket server (handles both drawing and game state)
+  const wss = new WebSocket.Server({ 
     server,
-    path: '/yjs'
+    path: '/',
+    verifyClient: (info) => {
+      console.log('WebSocket connection attempt:', info.req.url);
+      return true;
+    }
   });
-  setupYjsWebSocket(yjsWss);
-
-  // Game WebSocket server
-  const gameWss = new WebSocket.Server({ 
-    server,
-    path: '/game'
-  });
-  setupGameWebSocket(gameWss, gameManager);
+  setupYjsWebSocket(wss);
 
   server.listen(port, (err?: Error) => {
     if (err) throw err;
     console.log(`> Ready on http://${hostname}:${port}`);
-    console.log(`> Yjs WebSocket on ws://${hostname}:${port}/yjs`);
-    console.log(`> Game WebSocket on ws://${hostname}:${port}/game`);
+    console.log(`> WebSocket on ws://${hostname}:${port}`);
   });
 });

@@ -162,40 +162,62 @@ export class GameManager {
 
 export function setupYjsWebSocket(wss: WebSocket.Server): void {
   wss.on('connection', (ws, req) => {
-    console.log('New Yjs WebSocket connection');
-    setupWSConnection(ws, req);
-  });
-}
-
-export function setupGameWebSocket(wss: WebSocket.Server, gameManager: GameManager): void {
-  wss.on('connection', (ws) => {
-    console.log('New game WebSocket connection');
+    console.log('New WebSocket connection');
     
-    ws.on('message', (message) => {
-      try {
-        const data = JSON.parse(message.toString());
-        handleGameMessage(ws, data, gameManager);
-      } catch (error) {
-        console.error('Game message error:', error);
-      }
+    // Setup Yjs connection with logging
+    const conn = setupWSConnection(ws, req, {
+      docName: req.url?.split('/').pop() || 'default',
+      gc: true
     });
-
-    ws.on('close', () => {
-      // Clean up handled by GameManager
-    });
+    
+    // Log Yjs document changes
+    if (conn && conn.doc) {
+      conn.doc.on('update', (update: Uint8Array, origin: any) => {
+        console.log(`[Yjs] Document updated:`, {
+          docName: conn.doc?.guid,
+          updateSize: update.length,
+          origin: origin?.constructor?.name || 'unknown'
+        });
+      });
+      
+      conn.doc.on('subdocs', ({ added, removed }: { added: Set<Y.Doc>, removed: Set<Y.Doc> }) => {
+        console.log(`[Yjs] Subdocs changed:`, {
+          added: added.size,
+          removed: removed.size
+        });
+      });
+      
+      // Log specific map and array changes
+      const gameState = conn.doc.getMap('gameState');
+      const players = conn.doc.getArray('players');
+      const drawing = conn.doc.getMap('drawing');
+      
+      gameState.observe((event) => {
+        console.log(`[Yjs] GameState changed:`, {
+          changes: Array.from(event.changes.keys.entries()).map(([key, change]) => ({
+            key,
+            action: change.action,
+            oldValue: change.oldValue,
+            newValue: gameState.get(key)
+          }))
+        });
+      });
+      
+      players.observe((event) => {
+        console.log(`[Yjs] Players changed:`, {
+          changes: event.changes.delta,
+          currentPlayers: players.toArray()
+        });
+      });
+      
+      drawing.observe((event) => {
+        console.log(`[Yjs] Drawing changed:`, {
+          changes: Array.from(event.changes.keys.entries()).map(([key, change]) => ({
+            key,
+            action: change.action
+          }))
+        });
+      });
+    }
   });
-}
-
-function handleGameMessage(ws: WebSocket, message: any, gameManager: GameManager): void {
-  switch (message.action) {
-    case 'joinGame':
-      gameManager.handleJoinGame(ws, message);
-      break;
-    case 'startGame':
-      gameManager.handleStartGame(message);
-      break;
-    case 'endGame':
-      gameManager.handleEndGame(message);
-      break;
-  }
 }

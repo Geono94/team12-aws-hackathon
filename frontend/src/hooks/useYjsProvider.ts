@@ -8,12 +8,20 @@ export const useYjsProvider = (roomId: string, wsUrl: string) => {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    if (!roomId || !wsUrl) return;
+    if (!roomId || !wsUrl || typeof window === 'undefined') return;
 
-    const wsProvider = new WebsocketProvider(wsUrl, roomId, doc);
+    const wsProvider = new WebsocketProvider(wsUrl, roomId, doc, {
+      connect: true,
+      params: {}
+    });
     
     wsProvider.on('status', (event: any) => {
+      console.log('WebSocket status:', event.status);
       setConnected(event.status === 'connected');
+    });
+
+    wsProvider.on('connection-error', (error: any) => {
+      console.error('WebSocket connection error:', error);
     });
 
     setProvider(wsProvider);
