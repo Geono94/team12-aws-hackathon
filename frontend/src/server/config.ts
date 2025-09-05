@@ -1,6 +1,6 @@
 export const GAME_CONFIG = {
   MAX_PLAYERS: 1,
-  GAME_TIME: 30, // 30 seconds
+  GAME_TIME: 10, // 30 seconds
   COUNTDOWN_TIME: 3, // 3 seconds
   CANVAS_SIZE: {
     width: 800,
@@ -20,3 +20,5 @@ export const GAME_STATES = {
   PROCESSING: 'processing',
   RESULTS: 'results',
 } as const;
+
+export const S3_BUCKET_NAME = 'drawtogether-test-1757052413482';

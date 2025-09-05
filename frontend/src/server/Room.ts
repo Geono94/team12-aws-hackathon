@@ -1,5 +1,9 @@
 import WebSocket from 'ws';
-import { GAME_CONFIG } from './config';
+import { createCanvas } from 'canvas';
+import fs from 'fs';
+import path from 'path';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { GAME_CONFIG, S3_BUCKET_NAME } from './config';
 
 export interface PlayerInfo {
   id: string;
@@ -70,6 +74,48 @@ export class Room {
     return this.players.size === 0;
   }
 
+  private async createPngFromDrawingData(drawingData: any[]) {
+    const canvas = createCanvas(800, 600);
+    const ctx = canvas.getContext('2d');
+    
+    // White background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, 800, 600);
+    
+    // Draw points
+    drawingData.forEach((point: any) => {
+      if (point.x && point.y) {
+        ctx.fillStyle = point.color || '#000000';
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, (point.size || 5) / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+    
+    const buffer = canvas.toBuffer('image/png');
+    const filename = `${this.id}.png`;
+    
+    // Upload to S3
+    await this.uploadToS3(buffer, filename);
+    
+    console.log(`[${this.id}] PNG created and uploaded: ${filename}`);
+  }
+
+  private async uploadToS3(buffer: Buffer, filename: string) {
+    const s3Client = new S3Client({ region: 'us-east-1' });
+     
+    const command = new PutObjectCommand({
+      Bucket: S3_BUCKET_NAME,
+      Key: `drawings/${filename}`,
+      Body: buffer,
+      ContentType: 'image/png'
+    });
+    
+    await s3Client.send(command);
+
+    console.log(`[${this.id}] Uploaded to S3: s3://${S3_BUCKET_NAME}/drawings/${filename}`);
+  }
+
   startCountdown(onComplete: () => void) {
     if (this.countdownTimer) return;
     
@@ -125,6 +171,9 @@ export class Room {
       const drawingArray = doc.getArray('drawing');
       const drawingData = drawingArray.toArray();
       console.log(`[${this.id}] Drawing data:`, drawingData);
+      
+      // Create bitmap and save as PNG
+      await this.createPngFromDrawingData(drawingData);
     }
     
     this.updateState({ state: 'ended' });
