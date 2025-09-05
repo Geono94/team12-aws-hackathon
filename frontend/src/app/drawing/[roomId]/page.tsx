@@ -3,14 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import DrawingCanvas from '@/components/features/drawing/DrawingCanvas';
-import { GAME_CONFIG } from '@/constants/game';
 import { YjsProvider } from '@/contexts/YjsContext';
-import { getRoomInfo, joinRoom } from '@/lib/api/room';
+import { getRoomInfo } from '@/lib/api/room';
 
 export default function Drawing() {
   const {roomId} = useParams<{ roomId: string}>(); 
   const router = useRouter();
-  const [isReady, setIsReady] = useState(false);
   const [roomNotFound, setRoomNotFound] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
 
@@ -40,9 +38,6 @@ export default function Drawing() {
         }, 3000);
         return;
       }
-
-      // 방이 존재하고 진행 중이면 바로 입장
-      setIsReady(true);
     };
 
     handleRoomAccess();
@@ -133,23 +128,7 @@ export default function Drawing() {
     );
   }
 
-  if (!isReady) {
-    return (
-      <div style={{
-        background: '#000000',
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#FFFFFF'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎨</div>
-          <p>게임 준비 중...</p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div style={{ 

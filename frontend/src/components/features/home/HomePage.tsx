@@ -12,15 +12,14 @@ import { getFinishedRooms } from '@/lib/api/room';
 import { getOriginalImageUrl, getAiImageUrl } from '@/lib/utils/s3';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
-interface HomePageProps {}
-
-export default function HomePage({}: HomePageProps) {
+export default function HomePage() {
   const router = useRouter();
   const [playerName, setPlayerName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState('/characters/character1.svg');
   const [showProfileSelector, setShowProfileSelector] = useState(false);
   const [showFixedButton, setShowFixedButton] = useState(false);
+  const [isSearchingRoom, setIsSearchingRoom] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Feed state
@@ -138,6 +137,7 @@ export default function HomePage({}: HomePageProps) {
       return;
     }
 
+    setIsSearchingRoom(true);
     sendMessage({
       type: 'searchRoom',
       data: {
@@ -226,20 +226,22 @@ export default function HomePage({}: HomePageProps) {
           }}>
             <Button 
               onClick={handleQuickMatch}
-              disabled={!playerName.trim()}
-              style={{
-                background: playerName.trim() ? COLORS.primary.main : 'rgba(255,255,255,0.1)',
-                border: 'none',
-                borderRadius: '24px',
-                color: 'white',
-                padding: '12px 24px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-                backdropFilter: 'blur(10px)'
-              }}
+              disabled={!playerName.trim() || isSearchingRoom}
+              size="sm"
+              className="min-w-[160px]"
             >
-              🎮 게임 시작하기
+              {isSearchingRoom ? (
+                <div style={{
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderTop: '2px solid #fff',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
+              ) : (
+                '🎮 게임 시작하기'
+              )}
             </Button>
           </div>
         )}
@@ -484,7 +486,7 @@ export default function HomePage({}: HomePageProps) {
                 }}
                 autoFocus
               />
-              <Button
+              <button
                 onClick={handleNameSave}
                 disabled={!playerName.trim()}
                 style={{
@@ -494,11 +496,12 @@ export default function HomePage({}: HomePageProps) {
                   color: 'white',
                   padding: '10px 14px',
                   fontSize: '14px',
-                  minWidth: '50px'
+                  minWidth: '50px',
+                  cursor: 'pointer'
                 }}
               >
                 ✓
-              </Button>
+              </button>
             </div>
           ) : (
             <div style={{
@@ -543,16 +546,22 @@ export default function HomePage({}: HomePageProps) {
         }}>
           <Button 
             onClick={handleQuickMatch}
-            disabled={!playerName.trim()}
-            className="w-full text-lg px-4 py-4 border-none rounded-xl text-white font-bold shadow-lg cursor-pointer max-w-xs"
-            style={{
-              background: playerName.trim() ? COLORS.primary.main : 'rgba(255,255,255,0.1)',
-              cursor: playerName.trim() ? 'pointer' : 'not-allowed',
-              transition: 'all 0.2s',
-              boxShadow: playerName.trim() ? '0 4px 16px rgba(255,107,107,0.3)' : 'none'
-            }}
+            disabled={!playerName.trim() || isSearchingRoom}
+            size="lg"
+            className="min-w-[200px] max-w-xs"
           >
-            🎮 게임 시작하기
+            {isSearchingRoom ? (
+              <div style={{
+                width: '20px',
+                height: '20px',
+                border: '3px solid rgba(255,255,255,0.3)',
+                borderTop: '3px solid #fff',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite'
+              }} />
+            ) : (
+              '🎮 게임 시작하기'
+            )}
           </Button>
         </div>
 
