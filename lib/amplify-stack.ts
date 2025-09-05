@@ -17,7 +17,7 @@ export class AmplifyStack extends cdk.Stack {
       sourceCodeProvider: new amplify.GitHubSourceCodeProvider({
         owner: 'Geono94',
         repository: 'team12-aws-hackathon',
-        oauthToken: cdk.SecretValue.secretsManager('github-token'),
+        oauthToken: cdk.SecretValue.unsafePlainText('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'),
       }),
       environmentVariables: {
         NEXT_PUBLIC_API_URL: props.apiUrl,
