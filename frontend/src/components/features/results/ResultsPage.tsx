@@ -1,58 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useResults } from '@/hooks/useResults';
 
 export default function ResultsPage() {
   const searchParams = useSearchParams();
   const roomId = searchParams.get('roomId');
   
-  const [originalImage, setOriginalImage] = useState<string>('');
-  const [aiImage, setAiImage] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(true);
+  const { originalImage, aiImage, isLoading, loadingMessage } = useResults(roomId);
+  
   const [playerCount] = useState(4);
   const [topic] = useState('자유 주제');
   const [activeTab, setActiveTab] = useState<'original' | 'ai'>('original');
-
-  useEffect(() => {
-    if (roomId) {
-      fetchResultImages(roomId);
-    }
-  }, [roomId]);
-
-  const fetchResultImages = async (roomId: string) => {
-    try {
-      setIsLoading(true);
-      
-      // API를 통해 룸 결과 정보 가져오기
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://77q0bmlyb4.execute-api.us-east-1.amazonaws.com/prod';
-      const response = await fetch(`${API_BASE_URL}/rooms/${roomId}/results`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.originalImageUrl) {
-          setOriginalImage(data.originalImageUrl);
-        }
-        if (data.aiImageUrl) {
-          setAiImage(data.aiImageUrl);
-        }
-      } else {
-        // API가 없는 경우 S3 직접 접근
-        const bucketUrl = 'https://drawtogether-test-1757052413482.s3.us-east-1.amazonaws.com';
-        const originalUrl = `${bucketUrl}/drawings/${roomId}.png`;
-        setOriginalImage(originalUrl);
-      }
-      
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Failed to fetch result images:', error);
-      // 에러 시 기본 S3 URL 시도
-      const bucketUrl = 'https://drawtogether-test-1757052413482.s3.us-east-1.amazonaws.com';
-      const originalUrl = `${bucketUrl}/drawings/${roomId}.png`;
-      setOriginalImage(originalUrl);
-      setIsLoading(false);
-    }
-  };
 
   const onPlayAgain = () => {
     window.location.href = '/';
@@ -191,7 +151,7 @@ export default function ResultsPage() {
               }}>
                 🎨
               </div>
-              <p>AI가 작품을 재해석하고 있어요...</p>
+              <p>{loadingMessage}</p>
             </div>
           ) : aiImage ? (
             <img
