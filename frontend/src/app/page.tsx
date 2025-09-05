@@ -1,8 +1,8 @@
 'use client';
 
 import HomePage from '@/components/features/home/HomePage';
-import { joinRoom } from '@/lib/api/room';
-import { savePlayer, getPlayer, updatePlayerRoom } from '@/lib/player';
+import { joinRoom, getRoomInfo } from '@/lib/api/room';
+import { savePlayer, getPlayer, updatePlayerRoom, clearPlayer } from '@/lib/player';
 
 export default function Home() {
   const handleStartGame = async (playerName: string) => {
@@ -12,9 +12,16 @@ export default function Home() {
       
       // 이미 방에 참여 중인지 확인
       if (existingPlayer?.currentRoomId) {
-        // 기존 방으로 리다이렉트
-        window.location.href = `/drawing/${existingPlayer.currentRoomId}`;
-        return;
+        // 기존 방이 실제로 존재하는지 확인
+        const roomInfo = await getRoomInfo(existingPlayer.currentRoomId);
+        if (roomInfo) {
+          // 방이 존재하면 기존 방으로 리다이렉트
+          window.location.href = `/drawing/${existingPlayer.currentRoomId}`;
+          return;
+        } else {
+          // 방이 존재하지 않으면 플레이어 정보 초기화
+          clearPlayer();
+        }
       }
 
       // 새 플레이어 정보 저장 또는 기존 플레이어 사용
@@ -32,12 +39,7 @@ export default function Home() {
       window.location.href = `/drawing/${roomData.roomId}`;
     } catch (error) {
       console.error('Failed to join room:', error);
-      
-      // 에러 시 fallback 방 생성
-      const player = getPlayer() || savePlayer(playerName);
-      const fallbackRoomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-      updatePlayerRoom(fallbackRoomId);
-      window.location.href = `/drawing/${fallbackRoomId}`;
+      alert('게임 참가에 실패했습니다. 다시 시도해주세요.');
     }
   };
 

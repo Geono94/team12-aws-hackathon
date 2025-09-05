@@ -11,6 +11,7 @@ export default function Matching() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [roomId, setRoomId] = useState<string>('');
   const [playerId] = useState<string>(`player_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`);
+  const [playerName] = useState<string>(`플레이어_${Math.random().toString(36).substr(2, 4)}`);
   const [isHost, setIsHost] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -22,7 +23,7 @@ export default function Matching() {
   const handleJoinRoom = async () => {
     try {
       setIsLoading(true);
-      const roomData = await joinRoom();
+      const roomData = await joinRoom(playerId, playerName);
       setRoomId(roomData.roomId);
       
       // 첫 번째 플레이어면 호스트

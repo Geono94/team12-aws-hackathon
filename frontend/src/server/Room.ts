@@ -1,10 +1,16 @@
 import WebSocket from 'ws';
 import { GAME_CONFIG } from './config';
 
+export interface PlayerInfo {
+  id: string;
+  name: string;
+  joinedAt: string;
+}
+
 export class Room {
   public id: string;
   public state: any = {};
-  public players = new Set<string>();
+  public players = new Map<string, PlayerInfo>();
   public connections = new Set<WebSocket>();
   public gameTimer?: NodeJS.Timeout;
   public countdownTimer?: NodeJS.Timeout;
@@ -13,12 +19,16 @@ export class Room {
     this.id = id;
   }
 
-  addPlayer(playerId: string) {
-    this.players.add(playerId);
+  addPlayer(playerInfo: PlayerInfo) {
+    this.players.set(playerInfo.id, playerInfo);
   }
 
   removePlayer(playerId: string) {
     this.players.delete(playerId);
+  }
+
+  getPlayersArray(): PlayerInfo[] {
+    return Array.from(this.players.values());
   }
 
   addConnection(ws: WebSocket) {

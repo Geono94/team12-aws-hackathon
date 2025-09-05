@@ -4,6 +4,35 @@ export interface RoomResponse {
   roomId: string;
   playerCount: number;
   maxPlayers: number;
+  players?: Array<{
+    playerId: string;
+    name: string;
+    joinedAt: number;
+  }>;
+}
+
+export async function getRoomInfo(roomId: string): Promise<RoomResponse | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/rooms/${roomId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null; // Room not found
+      }
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Get room info failed:', error);
+    // API endpoint not available yet, assume room doesn't exist
+    return null;
+  }
 }
 
 export async function joinRoom(playerId: string, playerName: string): Promise<RoomResponse> {

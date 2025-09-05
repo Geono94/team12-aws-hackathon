@@ -1,7 +1,14 @@
+// Player Info Interface
+export interface PlayerInfo {
+  id: string;
+  name: string;
+  joinedAt: string;
+}
+
 // Client to Server Messages
 export interface PlayerJoinMessage {
   type: 'playerJoin';
-  playerId: string;
+  playerInfo: PlayerInfo;
 }
 
 export interface GameStateChangeMessage {
@@ -25,14 +32,16 @@ export interface GameStateUpdateMessage {
     topic?: string;
     countdown?: number;
     timeLeft?: number;
+    players?: PlayerInfo[];
   };
 }
 
 export interface PlayerUpdateMessage {
   type: 'playerUpdate';
   data: {
-    playerId?: string;
+    playerInfo?: PlayerInfo;
     playerCount: number;
+    players?: PlayerInfo[];
   };
 }
 

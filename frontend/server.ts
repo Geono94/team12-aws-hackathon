@@ -58,8 +58,8 @@ app.prepare().then(() => {
           console.log('Game message:', message);
           
           // Store playerId for cleanup
-          if (message.type === 'playerJoin' && 'playerId' in message) {
-            playerId = message.playerId;
+          if (message.type === 'playerJoin' && message.playerInfo) {
+            playerId = message.playerInfo.id;
           }
           
           gameManager.handleMessage(roomId, message, ws);
