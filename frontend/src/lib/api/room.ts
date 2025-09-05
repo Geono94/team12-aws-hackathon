@@ -6,13 +6,14 @@ export interface RoomResponse {
   maxPlayers: number;
 }
 
-export async function joinRoom(): Promise<RoomResponse> {
+export async function joinRoom(playerId: string, playerName: string): Promise<RoomResponse> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/join`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ playerId, playerName }),
     });
 
     if (!response.ok) {
