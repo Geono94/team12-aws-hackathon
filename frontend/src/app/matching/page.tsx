@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import MatchingPage from '@/components/features/matching/MatchingPage';
 import { Player } from '@/types/game';
 
 export default function Matching() {
+  const router = useRouter();
   const [players] = useState<Player[]>([
     {
       id: '1',
@@ -21,13 +23,14 @@ export default function Matching() {
   ]);
 
   const handleStartGame = () => {
-    // Navigate to drawing page
-    window.location.href = '/drawing';
+    // Generate room ID and navigate to topic selection
+    const roomId = Math.random().toString(36).substring(2, 8);
+    router.push(`/topic-selection/${roomId}`);
   };
 
   const handleLeaveRoom = () => {
     // Navigate back to home
-    window.location.href = '/';
+    router.push('/');
   };
 
   return (
