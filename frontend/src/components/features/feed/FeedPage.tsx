@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import ArtworkCard from './ArtworkCard';
 import FeedFiltersComponent from './FeedFilters';
-import ArtworkDetailModal from './ArtworkDetailModal';
 import { COLORS, SPACING } from '@/constants/design';
 import { ArtworkItem, FeedFilters, Reaction } from '@/types/ui';
 
@@ -12,10 +12,9 @@ interface FeedPageProps {
 }
 
 export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
+  const router = useRouter();
   const [artworks, setArtworks] = useState(initialArtworks);
   const [filters, setFilters] = useState<FeedFilters>({ sortBy: 'latest' });
-  const [selectedArtwork, setSelectedArtwork] = useState<ArtworkItem | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +37,7 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
-  // Pull to refresh functionality - only for content area
+  // Pull to refresh functionality
   useEffect(() => {
     let startY = 0;
     let currentY = 0;
@@ -58,7 +57,6 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
       const pullDistance = currentY - startY;
       
       if (pullDistance > 100 && window.scrollY === 0) {
-        // Only transform the content area, not the sticky header
         if (contentRef.current) {
           contentRef.current.style.transform = `translateY(${Math.min(pullDistance - 100, 50)}px)`;
           contentRef.current.style.transition = 'none';
@@ -72,17 +70,13 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
       const pullDistance = currentY - startY;
       
       if (pullDistance > 100 && window.scrollY === 0) {
-        // Trigger refresh
         setIsRefreshing(true);
-        
-        // Simulate refresh
         setTimeout(() => {
           setArtworks(prev => [...prev].sort(() => Math.random() - 0.5));
           setIsRefreshing(false);
         }, 1000);
       }
       
-      // Reset transform
       if (contentRef.current) {
         contentRef.current.style.transform = '';
         contentRef.current.style.transition = 'transform 0.3s ease-out';
@@ -126,24 +120,7 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
   };
 
   const handleViewDetail = (artworkId: string) => {
-    const artwork = artworks.find(a => a.id === artworkId);
-    if (artwork) {
-      setSelectedArtwork(artwork);
-      setIsModalOpen(true);
-    }
-  };
-
-  const handleShare = (artworkId: string) => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'DrawTogether 작품',
-        text: `${selectedArtwork?.topic} 주제로 ${selectedArtwork?.playerCount}명이 함께 그린 작품을 확인해보세요!`,
-        url: window.location.href
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert('링크가 클립보드에 복사되었습니다!');
-    }
+    router.push(`/feed/${artworkId}`);
   };
 
   // Infinite scroll
@@ -160,7 +137,7 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
 
   return (
     <div style={{ 
-      background: COLORS.neutral.background,
+      background: '#000000',
       minHeight: '100vh'
     }}>
       {/* Refresh Indicator */}
@@ -188,7 +165,7 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
           <h1 style={{ 
             fontSize: '28px',
             fontWeight: 'bold',
-            color: COLORS.neutral.text,
+            color: '#FFFFFF',
             marginBottom: SPACING.lg,
             textAlign: 'center'
           }}>
@@ -202,12 +179,12 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
             availableTopics={availableTopics}
           />
 
-          {/* Content Area - Only this part moves during pull-to-refresh */}
+          {/* Content Area */}
           <div ref={contentRef}>
             {/* Results Count */}
             <p style={{ 
               fontSize: '16px',
-              color: COLORS.neutral.subtext,
+              color: '#888888',
               marginBottom: SPACING.md,
               textAlign: 'center'
             }}>
@@ -235,7 +212,7 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
               <div style={{ 
                 textAlign: 'center',
                 padding: SPACING.xl,
-                color: COLORS.neutral.subtext
+                color: '#888888'
               }}>
                 <p style={{ fontSize: '18px', marginBottom: SPACING.sm }}>
                   조건에 맞는 작품이 없습니다
@@ -244,20 +221,6 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
               </div>
             )}
           </div>
-
-          {/* Detail Modal */}
-          {selectedArtwork && (
-            <ArtworkDetailModal
-              artwork={selectedArtwork}
-              isOpen={isModalOpen}
-              onClose={() => {
-                setIsModalOpen(false);
-                setSelectedArtwork(null);
-              }}
-              onReaction={handleReaction}
-              onShare={handleShare}
-            />
-          )}
         </div>
       </div>
     </div>

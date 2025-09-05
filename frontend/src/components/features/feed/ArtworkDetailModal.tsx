@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import Button from '@/components/ui/Button';
 import ReactionButton from '@/components/ui/ReactionButton';
+import ImageCompareSlider from '@/components/ui/ImageCompareSlider';
 import { COLORS, SPACING, BORDER_RADIUS } from '@/constants/design';
 import { ArtworkItem, Reaction } from '@/types/ui';
 
@@ -21,8 +21,6 @@ export default function ArtworkDetailModal({
   onReaction, 
   onShare 
 }: ArtworkDetailModalProps) {
-  const [viewMode, setViewMode] = useState<'original' | 'ai'>('original');
-
   if (!isOpen) return null;
 
   return (
@@ -70,63 +68,33 @@ export default function ArtworkDetailModal({
         </button>
 
         <div style={{ padding: SPACING.lg }}>
-          {/* Image Display */}
+          {/* Image Compare Slider */}
           <div style={{ 
             position: 'relative',
             marginBottom: SPACING.lg
           }}>
-            <img
-              src={viewMode === 'original' ? artwork.originalImage : artwork.aiImage}
-              alt={viewMode === 'original' ? 'Original artwork' : 'AI generated artwork'}
-              style={{
-                width: '100%',
-                maxHeight: '400px',
-                objectFit: 'contain',
-                borderRadius: BORDER_RADIUS.sm
-              }}
+            <ImageCompareSlider
+              originalImage={artwork.originalImage}
+              aiImage={artwork.aiImage}
+              alt={`${artwork.topic} artwork comparison`}
             />
-
-            {/* View Mode Toggle */}
+            
+            {/* Instruction Text */}
             <div style={{
               position: 'absolute',
               bottom: SPACING.md,
               left: '50%',
               transform: 'translateX(-50%)',
-              display: 'flex',
               background: 'rgba(0,0,0,0.7)',
-              borderRadius: '25px',
-              padding: '4px'
+              color: 'white',
+              padding: `${SPACING.xs} ${SPACING.md}`,
+              borderRadius: '20px',
+              fontSize: '12px',
+              fontWeight: '500',
+              backdropFilter: 'blur(10px)',
+              pointerEvents: 'none'
             }}>
-              <button
-                onClick={() => setViewMode('original')}
-                style={{
-                  padding: `${SPACING.sm} ${SPACING.md}`,
-                  borderRadius: '20px',
-                  border: 'none',
-                  background: viewMode === 'original' ? 'white' : 'transparent',
-                  color: viewMode === 'original' ? COLORS.neutral.text : 'white',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                원본 작품
-              </button>
-              <button
-                onClick={() => setViewMode('ai')}
-                style={{
-                  padding: `${SPACING.sm} ${SPACING.md}`,
-                  borderRadius: '20px',
-                  border: 'none',
-                  background: viewMode === 'ai' ? 'white' : 'transparent',
-                  color: viewMode === 'ai' ? COLORS.neutral.text : 'white',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                AI 변환
-              </button>
+              드래그해서 원본과 AI 결과를 비교해보세요
             </div>
           </div>
 

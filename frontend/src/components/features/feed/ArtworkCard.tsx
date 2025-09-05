@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { COLORS, SPACING, BORDER_RADIUS } from '@/constants/design';
 import { ArtworkItem } from '@/types/ui';
 
@@ -11,8 +10,6 @@ interface ArtworkCardProps {
 }
 
 export default function ArtworkCard({ artwork, onReaction, onViewDetail }: ArtworkCardProps) {
-  const [viewMode, setViewMode] = useState<'original' | 'ai'>('original');
-  
   const likeReaction = artwork.reactions.find(r => r.type === 'like');
   const isLiked = likeReaction?.userReacted || false;
   const likeCount = likeReaction?.count || 0;
@@ -23,104 +20,52 @@ export default function ArtworkCard({ artwork, onReaction, onViewDetail }: Artwo
 
   return (
     <div style={{
-      background: COLORS.neutral.card,
+      background: '#1a1a1a',
       borderRadius: BORDER_RADIUS.lg,
       overflow: 'hidden',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      boxShadow: '0 1px 3px rgba(255,255,255,0.1)',
       transition: 'transform 0.2s ease-out, box-shadow 0.2s ease-out',
       cursor: 'pointer'
     }}
     onMouseEnter={(e) => {
       e.currentTarget.style.transform = 'translateY(-2px)';
-      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+      e.currentTarget.style.boxShadow = '0 4px 12px rgba(255,255,255,0.15)';
     }}
     onMouseLeave={(e) => {
       e.currentTarget.style.transform = 'translateY(0)';
-      e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+      e.currentTarget.style.boxShadow = '0 1px 3px rgba(255,255,255,0.1)';
     }}>
       
-      {/* Image Container */}
-      <div style={{ 
-        position: 'relative',
-        aspectRatio: '1',
-        overflow: 'hidden'
-      }}>
+      {/* AI Image Only */}
+      <div 
+        style={{ position: 'relative' }}
+        onDoubleClick={handleDoubleClick}
+        onClick={() => onViewDetail(artwork.id)}
+      >
         <img
-          src={viewMode === 'original' ? artwork.originalImage : artwork.aiImage}
-          alt={viewMode === 'original' ? 'Original artwork' : 'AI generated artwork'}
+          src={artwork.aiImage}
+          alt={`${artwork.topic} AI artwork`}
           style={{
             width: '100%',
-            height: '100%',
+            height: '240px',
             objectFit: 'cover',
-            transition: 'opacity 0.3s ease-out'
+            display: 'block'
           }}
-          onDoubleClick={handleDoubleClick}
-          onClick={() => onViewDetail(artwork.id)}
         />
-        
-        {/* View Mode Toggle */}
-        <div style={{
-          position: 'absolute',
-          top: SPACING.sm,
-          right: SPACING.sm,
-          display: 'flex',
-          background: 'rgba(0,0,0,0.6)',
-          borderRadius: '20px',
-          padding: '4px',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setViewMode('original');
-            }}
-            style={{
-              padding: `4px ${SPACING.sm}`,
-              borderRadius: '16px',
-              border: 'none',
-              background: viewMode === 'original' ? 'rgba(255,255,255,0.9)' : 'transparent',
-              color: viewMode === 'original' ? COLORS.neutral.text : 'white',
-              fontSize: '11px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease-out'
-            }}
-          >
-            원본
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setViewMode('ai');
-            }}
-            style={{
-              padding: `4px ${SPACING.sm}`,
-              borderRadius: '16px',
-              border: 'none',
-              background: viewMode === 'ai' ? 'rgba(255,255,255,0.9)' : 'transparent',
-              color: viewMode === 'ai' ? COLORS.neutral.text : 'white',
-              fontSize: '11px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease-out'
-            }}
-          >
-            AI
-          </button>
-        </div>
 
         {/* Topic Badge */}
         <div style={{
           position: 'absolute',
           bottom: SPACING.sm,
-          left: SPACING.sm,
+          right: SPACING.sm,
           background: 'rgba(0,0,0,0.7)',
           color: 'white',
           padding: `4px ${SPACING.sm}`,
           borderRadius: '12px',
           fontSize: '12px',
           fontWeight: '600',
-          backdropFilter: 'blur(10px)'
+          backdropFilter: 'blur(10px)',
+          pointerEvents: 'none'
         }}>
           #{artwork.topic}
         </div>
@@ -140,7 +85,7 @@ export default function ArtworkCard({ artwork, onReaction, onViewDetail }: Artwo
             alignItems: 'center',
             gap: SPACING.xs,
             fontSize: '13px',
-            color: COLORS.neutral.subtext
+            color: '#888888'
           }}>
             <span>{artwork.playerCount}명 참여</span>
             <span>•</span>
@@ -150,8 +95,8 @@ export default function ArtworkCard({ artwork, onReaction, onViewDetail }: Artwo
           {artwork.aiModel && (
             <span style={{ 
               fontSize: '11px',
-              color: COLORS.neutral.subtext,
-              background: COLORS.neutral.background,
+              color: '#888888',
+              background: '#2a2a2a',
               padding: '2px 6px',
               borderRadius: '8px'
             }}>
@@ -179,7 +124,7 @@ export default function ArtworkCard({ artwork, onReaction, onViewDetail }: Artwo
               borderRadius: '20px',
               border: 'none',
               background: isLiked ? 'rgba(255, 107, 107, 0.1)' : 'transparent',
-              color: isLiked ? COLORS.primary.main : COLORS.neutral.subtext,
+              color: isLiked ? COLORS.primary.main : '#888888',
               fontSize: '14px',
               fontWeight: '500',
               cursor: 'pointer',
@@ -216,8 +161,8 @@ export default function ArtworkCard({ artwork, onReaction, onViewDetail }: Artwo
               padding: `${SPACING.xs} ${SPACING.sm}`,
               borderRadius: '16px',
               border: 'none',
-              background: COLORS.neutral.background,
-              color: COLORS.neutral.subtext,
+              background: '#2a2a2a',
+              color: '#888888',
               fontSize: '12px',
               fontWeight: '500',
               cursor: 'pointer',

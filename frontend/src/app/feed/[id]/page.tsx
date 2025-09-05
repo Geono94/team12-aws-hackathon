@@ -1,4 +1,4 @@
-import FeedPage from '@/components/features/feed/FeedPage';
+import ArtworkDetailPage from '@/components/features/feed/ArtworkDetailPage';
 import { ArtworkItem } from '@/types/ui';
 
 // Sample images from S3 bucket
@@ -43,6 +43,12 @@ const mockArtworks: ArtworkItem[] = [
   }
 ];
 
-export default function Feed() {
-  return <FeedPage artworks={mockArtworks} />;
+export default function ArtworkDetail({ params }: { params: { id: string } }) {
+  const artwork = mockArtworks.find(a => a.id === params.id);
+  
+  if (!artwork) {
+    return <div>작품을 찾을 수 없습니다.</div>;
+  }
+
+  return <ArtworkDetailPage artwork={artwork} />;
 }

@@ -41,9 +41,9 @@ export default function FeedFiltersComponent({
         left: 0,
         right: 0,
         zIndex: 100,
-        background: COLORS.neutral.background,
-        borderBottom: `2px solid ${COLORS.neutral.border}`,
-        backdropFilter: 'blur(10px)',
+        background: 'rgba(0, 0, 0, 0.95)',
+        borderBottom: '1px solid #333333',
+        backdropFilter: 'blur(20px)',
         margin: `-${SPACING.md} -${SPACING.md} ${SPACING.lg} -${SPACING.md}`,
         padding: SPACING.md
       }}>
@@ -63,21 +63,29 @@ export default function FeedFiltersComponent({
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: `${SPACING.sm} ${SPACING.md}`,
-              borderRadius: '8px',
-              border: `1px solid ${COLORS.neutral.border}`,
-              background: COLORS.neutral.card,
-              color: COLORS.neutral.text,
+              borderRadius: '12px',
+              border: '1px solid #333333',
+              background: '#1a1a1a',
+              color: '#FFFFFF',
               fontSize: '14px',
               fontWeight: '500',
               cursor: 'pointer',
               transition: 'all 0.2s ease-out',
-              minHeight: '40px'
+              minHeight: '44px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#2a2a2a';
+              e.currentTarget.style.borderColor = '#444444';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#1a1a1a';
+              e.currentTarget.style.borderColor = '#333333';
             }}
           >
             <span>
               {filters.topicFilter ? `#${filters.topicFilter}` : '주제 선택'}
             </span>
-            <span style={{ color: COLORS.neutral.subtext }}>
+            <span style={{ color: '#888888', fontSize: '12px' }}>
               {filters.topicFilter ? '✕' : '▼'}
             </span>
           </button>
@@ -89,23 +97,23 @@ export default function FeedFiltersComponent({
               onChange={handleSortChange}
               style={{
                 padding: `${SPACING.sm} ${SPACING.md}`,
-                borderRadius: '8px',
-                border: `1px solid ${COLORS.neutral.border}`,
-                background: COLORS.neutral.card,
-                color: COLORS.neutral.text,
+                borderRadius: '12px',
+                border: '1px solid #333333',
+                background: '#1a1a1a',
+                color: '#FFFFFF',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer',
                 outline: 'none',
                 minWidth: '100px',
                 flexShrink: 0,
-                height: '40px',
+                height: '44px',
                 position: 'relative',
                 zIndex: 200
               }}
             >
-              <option value="latest">최신순</option>
-              <option value="popular">인기순</option>
+              <option value="latest" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>최신순</option>
+              <option value="popular" style={{ background: '#1a1a1a', color: '#FFFFFF' }}>인기순</option>
             </select>
           </div>
         </div>
@@ -129,9 +137,9 @@ export default function FeedFiltersComponent({
             style={{
               padding: `${SPACING.sm} ${SPACING.md}`,
               borderRadius: '20px',
-              border: `1px solid ${COLORS.neutral.border}`,
-              background: !filters.topicFilter ? COLORS.primary.main : 'transparent',
-              color: !filters.topicFilter ? 'white' : COLORS.neutral.text,
+              border: '1px solid #333333',
+              background: !filters.topicFilter ? '#4ECDC4' : '#1a1a1a',
+              color: !filters.topicFilter ? '#000000' : '#FFFFFF',
               fontSize: '14px',
               fontWeight: '500',
               cursor: 'pointer',
@@ -151,13 +159,13 @@ export default function FeedFiltersComponent({
                 padding: `${SPACING.sm} ${SPACING.md}`,
                 borderRadius: '20px',
                 border: 'none',
-                background: filters.topicFilter === topic ? COLORS.primary.main : COLORS.neutral.background,
-                color: filters.topicFilter === topic ? 'white' : COLORS.neutral.text,
+                background: filters.topicFilter === topic ? '#4ECDC4' : '#2a2a2a',
+                color: filters.topicFilter === topic ? '#000000' : '#FFFFFF',
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease-out',
-                boxShadow: filters.topicFilter === topic ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
+                boxShadow: filters.topicFilter === topic ? '0 2px 8px rgba(78, 205, 196, 0.3)' : 'none',
                 textAlign: 'center'
               }}
             >
@@ -170,7 +178,7 @@ export default function FeedFiltersComponent({
         <p style={{
           textAlign: 'center',
           fontSize: '14px',
-          color: COLORS.neutral.subtext,
+          color: '#888888',
           marginTop: SPACING.md
         }}>
           원하는 주제를 선택하거나 '전체'를 선택하세요
