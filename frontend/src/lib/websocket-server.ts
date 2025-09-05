@@ -162,13 +162,10 @@ export class GameManager {
 
 export function setupYjsWebSocket(wss: WebSocket.Server): void {
   wss.on('connection', (ws, req) => {
-    console.log('New WebSocket connection');
+    console.log('New WebSocket connection from:', req.url);
     
     // Setup Yjs connection with logging
-    const conn = setupWSConnection(ws, req, {
-      docName: req.url?.split('/').pop() || 'default',
-      gc: true
-    });
+    const conn = setupWSConnection(ws, req);
     
     // Log Yjs document changes
     if (conn && conn.doc) {

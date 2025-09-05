@@ -26,7 +26,6 @@ app.prepare().then(() => {
   // Yjs WebSocket server (handles both drawing and game state)
   const wss = new WebSocket.Server({ 
     server,
-    path: '/',
     verifyClient: (info) => {
       console.log('WebSocket connection attempt:', info.req.url);
       return true;
