@@ -15,6 +15,96 @@ import { getStroke } from 'perfect-freehand';
 import { ColorPalette } from './ColorPalette';
 import { BrushSizeSelector } from './BrushSizeSelector';
 
+// PlayerAvatar 컴포넌트
+const PlayerAvatar = ({ player, index }: { player?: PlayerInfo; index: number }) => {
+  const avatarColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFB347'];
+  
+  return (
+    <div style={{
+      width: '80px',
+      height: '80px',
+      borderRadius: '50%',
+      border: `3px solid ${player ? avatarColors[index] : 'rgba(255,255,255,0.2)'}`,
+      background: player 
+        ? `linear-gradient(135deg, ${avatarColors[index]}, ${avatarColors[index]}88)`
+        : 'rgba(255,255,255,0.1)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+      backdropFilter: 'blur(10px)',
+      boxShadow: player 
+        ? `0 4px 16px ${avatarColors[index]}40`
+        : '0 4px 16px rgba(0,0,0,0.2)',
+      transition: 'all 0.3s ease'
+    }}>
+      {player ? (
+        <>
+          <img 
+            src={`https://drawtogether-test-1757052413482.s3.us-east-1.amazonaws.com/images/char_${index + 1}.gif`}
+            alt={`Character ${index + 1}`}
+            style={{
+              width: '50px',
+              height: '50px',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              marginBottom: '4px'
+            }}
+          />
+          <div style={{
+            fontSize: '10px',
+            fontWeight: '600',
+            color: '#FFFFFF',
+            textAlign: 'center',
+            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+            maxWidth: '70px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {player.name}
+          </div>
+          {/* 준비 완료 표시 */}
+          <div style={{
+            position: 'absolute',
+            top: '-5px',
+            right: '-5px',
+            width: '20px',
+            height: '20px',
+            borderRadius: '50%',
+            background: '#4CAF50',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '12px',
+            animation: 'sparkle 1.5s ease-in-out infinite'
+          }}>
+            ✓
+          </div>
+        </>
+      ) : (
+        <>
+          <div style={{
+            fontSize: '24px',
+            marginBottom: '4px',
+            opacity: 0.6
+          }}>
+            ⏳
+          </div>
+          <div style={{
+            fontSize: '10px',
+            color: 'rgba(255,255,255,0.6)',
+            fontWeight: '500'
+          }}>
+            대기 중
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 interface StrokeData {
   color: string;
   size: number;
@@ -53,6 +143,34 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   const [timeLeft, setTimeLeft] = useState<number>(30);
   const [playerCount, setPlayerCount] = useState<number>(1);
   const [players, setPlayers] = useState<PlayerInfo[]>([]);
+
+  const [toastMessage, setToastMessage] = useState<string>('');
+  const [showToast, setShowToast] = useState(false);
+  const [gameStartCountdown, setGameStartCountdown] = useState<number>(0);
+
+  // 토스트 알림 표시 함수
+  const showToastMessage = (message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
+  // 플레이어 변화 감지 및 토스트 알림
+  useEffect(() => {
+    const currentPlayerCount = players.length;
+    if (currentPlayerCount === GAME_CONFIG.MAX_PLAYERS && gameStartCountdown === 0) {
+      setGameStartCountdown(5);
+      const countdownInterval = setInterval(() => {
+        setGameStartCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+  }, [players.length, gameStartCountdown]);
 
   const { doc, connected, onMessage, sendMessage } = useYjs();
 
@@ -382,140 +500,325 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
       <div style={{ textAlign: 'center', marginBottom: SPACING.md }}>
         {gameState === 'waiting' ? (
           <div style={{
+            background: '#000000',
+            minHeight: '100vh',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: SPACING.lg,
-            marginBottom: SPACING.sm
+            flexDirection: 'column',
+            position: 'relative',
+            overflow: 'hidden'
           }}>
-            <div style={{ 
-                  background: '#000000',
-                  minHeight: '100vh',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: SPACING.lg
-                }}>
-                  <div style={{ 
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: SPACING.md,
-                    marginBottom: SPACING.xl
+            {/* 토스트 알림 */}
+            {showToast && (
+              <div style={{
+                position: 'fixed',
+                top: '20px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: 'rgba(128,128,128,0.9)',
+                color: '#FFFFFF',
+                padding: '10px 20px',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: '600',
+                zIndex: 1000,
+                animation: 'slideDown 0.3s ease-out',
+                backdropFilter: 'blur(10px)',
+                whiteSpace: 'nowrap',
+                minWidth: 'fit-content'
+              }}>
+                {toastMessage}
+              </div>
+            )}
+
+            {/* 상단 헤더 - 단순화 */}
+            <div style={{
+              padding: '20px',
+              textAlign: 'center'
+            }}>
+            </div>
+
+            {/* 메인 컨텐츠 영역 */}
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '40px 20px 120px 20px', // 하단 버튼 공간 확보
+              position: 'relative'
+            }}>
+              {/* 2x2 플레이어 그리드 */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '24px',
+                marginBottom: '32px',
+                width: '100%',
+                maxWidth: '320px'
+              }}>
+                {Array.from({ length: GAME_CONFIG.MAX_PLAYERS }).map((_, index) => {
+                  const player = players[index];
+                  const slotColors = ['#FF6B6B', '#4ECDC4', '#FFB347', '#9B59B6'];
+                  
+                  return (
+                    <div
+                      key={index}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        animation: player ? 'bounceIn 0.6s ease-out' : 'none',
+                        animationDelay: `${index * 0.1}s`
+                      }}
+                    >
+                      <div style={{
+                        width: '120px',
+                        height: '120px',
+                        borderRadius: '50%',
+                        border: `3px solid ${player ? slotColors[index] : 'rgba(255,255,255,0.2)'}`,
+                        background: player 
+                          ? `linear-gradient(135deg, ${slotColors[index]}20, ${slotColors[index]}10)`
+                          : 'rgba(255,255,255,0.05)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        position: 'relative',
+                        backdropFilter: 'blur(10px)',
+                        boxShadow: player 
+                          ? `0 8px 24px ${slotColors[index]}30`
+                          : '0 4px 16px rgba(0,0,0,0.2)',
+                        transition: 'all 0.3s ease',
+                        animation: player ? 'playerIdle 2s ease-in-out infinite' : 'waitingPulse 2s ease-in-out infinite'
+                      }}>
+                        {player ? (
+                          <>
+                            <img 
+                              src={`https://drawtogether-test-1757052413482.s3.us-east-1.amazonaws.com/images/char_${index + 1}.gif`}
+                              alt={`Character ${index + 1}`}
+                              style={{
+                                width: '60px',
+                                height: '60px',
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                marginBottom: '8px'
+                              }}
+                            />
+                            <div style={{
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              color: '#FFFFFF',
+                              textAlign: 'center',
+                              maxWidth: '100px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {player.name}
+                            </div>
+                            {/* 준비 완료 체크마크 */}
+                            <div style={{
+                              position: 'absolute',
+                              top: '8px',
+                              right: '8px',
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '50%',
+                              background: '#4CAF50',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '14px',
+                              color: '#FFFFFF',
+                              animation: 'sparkle 1.5s ease-in-out infinite'
+                            }}>
+                              ✓
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div style={{
+                              fontSize: '32px',
+                              marginBottom: '8px',
+                              opacity: 0.4
+                            }}>
+                              ⏳
+                            </div>
+                            <div style={{
+                              fontSize: '12px',
+                              color: 'rgba(255,255,255,0.5)',
+                              fontWeight: '500'
+                            }}>
+                              대기 중...
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* 상태 메시지 */}
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '20px'
+              }}>
+                {gameStartCountdown > 0 ? (
+                  <div style={{
+                    background: 'linear-gradient(135deg, #FF6B6B, #4ECDC4)',
+                    borderRadius: '16px',
+                    padding: '16px 24px',
+                    animation: 'pulse 1s ease-in-out infinite'
                   }}>
                     <div style={{
-                      fontSize: '48px'
-                    }}>
-                      🎮
-                    </div>
-                    <h1 style={{ 
-                      fontSize: '32px',
+                      fontSize: '24px',
+                      marginBottom: '8px'
+                    }}>🎉</div>
+                    <div style={{
+                      fontSize: '18px',
                       fontWeight: 'bold',
                       color: '#FFFFFF',
-                      margin: 0
+                      marginBottom: '4px'
                     }}>
-                      대기실
-                    </h1>
+                      모두 준비 완료!
+                    </div>
+                    <div style={{
+                      fontSize: '32px',
+                      fontWeight: 'bold',
+                      color: '#FFFFFF'
+                    }}>
+                      {gameStartCountdown}
+                    </div>
                   </div>
-
+                ) : (
                   <div style={{
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '16px',
-                    padding: SPACING.xl,
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-                    minWidth: '400px',
-                    maxWidth: '500px'
+                    background: 'rgba(255,255,255,0.1)',
+                    borderRadius: '12px',
+                    padding: '12px 20px',
+                    backdropFilter: 'blur(10px)'
                   }}>
-                    <div style={{ 
-                      textAlign: 'center',
-                      marginBottom: SPACING.xl,
-                      padding: SPACING.lg,
-                      background: COLORS.primary.main,
-                      borderRadius: '12px',
-                      color: 'white'
+                    <p style={{
+                      color: '#FFFFFF',
+                      fontSize: '14px',
+                      margin: 0,
+                      opacity: 0.8
                     }}>
-                      <p style={{ 
-                        fontSize: '24px',
-                        fontWeight: 'bold'
-                      }}>
-                        {players.length}/{GAME_CONFIG.MAX_PLAYERS} 명 참여 중
-                      </p>
-                    </div>
-
-                    <div style={{ 
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(2, 1fr)',
-                      gap: SPACING.md,
-                      marginBottom: SPACING.xl
-                    }}>
-                      {Array.from({ length: GAME_CONFIG.MAX_PLAYERS }).map((_, index) => {
-                        const player = players[index];
-                        return (
-                          <div
-                            key={index}
-                            style={{
-                              padding: SPACING.lg,
-                              background: player 
-                                ? COLORS.primary.main
-                                : 'rgba(255,255,255,0.1)',
-                              borderRadius: '12px',
-                              color: player ? 'white' : '#888888',
-                              fontWeight: '600',
-                              textAlign: 'center',
-                              fontSize: '16px',
-                              border: player ? 'none' : '1px dashed rgba(255,255,255,0.2)'
-                            }}
-                          >
-                            {player ? (
-                              <>
-                                <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
-                                  <img 
-                                    src={`https://drawtogether-test-1757052413482.s3.us-east-1.amazonaws.com/images/char_${index + 1}.gif`}
-                                    alt={`Character ${index + 1}`}
-                                    style={{
-                                      width: '96px',
-                                      height: '96px',
-                                      borderRadius: '8px',
-                                      objectFit: 'cover'
-                                    }}
-                                  />
-                                </div>
-                                {player.name}
-                              </>
-                            ) : (
-                              <>
-                                <div style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</div>
-                                대기 중...
-                              </>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div style={{ 
-                      display: 'flex',
-                      gap: SPACING.md,
-                      justifyContent: 'center'
-                    }}>
-                      <Button 
-                        variant="outline" 
-                        onClick={handleLeaveRoom}
-                        style={{
-                          borderRadius: '12px',
-                          padding: '12px 24px',
-                          border: '1px solid rgba(255,255,255,0.2)',
-                          background: 'rgba(255,255,255,0.1)',
-                          color: '#FFFFFF'
-                        }}
-                      >
-                        🚪 나가기
-                      </Button>
-                    </div>
+                      {GAME_CONFIG.MAX_PLAYERS - players.length}명 더 필요해요. 친구들을 초대해보세요!
+                    </p>
                   </div>
-                </div>
+                )}
+              </div>
+            </div>
+
+            {/* 하단 고정 버튼 */}
+            <div style={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: '#000000',
+              backdropFilter: 'blur(20px)',
+              padding: '20px',
+              display: 'flex',
+              gap: '16px',
+              justifyContent: 'center',
+              borderTop: '1px solid rgba(255,255,255,0.1)'
+            }}>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  showToastMessage('초대 링크가 복사되었습니다!');
+                }}
+                style={{
+                  flex: 2,
+                  maxWidth: '200px',
+                  padding: '16px 24px',
+                  border: 'none',
+                  borderRadius: '16px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  background: 'linear-gradient(135deg, #4ECDC4, #FF6B6B)',
+                  color: '#FFFFFF',
+                  boxShadow: '0 4px 16px rgba(78,205,196,0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 6px 24px rgba(78,205,196,0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 4px 16px rgba(78,205,196,0.3)';
+                }}
+              >
+                초대하기
+              </button>
+              
+              <button
+                onClick={handleLeaveRoom}
+                style={{
+                  flex: 0.7,
+                  maxWidth: '100px',
+                  padding: '16px 24px',
+                  border: '2px solid rgba(255,255,255,0.2)',
+                  borderRadius: '16px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  background: 'rgba(255,255,255,0.1)',
+                  color: 'rgba(255,255,255,0.8)',
+                  backdropFilter: 'blur(10px)'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(255,255,255,0.15)';
+                  e.target.style.color = '#FFFFFF';
+                  e.target.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'rgba(255,255,255,0.1)';
+                  e.target.style.color = 'rgba(255,255,255,0.8)';
+                  e.target.style.transform = 'translateY(0)';
+                }}
+              >
+                나가기
+              </button>
+            </div>
+
+            {/* CSS 애니메이션 */}
+            <style jsx>{`
+              @keyframes slideDown {
+                from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+              }
+              
+              @keyframes bounceIn {
+                0% { transform: scale(0.3) translateY(-50px); opacity: 0; }
+                50% { transform: scale(1.1) translateY(-10px); opacity: 0.8; }
+                100% { transform: scale(1) translateY(0); opacity: 1; }
+              }
+              
+              @keyframes playerIdle {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.02); }
+              }
+              
+              @keyframes waitingPulse {
+                0%, 100% { opacity: 0.6; transform: scale(1); }
+                50% { opacity: 0.8; transform: scale(1.02); }
+              }
+              
+              @keyframes sparkle {
+                0%, 100% { transform: scale(1) rotate(0deg); }
+                50% { transform: scale(1.2) rotate(180deg); }
+              }
+              
+              @keyframes pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+              }
+            `}</style>
           </div>
         ) : gameState === 'topicSelection' ? (
           <TopicSelection selectedTopic={topic} />
@@ -540,29 +843,32 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
         )}
       </div>
 
-      {gameState === 'playing' && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          flexDirection: 'column',
-          gap: SPACING.md,
-          marginBottom: SPACING.md,
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-        }}>
-          <ColorPalette 
-            colors={colors}
-            currentColor={currentColor}
-            onColorChange={setCurrentColor}
-          />
-          <BrushSizeSelector
-            currentSize={brushSize}
-            onSizeChange={setBrushSize}
-          />
-        </div>
-      )}
+      {/* 캔버스 영역 - 대기실이 아닐 때만 표시 */}
+      {gameState !== 'waiting' && (
+        <>
+          {gameState === 'playing' && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              flexDirection: 'column',
+              gap: SPACING.md,
+              marginBottom: SPACING.md,
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+            }}>
+              <ColorPalette 
+                colors={colors}
+                currentColor={currentColor}
+                onColorChange={setCurrentColor}
+              />
+              <BrushSizeSelector
+                currentSize={brushSize}
+                onSizeChange={setBrushSize}
+              />
+            </div>
+          )}
 
-      <div
+          <div
         onMouseDown={startDrawing}
         onMouseMove={draw}
         onMouseUp={stopDrawing}
@@ -636,6 +942,8 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
           }}
         />
       </div>
+        </>
+      )}
     </div>
   );
 }
