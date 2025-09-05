@@ -64,6 +64,113 @@
 [S3 Bucket] ← → [Bedrock] ← → [EventBridge] ← → [CloudWatch]
 ```
 
+## Room 생성 로직
+
+### 🎯 Room 배정 시스템
+
+**1단계: 빈 방 찾기**
+```typescript
+// GSI로 status='waiting'이고 playerCount < 4인 방 검색
+findAvailableRoom() // 최대 1개 반환
+```
+
+**2단계: 빈 방이 있으면**
+```typescript
+// 조건부 업데이트로 안전하게 참가
+UpdateCommand({
+  ConditionExpression: 'playerCount < maxPlayers AND status = waiting',
+  UpdateExpression: 'SET playerCount = playerCount + 1'
+})
+```
+
+**3단계: 빈 방이 없으면**
+```typescript
+// 새 방 생성
+createNewRoom() // playerCount: 1, status: 'waiting'
+```
+
+### 🔄 동시성 처리
+- **재시도 로직**: 3번까지 시도
+- **조건부 업데이트**: Race condition 방지
+- **ConditionalCheckFailedException**: 동시 접근 시 재시도
+
+### 📊 DynamoDB 테이블 구조
+
+**RoomsTable**
+```typescript
+{
+  roomId: string;           // 파티션 키
+  status: 'waiting' | 'playing' | 'finished';
+  playerCount: number;      // GSI 정렬 키
+  maxPlayers: number;       // 최대 4명
+  createdAt: number;        // 타임스탬프
+  updatedAt: number;        // 타임스탬프
+}
+```
+
+**GSI (StatusIndex)**
+- 파티션 키: `status`
+- 정렬 키: `playerCount`
+- 빠른 빈 방 검색 가능
+
+## 배포 방법
+
+### 🚀 CDK 인프라 배포
+
+**1. 사전 준비**
+```bash
+# AWS CLI 설정
+aws configure
+
+# CDK CLI 설치
+npm install -g aws-cdk
+
+# 의존성 설치
+cd lambda && npm install
+```
+
+**2. 배포 실행**
+```bash
+# 프로젝트 루트에서
+npm run build  # Lambda 함수 빌드
+cdk deploy --require-approval never
+```
+
+**3. 배포 결과**
+```
+✅ DrawTogetherStack
+
+Outputs:
+DrawTogetherStack.RestApiURL = https://77q0bmlyb4.execute-api.us-east-1.amazonaws.com/prod/
+DrawTogetherStack.ImagesBucketName = drawtogether-images-339712932307-1757057469094
+```
+
+### 🔗 프론트엔드 연결
+
+**환경 변수 설정** (`.env.local`)
+```bash
+NEXT_PUBLIC_API_URL=https://77q0bmlyb4.execute-api.us-east-1.amazonaws.com/prod
+NEXT_PUBLIC_WS_URL=ws://localhost:3001
+```
+
+**API 엔드포인트**
+- `POST /rooms/join` - 룸 참가/생성
+- `POST /rooms/leave` - 룸 나가기
+- `POST /ai/generate` - AI 이미지 생성
+
+### 🎮 게임 플로우
+
+**현재 구현된 플로우**
+1. 홈에서 "게임 시작하기" 클릭
+2. API 호출로 룸 ID 받아오기 (`joinRoom()`)
+3. 바로 `/drawing/[roomId]`로 이동
+4. YJS로 실시간 협업 드로잉
+
+**Room 배정 로직**
+- 빈 방 우선 배정 → 없으면 새 방 생성
+- 최대 4명까지 한 방에 배정
+- 안전한 동시성 제어로 Race condition 방지
+
 ## 상세 게임 플로우
 
 ```
