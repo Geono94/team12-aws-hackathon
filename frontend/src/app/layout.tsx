@@ -1,33 +1,21 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
+import '../styles/globals.css';
 import { YjsProvider } from "@/contexts/YjsContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "DrawTogether",
-  description: "실시간 협업 드로잉 AI 게임",
+  title: 'DrawTogether - 실시간 협업 드로잉 AI 게임',
+  description: '최대 4명이 함께 그림을 그리고 AI가 새로운 스타일로 재생성해주는 엔터테이먼트 서비스',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="ko">
+      <body>
         <YjsProvider>
           {children}
         </YjsProvider>
