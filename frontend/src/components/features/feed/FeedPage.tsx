@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import ArtworkCard from './ArtworkCard';
 import FeedFiltersComponent from './FeedFilters';
+import GameInvite from './GameInvite';
 import { COLORS, SPACING } from '@/constants/design';
 import { ArtworkItem, FeedFilters, Reaction } from '@/types/ui';
 
@@ -229,6 +230,9 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
                 />
               ))}
             </div>
+
+            {/* Game Invite - Always show at bottom */}
+            <GameInvite />
 
             {/* Empty State */}
             {filteredArtworks.length === 0 && (

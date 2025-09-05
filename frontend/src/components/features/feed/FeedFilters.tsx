@@ -125,63 +125,165 @@ export default function FeedFiltersComponent({
         onClose={() => setShowTagSheet(false)}
         title="주제 선택"
       >
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-          gap: SPACING.sm,
-          marginBottom: SPACING.md
-        }}>
+        <div style={{ marginBottom: SPACING.md }}>
           {/* Clear Filter Option */}
           <button
             onClick={clearTopicFilter}
             style={{
-              padding: `${SPACING.sm} ${SPACING.md}`,
-              borderRadius: '20px',
+              padding: `6px ${SPACING.sm}`,
+              borderRadius: '16px',
               border: '1px solid #333333',
-              background: !filters.topicFilter ? '#4ECDC4' : '#1a1a1a',
+              background: !filters.topicFilter ? '#4ECDC4' : '#2a2a2a',
               color: !filters.topicFilter ? '#000000' : '#FFFFFF',
-              fontSize: '14px',
+              fontSize: '12px',
               fontWeight: '500',
               cursor: 'pointer',
               transition: 'all 0.2s ease-out',
-              textAlign: 'center'
+              marginBottom: SPACING.md,
+              display: 'block',
+              margin: '0 auto 16px auto'
             }}
           >
-            전체
+            전체 보기
           </button>
 
-          {/* Topic Tags */}
-          {availableTopics.map((topic) => (
-            <button
-              key={topic}
-              onClick={() => handleTopicFilter(topic)}
-              style={{
-                padding: `${SPACING.sm} ${SPACING.md}`,
-                borderRadius: '20px',
-                border: 'none',
-                background: filters.topicFilter === topic ? '#4ECDC4' : '#2a2a2a',
-                color: filters.topicFilter === topic ? '#000000' : '#FFFFFF',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease-out',
-                boxShadow: filters.topicFilter === topic ? '0 2px 8px rgba(78, 205, 196, 0.3)' : 'none',
-                textAlign: 'center'
-              }}
-            >
-              #{topic}
-            </button>
-          ))}
+          {/* Animals Category */}
+          <div style={{ marginBottom: SPACING.md }}>
+            <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#888888', marginBottom: SPACING.xs }}>
+              🐾 동물
+            </h4>
+            <div style={{
+              display: 'flex',
+              gap: SPACING.xs,
+              flexWrap: 'wrap'
+            }}>
+              {['고양이', '강아지', '새', '물고기', '나비'].filter(topic => availableTopics.includes(topic)).map((topic) => (
+                <button
+                  key={topic}
+                  onClick={() => handleTopicFilter(topic)}
+                  style={{
+                    padding: `4px ${SPACING.sm}`,
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: filters.topicFilter === topic ? '#4ECDC4' : '#2a2a2a',
+                    color: filters.topicFilter === topic ? '#000000' : '#FFFFFF',
+                    fontSize: '11px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease-out'
+                  }}
+                >
+                  #{topic}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Nature Category */}
+          <div style={{ marginBottom: SPACING.md }}>
+            <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#888888', marginBottom: SPACING.xs }}>
+              🌿 자연
+            </h4>
+            <div style={{
+              display: 'flex',
+              gap: SPACING.xs,
+              flexWrap: 'wrap'
+            }}>
+              {['나무', '꽃', '태양', '달', '별', '구름', '무지개', '산', '바다'].filter(topic => availableTopics.includes(topic)).map((topic) => (
+                <button
+                  key={topic}
+                  onClick={() => handleTopicFilter(topic)}
+                  style={{
+                    padding: `4px ${SPACING.sm}`,
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: filters.topicFilter === topic ? '#4ECDC4' : '#2a2a2a',
+                    color: filters.topicFilter === topic ? '#000000' : '#FFFFFF',
+                    fontSize: '11px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease-out'
+                  }}
+                >
+                  #{topic}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Objects Category */}
+          <div style={{ marginBottom: SPACING.md }}>
+            <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#888888', marginBottom: SPACING.xs }}>
+              🏠 사물
+            </h4>
+            <div style={{
+              display: 'flex',
+              gap: SPACING.xs,
+              flexWrap: 'wrap'
+            }}>
+              {['집', '자동차', '로봇', '우주선', '성'].filter(topic => availableTopics.includes(topic)).map((topic) => (
+                <button
+                  key={topic}
+                  onClick={() => handleTopicFilter(topic)}
+                  style={{
+                    padding: `4px ${SPACING.sm}`,
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: filters.topicFilter === topic ? '#4ECDC4' : '#2a2a2a',
+                    color: filters.topicFilter === topic ? '#000000' : '#FFFFFF',
+                    fontSize: '11px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease-out'
+                  }}
+                >
+                  #{topic}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Fantasy Category */}
+          <div style={{ marginBottom: SPACING.md }}>
+            <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#888888', marginBottom: SPACING.xs }}>
+              ✨ 판타지
+            </h4>
+            <div style={{
+              display: 'flex',
+              gap: SPACING.xs,
+              flexWrap: 'wrap'
+            }}>
+              {['용'].filter(topic => availableTopics.includes(topic)).map((topic) => (
+                <button
+                  key={topic}
+                  onClick={() => handleTopicFilter(topic)}
+                  style={{
+                    padding: `4px ${SPACING.sm}`,
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: filters.topicFilter === topic ? '#4ECDC4' : '#2a2a2a',
+                    color: filters.topicFilter === topic ? '#000000' : '#FFFFFF',
+                    fontSize: '11px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease-out'
+                  }}
+                >
+                  #{topic}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         
         {/* Info Text */}
         <p style={{
           textAlign: 'center',
-          fontSize: '14px',
-          color: '#888888',
+          fontSize: '12px',
+          color: '#666666',
           marginTop: SPACING.md
         }}>
-          원하는 주제를 선택하거나 '전체'를 선택하세요
+          원하는 주제를 선택하거나 '전체 보기'를 선택하세요
         </p>
       </BottomSheet>
     </>

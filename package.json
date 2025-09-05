@@ -18,14 +18,15 @@
     "clean": "cd lambda && npm run clean && rm -rf coverage",
     "upload-samples": "node scripts/upload-sample-images.js",
     "create-test-bucket": "node scripts/create-test-bucket.js",
-    "create-test-images": "node scripts/create-test-images.js"
+    "create-test-images": "node scripts/create-test-images.js",
+    "create-feed-images": "node scripts/create-feed-images.js"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.0.0",
-    "aws-cdk-lib": "^2.0.0",
-    "constructs": "^10.0.0",
     "aws-cdk": "^2.1028.0",
-    "aws-sdk": "^2.1692.0"
+    "aws-cdk-lib": "^2.214.0",
+    "aws-sdk": "^2.1692.0",
+    "constructs": "^10.4.2"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.145",

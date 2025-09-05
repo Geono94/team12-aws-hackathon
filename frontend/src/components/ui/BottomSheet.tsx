@@ -51,19 +51,20 @@ export default function BottomSheet({ isOpen, onClose, title, children }: Bottom
       
       {/* Bottom Sheet */}
       <div style={{
-        background: COLORS.neutral.card,
+        background: '#1a1a1a',
         width: '100%',
-        maxHeight: '70vh',
+        maxHeight: '60vh',
         borderRadius: `${BORDER_RADIUS.lg} ${BORDER_RADIUS.lg} 0 0`,
         position: 'relative',
         animation: 'slideUp 0.3s ease-out',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        border: '1px solid #333333'
       }}>
         {/* Handle */}
         <div style={{
           width: '40px',
           height: '4px',
-          background: COLORS.neutral.border,
+          background: '#666666',
           borderRadius: '2px',
           margin: `${SPACING.sm} auto ${SPACING.md} auto`
         }} />
@@ -71,13 +72,14 @@ export default function BottomSheet({ isOpen, onClose, title, children }: Bottom
         {/* Header */}
         <div style={{
           padding: `0 ${SPACING.md} ${SPACING.md} ${SPACING.md}`,
-          borderBottom: `1px solid ${COLORS.neutral.border}`
+          borderBottom: '1px solid #333333'
         }}>
           <h3 style={{
             fontSize: '18px',
             fontWeight: '600',
-            color: COLORS.neutral.text,
-            textAlign: 'center'
+            color: '#FFFFFF',
+            textAlign: 'center',
+            margin: 0
           }}>
             {title}
           </h3>
@@ -86,7 +88,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }: Bottom
         {/* Content */}
         <div style={{
           padding: SPACING.md,
-          maxHeight: 'calc(70vh - 100px)',
+          maxHeight: 'calc(60vh - 100px)',
           overflowY: 'auto'
         }}>
           {children}
