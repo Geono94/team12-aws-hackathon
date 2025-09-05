@@ -6,7 +6,7 @@ import { useYjs } from '@/contexts/YjsContext';
 import { useGameRoom } from '@/hooks/useGameRoom';
 import { COLORS, SPACING, BORDER_RADIUS } from '@/constants/design';
 import { GAME_CONFIG } from '@/constants/game';
-import { DrawPoint, GameStateType, ServerToClientMessage } from '@/types';
+import { GameStateType, ServerToClientMessage } from '@/types';
 import TopicSelection from './TopicSelection';
 import { PlayerInfo } from '@/server/Room';
 import Button from '@/components/ui/Button';
@@ -20,6 +20,16 @@ interface StrokeData {
   pathData: string;
 }
 
+interface TempStrokeData {
+  id: string;
+  color: string;
+  size: number;
+  pathData: string;
+  playerId: string;
+  playerName: string;
+  lastPoint?: [number, number];
+}
+
 interface DrawingCanvasProps {
   roomId: string;
 }
@@ -29,11 +39,13 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const previewRef = useRef<SVGSVGElement>(null);
+  const cursorsRef = useRef<HTMLDivElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentColor, setCurrentColor] = useState<string>(COLORS.primary.main);
   const [brushSize, setBrushSize] = useState(5);
   const [currentStroke, setCurrentStroke] = useState<number[][]>([]);
-  const [currentStrokeIndex, setCurrentStrokeIndex] = useState<number>(-1);
+  const [currentStrokeId, setCurrentStrokeId] = useState<string>('');
+  const [lastSyncTime, setLastSyncTime] = useState<number>(0);
   const [gameState, setGameState] = useState<GameStateType>('waiting');
   const [topic, setTopic] = useState<string>('고양이');
   const [countdown, setCountdown] = useState<number>(0);
@@ -69,6 +81,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   }, [])
 
   const strokesArray = doc?.getArray<StrokeData>('strokes');
+  const tempStrokesMap = doc?.getMap<TempStrokeData>('tempStrokes');
 
   const colors = [
     COLORS.primary.main,
@@ -154,25 +167,64 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   }, [strokesArray]);
 
   useEffect(() => {
-    if (!strokesArray || !svgRef.current) return;
+    if (!strokesArray || !tempStrokesMap || !svgRef.current) return;
 
-    const observer = () => {
+    const renderStrokes = () => {
       const svg = svgRef.current;
+      const cursors = cursorsRef.current;
       if (!svg) return;
 
       svg.innerHTML = '';
+      if (cursors) cursors.innerHTML = '';
       
+      // Render completed strokes
       strokesArray.forEach((strokeData: StrokeData) => {
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', strokeData.pathData);
         path.setAttribute('fill', strokeData.color);
         svg.appendChild(path);
       });
+      
+      // Render temporary strokes and cursors
+      tempStrokesMap.forEach((tempStroke: TempStrokeData) => {
+        if (tempStroke.pathData) {
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', tempStroke.pathData);
+          path.setAttribute('fill', tempStroke.color);
+          path.setAttribute('opacity', '0.8');
+          svg.appendChild(path);
+        }
+        
+        // Show cursor with player name
+        if (cursors && tempStroke.lastPoint && tempStroke.playerId !== getPlayer().id) {
+          const [x, y] = tempStroke.lastPoint;
+          const cursor = document.createElement('div');
+          cursor.style.position = 'absolute';
+          cursor.style.left = `${x}px`;
+          cursor.style.top = `${y - 30}px`;
+          cursor.style.background = tempStroke.color;
+          cursor.style.color = 'white';
+          cursor.style.padding = '4px 8px';
+          cursor.style.borderRadius = '12px';
+          cursor.style.fontSize = '12px';
+          cursor.style.fontWeight = 'bold';
+          cursor.style.pointerEvents = 'none';
+          cursor.style.zIndex = '10';
+          cursor.style.transform = 'translateX(-50%)';
+          cursor.textContent = tempStroke.playerName;
+          cursors.appendChild(cursor);
+        }
+      });
     };
 
-    strokesArray.observe(observer);
-    return () => strokesArray.unobserve(observer);
-  }, [strokesArray]);
+    strokesArray.observe(renderStrokes);
+    tempStrokesMap.observe(renderStrokes);
+    
+    return () => {
+      strokesArray.unobserve(renderStrokes);
+      tempStrokesMap.unobserve(renderStrokes);
+    };
+  }, [strokesArray, tempStrokesMap]);
 
   const getSvgPathFromStroke = (stroke: number[][]) => {
     if (!stroke.length) return '';
@@ -217,16 +269,8 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     const point = getEventPos(e);
     setCurrentStroke([point]);
     
-    // Create new stroke in Yjs array
-    if (strokesArray) {
-      const strokeData: StrokeData = {
-        color: currentColor,
-        size: brushSize,
-        pathData: ''
-      };
-      strokesArray.push([strokeData]);
-      setCurrentStrokeIndex(strokesArray.length - 1);
-    }
+    const strokeId = `${getPlayer().id}_${Date.now()}`;
+    setCurrentStrokeId(strokeId);
   };
 
   const draw = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
@@ -237,8 +281,11 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     const newStroke = [...currentStroke, point];
     setCurrentStroke(newStroke);
     
-    // Update stroke in Yjs array for real-time sync
-    if (strokesArray && currentStrokeIndex >= 0 && newStroke.length > 1) {
+    const now = Date.now();
+    const shouldSync = now - lastSyncTime > 100;
+    
+    // Update temp stroke for real-time sync
+    if (tempStrokesMap && currentStrokeId && newStroke.length > 1 && shouldSync) {
       const stroke = getStroke(newStroke, {
         size: brushSize * 2,
         thinning: 0.5,
@@ -248,33 +295,18 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
       
       const pathData = getSvgPathFromStroke(stroke);
       
-      const strokeData: StrokeData = {
+      const tempStrokeData: TempStrokeData = {
+        id: currentStrokeId,
         color: currentColor,
         size: brushSize,
-        pathData
+        pathData,
+        playerId: getPlayer().id,
+        playerName: getPlayer().name,
+        lastPoint: [point[0], point[1]]
       };
       
-      strokesArray.delete(currentStrokeIndex, 1);
-      strokesArray.insert(currentStrokeIndex, [strokeData]);
-    }
-    
-    // Real-time preview
-    if (previewRef.current && newStroke.length > 1) {
-      const stroke = getStroke(newStroke, {
-        size: brushSize * 2,
-        thinning: 0.5,
-        smoothing: 0.5,
-        streamline: 0.5,
-      });
-      
-      const pathData = getSvgPathFromStroke(stroke);
-      
-      previewRef.current.innerHTML = '';
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.setAttribute('d', pathData);
-      path.setAttribute('fill', currentColor);
-      path.setAttribute('opacity', '0.8');
-      previewRef.current.appendChild(path);
+      tempStrokesMap.set(currentStrokeId, tempStrokeData);
+      setLastSyncTime(now);
     }
   };
 
@@ -284,8 +316,8 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     
     setIsDrawing(false);
     
-    // Final update to Yjs array
-    if (strokesArray && currentStrokeIndex >= 0 && currentStroke.length > 1) {
+    // Add completed stroke to permanent array
+    if (strokesArray && currentStroke.length > 1) {
       const stroke = getStroke(currentStroke, {
         size: brushSize * 2,
         thinning: 0.5,
@@ -301,17 +333,17 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
         pathData
       };
       
-      strokesArray.delete(currentStrokeIndex, 1);
-      strokesArray.insert(currentStrokeIndex, [strokeData]);
+      strokesArray.push([strokeData]);
     }
     
-    // Clear preview
-    if (previewRef.current) {
-      previewRef.current.innerHTML = '';
+    // Remove temp stroke
+    if (tempStrokesMap && currentStrokeId) {
+      tempStrokesMap.delete(currentStrokeId);
     }
     
     setCurrentStroke([]);
-    setCurrentStrokeIndex(-1);
+    setCurrentStrokeId('');
+    setLastSyncTime(0);
   };
 
   const clearCanvas = () => {
@@ -616,6 +648,18 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
             zIndex: 2
           }}
           viewBox={`0 0 ${GAME_CONFIG.CANVAS_SIZE.width} ${GAME_CONFIG.CANVAS_SIZE.height}`}
+        />
+        <div
+          ref={cursorsRef}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 3
+          }}
         />
       </div>
     </div>

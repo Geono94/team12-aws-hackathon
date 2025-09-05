@@ -3,7 +3,6 @@ import { parse } from 'url';
 import next from 'next';
 import WebSocket from 'ws';
 import { setupWSConnection } from 'y-websocket/bin/utils';
-import * as Y from 'yjs';
 import { GameManager } from './src/server/GameManager';
 import { ClientToServerMessage } from '@/types';
 
