@@ -14,3 +14,18 @@ build/
 cdk.out/
 *.tgz
 *.tar.gz
+.q
+
+# Test coverage
+coverage/
+
+# Lambda deployment
+lambda-deployment.zip
+
+# Temporary files
+temp_*.jpg
+ai-regenerated.jpg
+analysis-result.txt
+game-result.json
+
+.idea
