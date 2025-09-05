@@ -189,11 +189,14 @@ export class Room {
     
     this.selectTopic(topic);
  
-    this.startCountdown(() => {
-      this.startGameTimer(() => {
-        this.endGame(docs);
+    // TopicSelection 화면을 3초간 보여준 후 카운트다운 시작
+    setTimeout(() => {
+      this.startCountdown(() => {
+        this.startGameTimer(() => {
+          this.endGame(docs);
+        });
       });
-    }); 
+    }, 3000); // 3초 지연
   }
 
   public broadcastGameState() {

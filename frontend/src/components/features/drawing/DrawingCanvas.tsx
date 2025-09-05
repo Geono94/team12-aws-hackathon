@@ -459,23 +459,25 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
         </div>
       )}
 
-      {/* Canvas */}
-      <canvas
-        ref={canvasRef}
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseLeave={stopDrawing}
-        style={{
-          border: `2px solid ${COLORS.neutral.border}`,
-          borderRadius: BORDER_RADIUS.sm,
-          cursor: gameState === 'playing' ? 'crosshair' : 'not-allowed',
-          background: 'white',
-          width: GAME_CONFIG.CANVAS_SIZE.width,
-          height: GAME_CONFIG.CANVAS_SIZE.height,
-          touchAction: 'none'
-        }}
-      />
+      {/* Canvas - topicSelection 상태일 때는 숨김 */}
+      {gameState !== 'topicSelection' && (
+        <canvas
+          ref={canvasRef}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          style={{
+            border: `2px solid ${COLORS.neutral.border}`,
+            borderRadius: BORDER_RADIUS.sm,
+            cursor: gameState === 'playing' ? 'crosshair' : 'not-allowed',
+            background: 'white',
+            width: GAME_CONFIG.CANVAS_SIZE.width,
+            height: GAME_CONFIG.CANVAS_SIZE.height,
+            touchAction: 'none'
+          }}
+        />
+      )}
     </div>
   );
 }
