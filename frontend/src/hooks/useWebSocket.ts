@@ -20,8 +20,7 @@ export const useWebSocket = (roomId: string, wsUrl: string) => {
     if (provider?.ws) {
       const handleMessage = (event: MessageEvent) => {
         try {
-          const message = JSON.parse(event.data);
-          console.log('Receive message :', message);
+          const message = JSON.parse(event.data); 
           // Only handle game messages (has type property and roomId)
           if (message.type && typeof message.type === 'string') {
             callback(message);

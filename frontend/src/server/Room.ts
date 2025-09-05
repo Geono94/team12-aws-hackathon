@@ -10,7 +10,6 @@ export class PlayerInfo {
   joinedAt: string;
   ws: WebSocket;
 
-
   constructor(args: {
     id: string;
     name: string;
@@ -96,31 +95,76 @@ export class Room {
     return this.players.size === 0;
   }
 
-  private async createPngFromDrawingData(drawingData: any[]) {
-    const canvas = createCanvas(800, 600);
+  private async createPngFromSvgData(svgDrawingMap: Map<string, any>) {
+    const canvas = createCanvas(GAME_CONFIG.CANVAS_SIZE.width, GAME_CONFIG.CANVAS_SIZE.height);
     const ctx = canvas.getContext('2d');
     
     // White background
     ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, 800, 600);
+    ctx.fillRect(0, 0, GAME_CONFIG.CANVAS_SIZE.width, GAME_CONFIG.CANVAS_SIZE.height);
     
-    // Draw points
-    drawingData.forEach((point: any) => {
-      if (point.x && point.y) {
-        ctx.fillStyle = point.color || '#000000';
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, (point.size || 5) / 2, 0, Math.PI * 2);
-        ctx.fill();
+    // Draw each player's paths
+    svgDrawingMap.forEach((playerDrawing: any, playerId: string) => {
+      console.log(playerDrawing, playerId);
+      if (playerDrawing.paths) {
+        playerDrawing.paths.forEach((pathData: string, index: number) => {
+          const color = playerDrawing.colors?.[index] || '#000';
+          const strokeWidth = playerDrawing.strokeWidths?.[index] || 5;
+          
+          // Parse SVG path and draw on canvas
+          this.drawSvgPath(ctx, pathData, color, strokeWidth);
+        });
       }
     });
     
     const buffer = canvas.toBuffer('image/png');
     const filename = `${this.id}.png`;
     
-    // Upload to S3
     await this.uploadToS3(buffer, filename);
-    
     console.log(`[${this.id}] PNG created and uploaded: ${filename}`);
+  }
+
+  private drawSvgPath(ctx: any, pathData: string, color: string, strokeWidth: number) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = strokeWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    // Parse SVG path commands
+    const commands = pathData.match(/[MLHVCSQTAZ][^MLHVCSQTAZ]*/gi) || [];
+    
+    ctx.beginPath();
+    let currentX = 0, currentY = 0;
+    
+    commands.forEach(cmd => {
+      const type = cmd[0].toUpperCase();
+      const coords = cmd.slice(1).trim().split(/[\s,]+/).map(Number).filter(n => !isNaN(n));
+      
+      switch (type) {
+        case 'M':
+          currentX = coords[0];
+          currentY = coords[1];
+          ctx.moveTo(currentX, currentY);
+          break;
+        case 'L':
+          currentX = coords[0];
+          currentY = coords[1];
+          ctx.lineTo(currentX, currentY);
+          break;
+        case 'C':
+          ctx.bezierCurveTo(coords[0], coords[1], coords[2], coords[3], coords[4], coords[5]);
+          currentX = coords[4];
+          currentY = coords[5];
+          break;
+        case 'Q':
+          ctx.quadraticCurveTo(coords[0], coords[1], coords[2], coords[3]);
+          currentX = coords[2];
+          currentY = coords[3];
+          break;
+      }
+    });
+    
+    ctx.stroke();
   }
 
   private async uploadToS3(buffer: Buffer, filename: string) {
@@ -211,12 +255,12 @@ export class Room {
     
     const doc = docs.get(this.id);
     if (doc) {
-      const drawingArray = doc.getArray('drawing');
-      const drawingData = drawingArray.toArray();
-      console.log(`[${this.id}] Drawing data:`, drawingData);
+      const svgDrawingData = doc.getMap('svgDrawing');
       
-      // Create bitmap and save as PNG
-      await this.createPngFromDrawingData(drawingData);
+      console.log(`[${this.id}] Drawing data:`, svgDrawingData);
+      
+      // Create PNG from SVG data
+      await this.createPngFromSvgData(svgDrawingData);
     }
     
     this.updateState({ state: 'ended' });

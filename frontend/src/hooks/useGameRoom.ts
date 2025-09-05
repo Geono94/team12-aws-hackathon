@@ -12,16 +12,7 @@ export function useGameRoom(roomId: string) {
     console.log('Initializing game room:', roomId, 'Player:', playerId);
     setIsInitialized(true);
   }, [connected, roomId, playerId, isInitialized]);
-
-  useEffect(() => {
-    if (!connected) return;
-    
-    return onMessage((message: any) => {
-      console.log('Received message:', message);
-      // Handle incoming messages if needed
-    });
-  }, [connected, onMessage]);
-
+ 
   const clearDrawing = () => {
     if (!doc) return;
     const drawingArray = doc.getArray('drawing');

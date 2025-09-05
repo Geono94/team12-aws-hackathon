@@ -12,6 +12,7 @@ import { PlayerInfo } from '@/server/Room';
 import Button from '@/components/ui/Button';
 import { getPlayer } from '@/lib/player';
 import { leaveRoom } from '@/lib/api/room';
+import NewCanvas from './NewCanvas';
 
 interface DrawingCanvasProps {
   roomId: string;
@@ -20,9 +21,6 @@ interface DrawingCanvasProps {
 export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [currentColor, setCurrentColor] = useState<string>(COLORS.primary.main);
-  const [brushSize, setBrushSize] = useState(5);
   const [gameState, setGameState] = useState<GameStateType>('waiting');
   const [topic, setTopic] = useState<string>('고양이');
   const [countdown, setCountdown] = useState<number>(0);
@@ -31,7 +29,6 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   const [players, setPlayers] = useState<PlayerInfo[]>([]);
 
   const { doc, connected, onMessage, sendMessage } = useYjs();
-  const { clearDrawing } = useGameRoom(roomId);
 
   // 나가기 함수
   const handleLeaveRoom = async () => {
@@ -64,25 +61,11 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
       }
     })
   }, [])
-
-  const drawingArray = doc?.getArray('drawing');
-
-  const colors = [
-    COLORS.primary.main,
-    COLORS.primary.sub,
-    COLORS.primary.accent,
-    '#FFD93D',
-    '#6BCF7F',
-    '#FF8C42',
-    '#9B59B6',
-    '#2D3748'
-  ];
+ 
 
   // Sync local state with server messages
   useEffect(() => {
-    return onMessage((message: ServerToClientMessage) => {
-      console.log('Received message:', message);
-
+    return onMessage((message: ServerToClientMessage) => { 
       if (message.type === 'gameStateUpdate') {
         const data = message.data;
         console.log('gameStateUpdate received:', data); // 디버그 로그 추가
@@ -140,73 +123,8 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }, []);
-
-  // Handle drawing with Yjs document
-  useEffect(() => {
-    if (!drawingArray) return;
-
-    const observer = () => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      drawingArray.forEach((point: DrawPoint) => {
-        ctx.fillStyle = point.color;
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, point.size, 0, 2 * Math.PI);
-        ctx.fill();
-      });
-    };
-
-    drawingArray.observe(observer);
-    return () => drawingArray.unobserve(observer);
-  }, [drawingArray]);
  
-
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (gameState !== 'playing') return;
-    setIsDrawing(true);
-    draw(e);
-  };
-
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || gameState !== 'playing') return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const point: DrawPoint = {
-      x,
-      y,
-      color: currentColor,
-      size: brushSize,
-    };
-
-    if (drawingArray) {
-      drawingArray.push([point]);
-    }
-  };
-
-  const stopDrawing = () => {
-    setIsDrawing(false);
-  };
-
-  const clearCanvas = () => {
-    if (gameState === 'playing') {
-      clearDrawing();
-    }
-  };
-
+  
   if (!connected || !doc) {
     return (
       <div style={{
@@ -398,82 +316,13 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
           </div>
         )}
       </div>
-
-      {/* Drawing Tools */}
-      {gameState === 'playing' && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: SPACING.md,
-          marginBottom: SPACING.md,
-          flexWrap: 'wrap',
-          justifyContent: 'center'
-        }}>
-          {/* Color Palette */}
-          <div style={{ display: 'flex', gap: SPACING.xs }}>
-            {colors.map((color) => (
-              <button
-                key={color}
-                onClick={() => setCurrentColor(color)}
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: color,
-                  border: currentColor === color ? `3px solid ${COLORS.neutral.text}` : '2px solid white',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                }}
-              />
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: SPACING.xs }}>
-            <label>Size:</label>
-            <input
-              type="range"
-              min="1"
-              max="20"
-              value={brushSize}
-              onChange={(e) => setBrushSize(Number(e.target.value))}
-              style={{ width: '80px' }}
-            />
-            <span>{brushSize}px</span>
-          </div>
-
-          <button
-            onClick={clearCanvas}
-            style={{
-              padding: `${SPACING.xs} ${SPACING.sm}`,
-              backgroundColor: COLORS.primary.main,
-              color: 'white',
-              border: 'none',
-              borderRadius: BORDER_RADIUS.sm,
-              cursor: 'pointer'
-            }}
-          >
-            Clear
-          </button>
-        </div>
-      )}
-
-      {/* Canvas */}
-      <canvas
-        ref={canvasRef}
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseLeave={stopDrawing}
-        style={{
-          border: `2px solid ${COLORS.neutral.border}`,
-          borderRadius: BORDER_RADIUS.sm,
-          cursor: gameState === 'playing' ? 'crosshair' : 'not-allowed',
-          background: 'white',
-          width: GAME_CONFIG.CANVAS_SIZE.width,
-          height: GAME_CONFIG.CANVAS_SIZE.height,
-          touchAction: 'none'
-        }}
-      />
+ 
+      <NewCanvas
+        roomId={roomId}
+        playerId={getPlayer()?.id!}
+        gameState={gameState}
+        disabled={!connected || !doc}
+      /> 
     </div>
   );
 }
