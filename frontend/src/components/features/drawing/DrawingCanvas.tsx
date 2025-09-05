@@ -102,7 +102,11 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
       if (message.type === 'gameStateUpdate') {
         const data = message.data;
         if (data.state) setGameState(data.state);
-        if (data.topic) setTopic(data.topic);
+        if (data.topic) {
+          setTopic(data.topic);
+          // topic을 localStorage에 저장
+          localStorage.setItem(`gameTopic_${roomId}`, data.topic);
+        }
         if (data.countdown !== undefined) setCountdown(data.countdown);
         if (data.timeLeft !== undefined) setTimeLeft(data.timeLeft);
         

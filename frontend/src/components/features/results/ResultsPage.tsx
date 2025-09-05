@@ -93,7 +93,7 @@ export default function ResultsPage() {
     <div style={{
       fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
       backgroundColor: '#000000',
-      minHeight: '100vh',
+      minHeight: '30vh',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -107,7 +107,7 @@ export default function ResultsPage() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '32px'
+        gap: '24px'
       }}>
         {/* Header */}
         <div style={{ textAlign: 'center' }}>
@@ -189,33 +189,42 @@ export default function ResultsPage() {
               }} />
             </div>
             
-            {/* 변환 메시지 - 프로그래스 바 아래로 이동 */}
+            {/* 변환 메시지 - 인라인 레이아웃 */}
             <div style={{
-              textAlign: 'center',
-              marginTop: '16px',
-              marginBottom: '16px'
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginTop: '12px',
+              marginBottom: '1px',
+              padding: '12px',
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              borderRadius: '12px'
             }}>
               <div style={{
-                fontSize: '48px',
-                marginBottom: '12px',
-                animation: 'float 2s ease-in-out infinite'
+                fontSize: '32px',
+                animation: 'float 2s ease-in-out infinite',
+                flexShrink: 0
               }}>
                 🎨
               </div>
-              <p style={{ 
-                fontSize: '16px', 
-                fontWeight: '600',
-                color: '#FFFFFF',
-                marginBottom: '4px'
-              }}>
-                {funFacts[currentFactIndex]}
-              </p>
-              <p style={{ 
-                fontSize: '14px', 
-                color: '#888'
-              }}>
-                AI가 그림을 분석하고 새로운 스타일로 변환하고 있어요
-              </p>
+              <div style={{ flex: 1 }}>
+                <p style={{ 
+                  fontSize: '16px', 
+                  fontWeight: '600',
+                  color: '#FFFFFF',
+                  marginBottom: '6px',
+                  margin: 0
+                }}>
+                  {funFacts[currentFactIndex]}
+                </p>
+                <p style={{ 
+                  fontSize: '12px', 
+                  color: '#888',
+                  margin: 0
+                }}>
+                  AI가 그림을 분석하고 새로운 스타일로 변환하고 있어요
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -223,15 +232,16 @@ export default function ResultsPage() {
         {/* Image Area */}
         <div style={{
           width: '100%',
-          height: '400px',
+          maxWidth: '400px',
+          aspectRatio: '4/3',
           borderRadius: '20px',
-          padding: '16px',
+          padding: '6px',
           background: 'white',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-          position: 'relative'
+          position: 'relative',
+          margin: '0 16px'
         }}>
           {isLoading ? (
             /* 로딩 중에도 원본 이미지 표시 */

@@ -125,6 +125,33 @@ export const useResults = (roomId: string | null) => {
       console.log('fetchResultImages called with roomId:', roomId);
       setIsLoading(true);
       
+      // 게임 정보 로드
+      const savedTopic = localStorage.getItem(`gameTopic_${roomId}`);
+      const gameStateStr = localStorage.getItem(`gameState_${roomId}`);
+      
+      let topic = '자유 주제';
+      let playerCount = 1;
+      
+      if (savedTopic) {
+        topic = savedTopic;
+      }
+      
+      if (gameStateStr) {
+        try {
+          const gameState = JSON.parse(gameStateStr);
+          if (!savedTopic && gameState.topic) {
+            topic = gameState.topic;
+          }
+          if (gameState.players?.length) {
+            playerCount = gameState.players.length;
+          }
+        } catch (e) {
+          console.log('Failed to parse game state:', e);
+        }
+      }
+      
+      setGameInfo({ topic, playerCount });
+      
       const drawingResult = localStorage.getItem('drawingResult');
       console.log('drawingResult from localStorage:', drawingResult);
       
