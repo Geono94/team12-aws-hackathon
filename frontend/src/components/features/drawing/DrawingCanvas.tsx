@@ -336,7 +336,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
                                     }}
                                   />
                                 </div>
-                                플레이어 {index + 1}
+                                {player.name}
                               </>
                             ) : (
                               <>
