@@ -97,10 +97,12 @@ export class DrawTogetherStack extends cdk.Stack {
     const joinResource = roomsResource.addResource('join');
     const leaveResource = roomsResource.addResource('leave');
     const roomIdResource = roomsResource.addResource('{roomId}');
+    const statusResource = roomIdResource.addResource('status');
     
     joinResource.addMethod('POST', new apigateway.LambdaIntegration(roomHandler));
     leaveResource.addMethod('POST', new apigateway.LambdaIntegration(roomHandler));
     roomIdResource.addMethod('GET', new apigateway.LambdaIntegration(roomHandler));
+    statusResource.addMethod('PUT', new apigateway.LambdaIntegration(roomHandler));
 
     // AI endpoint
     const aiResource = restApi.root.addResource('ai');

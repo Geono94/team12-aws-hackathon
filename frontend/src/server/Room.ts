@@ -117,7 +117,7 @@ export class Room {
     });
   }
 
-  private endGame(docs: Map<string, any>) {
+  private async endGame(docs: Map<string, any>) {
     console.log(`[${this.id}] Game ended, reading drawing data...`);
     
     const doc = docs.get(this.id);
@@ -128,6 +128,26 @@ export class Room {
     }
     
     this.updateState({ state: 'ended' });
+    
+    // Update room status in database
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://77q0bmlyb4.execute-api.us-east-1.amazonaws.com/prod';
+      const response = await fetch(`${API_BASE_URL}/rooms/${this.id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'finished' }),
+      });
+      
+      if (response.ok) {
+        console.log(`[${this.id}] Room status updated to finished`);
+      } else {
+        console.error(`[${this.id}] Failed to update room status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error(`[${this.id}] Failed to update room status:`, error);
+    }
     
     this.broadcast({ 
       type: 'gameEnded', 

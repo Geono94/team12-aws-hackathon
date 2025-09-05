@@ -34,6 +34,12 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const path = event.path;
     const method = event.httpMethod;
 
+    if (path.startsWith('/rooms/') && path.endsWith('/status') && method === 'PUT') {
+      const roomId = path.split('/')[2];
+      const { status } = JSON.parse(event.body || '{}');
+      return await updateRoomStatus(roomId, status);
+    }
+
     if (path.startsWith('/rooms/') && method === 'GET') {
       const roomId = path.split('/')[2];
       return await getRoomInfo(roomId);
@@ -152,6 +158,36 @@ async function joinRoomSafely(playerId: string, playerName: string, maxRetries: 
   };
 }
 
+async function updateRoomStatus(roomId: string, status: 'waiting' | 'playing' | 'finished'): Promise<APIGatewayProxyResult> {
+  try {
+    await docClient.send(new UpdateCommand({
+      TableName: ROOMS_TABLE,
+      Key: { roomId },
+      UpdateExpression: 'SET #status = :status, updatedAt = :time',
+      ExpressionAttributeNames: {
+        '#status': 'status'
+      },
+      ExpressionAttributeValues: {
+        ':status': status,
+        ':time': Date.now(),
+      },
+    }));
+
+    return {
+      statusCode: 200,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ success: true }),
+    };
+  } catch (error) {
+    console.error('Update room status error:', error);
+    return {
+      statusCode: 500,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'Failed to update room status' }),
+    };
+  }
+}
+
 async function getRoomInfo(roomId: string): Promise<APIGatewayProxyResult> {
   try {
     const command = new QueryCommand({
@@ -205,9 +241,9 @@ async function findAvailableRoom(): Promise<Room | null> {
 
   const result = await docClient.send(command);
   
-  // Filter rooms with available space in application logic
+  // Filter rooms with available space and not finished
   const availableRooms = (result.Items as Room[])?.filter(room => 
-    room.playerCount < room.maxPlayers
+    room.playerCount < room.maxPlayers && room.status === 'waiting'
   );
   
   return availableRooms?.[0] || null;

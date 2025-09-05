@@ -63,6 +63,24 @@ export async function joinRoom(playerId: string, playerName: string): Promise<Ro
   }
 }
 
+export async function updateRoomStatus(roomId: string, status: 'waiting' | 'playing' | 'finished'): Promise<void> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/rooms/${roomId}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+  } catch (error) {
+    console.error('Update room status failed:', error);
+  }
+}
+
 export async function leaveRoom(roomId: string, playerId: string): Promise<void> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/leave`, {
