@@ -62,7 +62,7 @@ export default function FeedFiltersComponent({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: `${SPACING.sm} ${SPACING.md}`,
+              padding: `8px ${SPACING.md}`,
               borderRadius: '12px',
               border: '1px solid #333333',
               background: '#1a1a1a',
@@ -71,7 +71,7 @@ export default function FeedFiltersComponent({
               fontWeight: '500',
               cursor: 'pointer',
               transition: 'all 0.2s ease-out',
-              minHeight: '44px'
+              minHeight: '36px'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = '#2a2a2a';
@@ -96,7 +96,7 @@ export default function FeedFiltersComponent({
               value={filters.sortBy}
               onChange={handleSortChange}
               style={{
-                padding: `${SPACING.sm} ${SPACING.md}`,
+                padding: `8px ${SPACING.md}`,
                 borderRadius: '12px',
                 border: '1px solid #333333',
                 background: '#1a1a1a',
@@ -107,7 +107,7 @@ export default function FeedFiltersComponent({
                 outline: 'none',
                 minWidth: '100px',
                 flexShrink: 0,
-                height: '44px',
+                height: '36px',
                 position: 'relative',
                 zIndex: 200
               }}

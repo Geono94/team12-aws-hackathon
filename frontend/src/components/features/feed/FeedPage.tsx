@@ -162,15 +162,38 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
 
       <div style={{ padding: SPACING.md }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <h1 style={{ 
-            fontSize: '28px',
-            fontWeight: 'bold',
-            color: '#FFFFFF',
-            marginBottom: SPACING.lg,
-            textAlign: 'center'
+          {/* Header with Home Button */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: SPACING.md,
+            marginBottom: SPACING.lg
           }}>
-            작품 피드
-          </h1>
+            <button
+              onClick={() => router.push('/')}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#FFFFFF',
+                padding: SPACING.xs
+              }}
+            >
+              ←
+            </button>
+            <h1 style={{ 
+              fontSize: '28px',
+              fontWeight: 'bold',
+              color: '#FFFFFF',
+              margin: 0,
+              flex: 1,
+              textAlign: 'center'
+            }}>
+              작품 피드
+            </h1>
+            <div style={{ width: '32px' }}></div> {/* Spacer for centering */}
+          </div>
 
           {/* Sticky Filters */}
           <FeedFiltersComponent
