@@ -11,6 +11,7 @@ import { useYjs } from '@/contexts/YjsContext';
 import { getFinishedRooms } from '@/lib/api/room';
 import { getOriginalImageUrl, getAiImageUrl } from '@/lib/utils/s3';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { Title } from './Title';
 
 export default function HomePage() {
   const router = useRouter();
@@ -396,19 +397,7 @@ export default function HomePage() {
           </div>
           
           {/* Title with Gradient */}
-          <h1 style={{ 
-            fontSize: '36px',
-            fontWeight: 'bold',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            marginBottom: SPACING.sm,
-            position: 'relative',
-            zIndex: 1
-          }}>
-            DrawTogether
-          </h1>
+          <Title />
           
           {/* Enhanced Subtitle */}
           <div style={{

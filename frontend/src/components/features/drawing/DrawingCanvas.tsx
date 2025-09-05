@@ -12,6 +12,8 @@ import Button from '@/components/ui/Button';
 import { getPlayer } from '@/lib/player';
 import { leaveRoom } from '@/lib/api/room';
 import { getStroke } from 'perfect-freehand';
+import { ColorPalette } from './ColorPalette';
+import { BrushSizeSelector } from './BrushSizeSelector';
 
 interface StrokeData {
   color: string;
@@ -542,39 +544,17 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
           gap: SPACING.md,
           marginBottom: SPACING.md,
           flexWrap: 'wrap',
-          justifyContent: 'center'
+          justifyContent: 'center',
         }}>
-          <div style={{ display: 'flex', gap: SPACING.xs }}>
-            {colors.map((color) => (
-              <button
-                key={color}
-                onClick={() => setCurrentColor(color)}
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: color,
-                  border: currentColor === color ? `3px solid ${COLORS.neutral.text}` : '2px solid white',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                }}
-              />
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: SPACING.xs }}>
-            <label>Size:</label>
-            <input
-              type="range"
-              min="1"
-              max="20"
-              value={brushSize}
-              onChange={(e) => setBrushSize(Number(e.target.value))}
-              style={{ width: '80px' }}
-            />
-            <span>{brushSize}px</span>
-          </div>
-
+          <ColorPalette 
+            colors={colors}
+            currentColor={currentColor}
+            onColorChange={setCurrentColor}
+          />
+          <BrushSizeSelector
+            currentSize={brushSize}
+            onSizeChange={setBrushSize}
+          /> 
           <button
             onClick={clearCanvas}
             style={{
