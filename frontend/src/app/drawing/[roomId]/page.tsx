@@ -154,7 +154,7 @@ export default function Drawing() {
   return (
     <div style={{ 
       padding: '20px',
-      background: '#FAFAFA',
+      background: '#000000',
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
