@@ -10,7 +10,7 @@ Amazon Q Developer Hackathon으로 구현한 실시간 협업 드로잉 게임�
 - **완전 서버리스**: AWS CDK로 관리되는 서버리스 아키텍처
 
 ## 주요 기능
-
+![DrawTogether](complete_fast.gif)
 1. **룸 생성 및 참가** (최대 4명)
 2. **랜덤 주제 생성** 및 3초 카운트다운
 3. **30초 협업 드로잉** (실시간 동기화)
