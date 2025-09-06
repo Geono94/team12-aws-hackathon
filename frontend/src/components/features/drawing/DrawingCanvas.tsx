@@ -50,7 +50,11 @@ const PlayerAvatar = ({ player, index }: { player?: PlayerInfo; index: number })
               height: '50px',
               borderRadius: '50%',
               objectFit: 'cover',
-              marginBottom: '4px'
+              marginBottom: '4px',
+              animation: index % 2 === 0 
+                ? `bounce 2.5s ease-in-out infinite ${index * 0.4}s` 
+                : `wiggle 2.2s ease-in-out infinite ${index * 0.4}s`,
+              animationFillMode: 'both'
             }}
           />
           <div style={{
@@ -595,7 +599,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
                           ? `0 8px 24px ${slotColors[index]}30`
                           : '0 4px 16px rgba(0,0,0,0.2)',
                         transition: 'all 0.3s ease',
-                        animation: player ? 'playerIdle 2s ease-in-out infinite' : 'waitingPulse 2s ease-in-out infinite'
+                        animation: player ? 'none' : 'waitingPulse 2s ease-in-out infinite'
                       }}>
                         {player ? (
                           <>
@@ -607,7 +611,11 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
                                 height: '60px',
                                 borderRadius: '50%',
                                 objectFit: 'cover',
-                                marginBottom: '8px'
+                                marginBottom: '8px',
+                                animation: index % 2 === 0 
+                                  ? `bounce 2s ease-in-out infinite ${index * 0.3}s` 
+                                  : `wiggle 1.8s ease-in-out infinite ${index * 0.3}s`,
+                                animationFillMode: 'both'
                               }}
                             />
                             <div style={{
