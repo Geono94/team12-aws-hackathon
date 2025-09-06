@@ -7,107 +7,15 @@ import { COLORS, SPACING, BORDER_RADIUS } from '@/constants/design';
 import { GAME_CONFIG } from '@/constants/game';
 import { GameStateType, ServerToClientMessage } from '@/types';
 import TopicSelection from './TopicSelection';
-import { PlayerData, PlayerInfo } from '@/server/Room';
+import { PlayerData } from '@/server/Room';
 import { getPlayer } from '@/lib/player';
 import { leaveRoom } from '@/lib/api/room';
 import { getStroke } from 'perfect-freehand';
 import { ColorPalette } from './ColorPalette';
 import { BrushSizeSelector } from './BrushSizeSelector';
 import { InviteButton } from '../../ui/InviteButton';
+import { Countdown } from './Countdown';
 
-// PlayerAvatar 컴포넌트
-const PlayerAvatar = ({ player, index }: { player?: PlayerInfo; index: number }) => {
-  const avatarColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFB347'];
-  
-  return (
-    <div style={{
-      width: '80px',
-      height: '80px',
-      borderRadius: '50%',
-      border: `3px solid ${player ? avatarColors[index] : 'rgba(255,255,255,0.2)'}`,
-      background: player 
-        ? `linear-gradient(135deg, ${avatarColors[index]}, ${avatarColors[index]}88)`
-        : 'rgba(255,255,255,0.1)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      position: 'relative',
-      backdropFilter: 'blur(10px)',
-      boxShadow: player 
-        ? `0 4px 16px ${avatarColors[index]}40`
-        : '0 4px 16px rgba(0,0,0,0.2)',
-      transition: 'all 0.3s ease'
-    }}>
-      {player ? (
-        <>
-          <img 
-            src={`/characters/character${index + 1}.svg`}
-            alt={`Character ${index + 1}`}
-            style={{
-              width: '50px',
-              height: '50px',
-              borderRadius: '50%',
-              objectFit: 'cover',
-              marginBottom: '4px',
-              animation: index % 2 === 0 
-                ? `bounce 2.5s ease-in-out infinite ${index * 0.4}s` 
-                : `wiggle 2.2s ease-in-out infinite ${index * 0.4}s`,
-              animationFillMode: 'both'
-            }}
-          />
-          <div style={{
-            fontSize: '10px',
-            fontWeight: '600',
-            color: '#FFFFFF',
-            textAlign: 'center',
-            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-            maxWidth: '70px',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}>
-            {player.name}
-          </div>
-          {/* 준비 완료 표시 */}
-          <div style={{
-            position: 'absolute',
-            top: '-5px',
-            right: '-5px',
-            width: '20px',
-            height: '20px',
-            borderRadius: '50%',
-            background: '#4CAF50',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '12px',
-            animation: 'sparkle 1.5s ease-in-out infinite'
-          }}>
-            ✓
-          </div>
-        </>
-      ) : (
-        <>
-          <div style={{
-            fontSize: '24px',
-            marginBottom: '4px',
-            opacity: 0.6
-          }}>
-            ⏳
-          </div>
-          <div style={{
-            fontSize: '10px',
-            color: 'rgba(255,255,255,0.6)',
-            fontWeight: '500'
-          }}>
-            대기 중
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
 
 interface StrokeData {
   color: string;
@@ -150,7 +58,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
 
   const [toastMessage, setToastMessage] = useState<string>('');
   const [showToast, setShowToast] = useState(false);
-  const [gameStartCountdown, setGameStartCountdown] = useState<number>(0);
+  const [gameStartCountdown, setGameStartCountdown] = useState<number | null>(null);
 
   // 토스트 알림 표시 함수
   const showToastMessage = (message: string) => {
@@ -162,15 +70,15 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   // 플레이어 변화 감지 및 토스트 알림
   useEffect(() => {
     const currentPlayerCount = players.length;
-    if (currentPlayerCount === GAME_CONFIG.MAX_PLAYERS && gameStartCountdown === 0) {
-      setGameStartCountdown(GAME_CONFIG.COUNTDOWN_TIME);
+    if (currentPlayerCount === GAME_CONFIG.MAX_PLAYERS && gameStartCountdown === null) {
+      setGameStartCountdown(GAME_CONFIG.MATCHED_COUNTDOWN_TIME);
       const countdownInterval = setInterval(() => {
         setGameStartCountdown(prev => {
-          if (prev <= 1) {
+          if (prev && prev <= 1) {
             clearInterval(countdownInterval);
             return 0;
           }
-          return prev - 1;
+          return (prev ?? 0) - 1;
         });
       }, 1000);
     }
@@ -677,7 +585,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
                 textAlign: 'center',
                 marginBottom: '20px'
               }}>
-                {gameStartCountdown > 0 ? (
+                {(gameStartCountdown ?? 0) > 0 ? (
                   <div style={{
                     background: 'linear-gradient(135deg, #FF6B6B, #4ECDC4)',
                     borderRadius: '16px',
@@ -797,7 +705,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
             `}</style>
           </div>
         ) : gameState === 'topicSelection' ? (
-          <TopicSelection selectedTopic={topic} />
+          <TopicSelection selectedTopic={topic} duration={GAME_CONFIG.TOPIC_SELECT_TIME * 1000} />
         ) : (
           <div style={{ marginBottom: SPACING.sm }}>
             <span style={{ fontSize: '18px', fontWeight: '600' }}>Players: {playerCount}/{GAME_CONFIG.MAX_PLAYERS}</span>
@@ -805,15 +713,12 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
         )}
 
         {gameState === 'countdown' && (
-          <div style={{ fontSize: '48px', fontWeight: 'bold', color: COLORS.primary.main }}>
-            {topic && <div style={{ fontSize: '24px', marginBottom: SPACING.sm }}>Draw: {topic}</div>}
-            {countdown > 0 ? countdown : 'GO!'}
-          </div>
+          <Countdown countdown={countdown} topic={topic} />
         )}
 
         {gameState === 'playing' && (
           <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
-            <div style={{ marginBottom: SPACING.sm, color: COLORS.neutral.text }}>Draw: {topic}</div>
+            <div style={{ marginBottom: SPACING.sm, color: 'white' }}>Draw: {topic}</div>
             <div style={{ color: timeLeft <= 10 ? COLORS.primary.main : COLORS.primary.accent }}>Time: {timeLeft}s</div>
           </div>
         )}

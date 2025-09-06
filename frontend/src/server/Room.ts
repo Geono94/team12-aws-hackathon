@@ -38,7 +38,6 @@ export class Room {
   public id: string;
   public state: any = {};
   public players = new Map<string, PlayerInfo>();
-  public connections = new Set<WebSocket>();
   public gameTimer?: NodeJS.Timeout;
   public countdownTimer?: NodeJS.Timeout;
 
@@ -94,7 +93,6 @@ export class Room {
       this.countdownTimer = undefined;
     }
     
-    this.connections.clear();
     this.players.clear();
   }
 
@@ -140,6 +138,7 @@ export class Room {
   }
 
   async selectTopic(topic: string) {
+    console.log(`[${this.id}] selectTopic: ${topic}`);
     this.updateState({ state: 'topicSelection', topic });
     this.broadcastGameState();
     
@@ -205,18 +204,27 @@ export class Room {
 
   async startGame(docs: Map<string, any>) {
     const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
-    console.log(`[${this.id}] Auto-starting game with topic: ${topic}`);
-    
-    await this.selectTopic(topic);
- 
-    // TopicSelection 화면을 3초간 보여준 후 카운트다운 시작
-    setTimeout(() => {
-      this.startCountdown(() => {
-        this.startGameTimer(() => {
-          this.endGame(docs);
+
+    // 게임 시작 하면 3초 일단 대기
+    // 토픽 전송 후, 3초 대기
+    // 카운트다운 전송 후 3초 대기
+    console.log('게임 시작');
+    setTimeout(async () => {
+      await this.selectTopic(topic);
+      console.log('토픽 전송');
+
+      // TopicSelection 화면을 3초간 보여준 후 카운트다운 시작
+      setTimeout(() => {
+        // 3초 카운트다운 후 게임 시작
+        console.log('카운트다운 시작');
+        this.startCountdown(() => {
+          console.log('게임 시작!');
+          this.startGameTimer(() => {
+            this.endGame(docs);
+          });
         });
-      });
-    }, GAME_CONFIG.TOPIC_SELECT_TIME * 1000); // 3초 지연
+      }, GAME_CONFIG.TOPIC_SELECT_TIME * 1000);
+    }, GAME_CONFIG.MATCHED_COUNTDOWN_TIME * 1000); // 매치 완료 후 3초 대기
   }
 
   public broadcastGameState() {

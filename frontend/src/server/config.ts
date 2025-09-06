@@ -1,8 +1,11 @@
 export const GAME_CONFIG = {
-  MAX_PLAYERS: 4,
+  MAX_PLAYERS: 1,
   GAME_TIME: 30,  
-  COUNTDOWN_TIME: 3,  
-  TOPIC_SELECT_TIME: 3,
+
+  MATCHED_COUNTDOWN_TIME: 3, // 매치 완료 후 3초 카운트
+  TOPIC_SELECT_TIME: 5, // 토픽 움직이는 시간
+  COUNTDOWN_TIME: 3, // 게임 시작 3초 카운트
+  
   CANVAS_SIZE: {
     width: 800,
     height: 600,

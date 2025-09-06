@@ -130,10 +130,8 @@ export class GameManager {
     if (joinedRoom.players.size >= GAME_CONFIG.MAX_PLAYERS) {
       console.log(`[${roomId}] Max players reached! Current state: ${joinedRoom.state.state}`);
       if (joinedRoom.state.state !== 'countdown' && joinedRoom.state.state !== 'playing') {
-        console.log(`[${roomId}] Auto-starting game in 2 seconds...`);
-        setTimeout(() => {
-          this.startAutoGame(roomId);
-        }, 4000); // 4초 지연 - 마지막 플레이어도 대기실 화면을 볼 수 있도록
+        console.log(`[${roomId}] Auto-starting`);
+        this.startAutoGame(roomId); 
       } else {
         console.log(`[${roomId}] Game already started or starting (state: ${joinedRoom.state.state})`);
       }
@@ -216,10 +214,7 @@ export class GameManager {
     if (room.players.size >= GAME_CONFIG.MAX_PLAYERS) {
       console.log(`[${roomId}] Max players reached! Current state: ${room.state.state}`);
       if (room.state.state !== 'countdown' && room.state.state !== 'playing') {
-        console.log(`[${roomId}] Auto-starting game in 2 seconds...`);
-        setTimeout(() => {
-          this.startAutoGame(roomId);
-        }, 2000); // 2초 지연 - 마지막 플레이어도 대기실 화면을 볼 수 있도록
+        this.startAutoGame(roomId);
       } else {
         console.log(`[${roomId}] Game already started or starting (state: ${room.state.state})`);
       }
@@ -257,31 +252,26 @@ export class GameManager {
       return;
     }
 
-    // for (const room of this.rooms.values()) {
-    //   if (room.players.has(playerId)) {
- 
-    //       const player = room.players.get(playerId);
-    //       if (!player) {
-    //         return;
-    //       }
-          
-    //       // Only cleanup if WebSocket is not in OPEN state
-    //       if (player.ws.readyState !== WebSocket.OPEN) {
-    //         room.removePlayer(playerId);
-    //         // If room is empty, clean up everything
-    //         if (room.isEmpty()) {
-    //           console.log(`[${room.id}] Room is empty, cleaning up`);
-    //           room.cleanup();
-    //           this.rooms.delete(room.id);
-    //         } else {
-    //           // Broadcast updated player count
-    //           room.broadcast({ 
-    //             type: 'playerUpdate', 
-    //             data: { playerCount: room.players.size } 
-    //           });
-    //         }
-    //       }  
-    //   }
-    // }
+    for (const room of this.rooms.values()) {
+      if (room.players.has(playerId)) {
+          const player = room.players.get(playerId);
+          if (!player) {
+            return;
+          }
+           
+          if (player.ws.readyState !== WebSocket.OPEN) {
+            room.removePlayer(playerId);
+            // If room is empty, clean up everything
+            if (room.isEmpty() && room.state.state !== 'playing') {
+            } else {
+              // Broadcast updated player count
+              room.broadcast({ 
+                type: 'playerUpdate', 
+                data: { playerCount: room.players.size } 
+              });
+            }
+          }  
+      }
+    }
   }
 }

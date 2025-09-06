@@ -15,37 +15,35 @@ export default function TopicSelection({ selectedTopic, duration = 3000 }: Topic
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    let speed = 100;
+    const stopTime = duration - 1500; // 1.5초 전에 멈춤
     
     const roll = () => {
       setCurrentIndex(prev => (prev + 1) % TOPICS.length);
     };
 
     // Start rolling fast
-    interval = setInterval(roll, speed);
+    interval = setInterval(roll, 80);
 
-    // Slow down after 1.5 seconds
+    // Slow down after 40% of duration
     setTimeout(() => {
       clearInterval(interval);
-      speed = 300;
-      interval = setInterval(roll, speed);
-      
-      // Final slow down
-      setTimeout(() => {
-        clearInterval(interval);
-        speed = 800;
-        interval = setInterval(roll, speed);
-        
-        // Stop and show selected topic
-        setTimeout(() => {
-          clearInterval(interval);
-          setIsFinished(true);
-         }, 800);
-      }, 600);
-    }, 1000);
+      interval = setInterval(roll, 200);
+    }, duration * 0.4);
+
+    // Final slow down
+    setTimeout(() => {
+      clearInterval(interval);
+      interval = setInterval(roll, 500);
+    }, stopTime - 500);
+
+    // Stop and show selected topic
+    setTimeout(() => {
+      clearInterval(interval);
+      setIsFinished(true);
+    }, stopTime);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [duration, selectedTopic]);
 
   return (
     <div style={{
@@ -74,15 +72,15 @@ export default function TopicSelection({ selectedTopic, duration = 3000 }: Topic
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: isFinished ? COLORS.primary.accent : 'white',
+        background: isFinished ? COLORS.neutral.background : 'white',
         transition: 'all 0.5s ease',
         boxShadow: isFinished ? '0 8px 20px rgba(255, 107, 107, 0.3)' : '0 4px 12px rgba(0,0,0,0.1)'
       }}>
         <div style={{
           fontSize: '36px',
           fontWeight: 'bold',
-          color: isFinished ? 'white' : COLORS.primary.main,
-          transform: isFinished ? 'scale(1.2)' : 'scale(1)',
+          color: isFinished ? 'black' : COLORS.primary.main,
+          transform: isFinished ? 'scale(1.4)' : 'scale(1)',
           transition: 'all 0.5s ease'
         }}>
           {isFinished ? selectedTopic : TOPICS[currentIndex]}

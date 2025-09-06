@@ -212,31 +212,6 @@ async function getRoomInfo(roomId: string): Promise<APIGatewayProxyResult> {
   }
 }
 
-async function findAvailableRoom(): Promise<Room | null> {
-  const command = new QueryCommand({
-    TableName: ROOMS_TABLE,
-    IndexName: 'StatusIndex',
-    KeyConditionExpression: '#status = :status',
-    ExpressionAttributeNames: {
-      '#status': 'status',
-    },
-    ExpressionAttributeValues: {
-      ':status': 'waiting',
-    },
-    ScanIndexForward: true,
-    Limit: 10, // Get multiple rooms to check availability
-  });
-
-  const result = await docClient.send(command);
-  
-  // Filter rooms with available space and not finished
-  const availableRooms = (result.Items as Room[])?.filter(room => 
-    room.playerCount < room.maxPlayers && room.status === 'waiting'
-  );
-  
-  return availableRooms?.[0] || null;
-}
-
 async function leaveRoom(roomId: string, playerId: string): Promise<APIGatewayProxyResult> {
   try {
     // First get the current room data

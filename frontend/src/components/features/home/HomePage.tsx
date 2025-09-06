@@ -12,6 +12,7 @@ import { getFinishedRooms } from '@/lib/api/room';
 import { createArtworkFromRoom } from '@/lib/utils/artwork';
 import { getAiImageUrl } from '@/lib/utils/s3';
 import { Title } from './Title';
+import TopicSelection from '../drawing/TopicSelection';
 
 export default function HomePage() {
   const router = useRouter();

@@ -64,34 +64,6 @@ export async function getRoomInfo(roomId: string): Promise<RoomResponse | null> 
   }
 }
 
-export async function joinRoom(playerId: string, playerName: string): Promise<RoomResponse> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/rooms/join`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ playerId, playerName }),
-    });
-
-    if (!response.ok) {
-      console.error(`API Error: HTTP ${response.status}: ${response.statusText}`);
-      throw new Error('API_ERROR');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API call failed, using mock data:', error);
-    
-    // 임시 목 데이터 반환
-    return {
-      roomId: `room_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-      playerCount: Math.floor(Math.random() * 3) + 1, // 1-3명
-      maxPlayers: 4
-    };
-  }
-}
-
 export async function updateRoomStatus(roomId: string, status: 'waiting' | 'playing' | 'finished'): Promise<void> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/${roomId}/status`, {
