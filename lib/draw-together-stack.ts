@@ -56,29 +56,6 @@ export class DrawTogetherStack extends cdk.Stack {
     });
 
     // Security Groups
-    const albSecurityGroup = new ec2.SecurityGroup(this, 'ALBSecurityGroup', {
-      vpc: vpc,
-      description: 'Security group for ALB',
-      allowAllOutbound: true,
-    });
-
-    albSecurityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(80),
-      'Allow HTTP traffic from anywhere'
-    );
-
-    albSecurityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(3000),
-      'Allow traffic to port 3000'
-    );
-
-    albSecurityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(3001),
-      'Allow traffic to port 3001'
-    );
 
     const ecsSecurityGroup = new ec2.SecurityGroup(this, 'ECSSecurityGroup', {
       vpc: vpc,
@@ -86,16 +63,17 @@ export class DrawTogetherStack extends cdk.Stack {
       allowAllOutbound: true,
     });
 
+    // Allow direct internet access for Network Load Balancer
     ecsSecurityGroup.addIngressRule(
-      albSecurityGroup,
+      ec2.Peer.anyIpv4(),
       ec2.Port.tcp(3000),
-      'Allow traffic from ALB to port 3000'
+      'Allow internet access to port 3000'
     );
 
     ecsSecurityGroup.addIngressRule(
-      albSecurityGroup,
+      ec2.Peer.anyIpv4(),
       ec2.Port.tcp(3001),
-      'Allow traffic from ALB to port 3001'
+      'Allow internet access to port 3001'
     );
 
     // CloudWatch Log Group
@@ -142,6 +120,17 @@ export class DrawTogetherStack extends cdk.Stack {
       port: 3000,
       protocol: elbv2.Protocol.TCP,
       targetType: elbv2.TargetType.IP,
+      healthCheck: {
+        enabled: true,
+        protocol: elbv2.Protocol.HTTP,
+        port: '3000',
+        path: '/',
+        interval: cdk.Duration.seconds(5),
+        timeout: cdk.Duration.seconds(2),
+        healthyThresholdCount: 2,
+        unhealthyThresholdCount: 2,
+        healthyHttpCodes: '200',
+      },
     });
 
     const targetGroup3001 = new elbv2.NetworkTargetGroup(this, 'DrawTogetherTargetGroup3001', {
@@ -149,6 +138,15 @@ export class DrawTogetherStack extends cdk.Stack {
       port: 3001,
       protocol: elbv2.Protocol.TCP,
       targetType: elbv2.TargetType.IP,
+      healthCheck: {
+        enabled: true,
+        protocol: elbv2.Protocol.TCP,
+        port: '3001',
+        interval: cdk.Duration.seconds(5),
+        timeout: cdk.Duration.seconds(2),
+        healthyThresholdCount: 2,
+        unhealthyThresholdCount: 2,
+      },
     });
 
     // Listeners
@@ -176,9 +174,16 @@ export class DrawTogetherStack extends cdk.Stack {
       securityGroups: [ecsSecurityGroup],
     });
 
-    // Attach service to target groups
-    service.attachToNetworkTargetGroup(targetGroup3000);
-    service.attachToNetworkTargetGroup(targetGroup3001);
+    // Attach service to target groups with specific container ports
+    targetGroup3000.addTarget(service.loadBalancerTarget({
+      containerName: 'DrawTogetherContainer',
+      containerPort: 3000,
+    }));
+
+    targetGroup3001.addTarget(service.loadBalancerTarget({
+      containerName: 'DrawTogetherContainer', 
+      containerPort: 3001,
+    }));
 
     // S3 Bucket for images
     const imagesBucket = new s3.Bucket(this, 'ImagesBucket', {
@@ -193,6 +198,9 @@ export class DrawTogetherStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
+
+    // Grant S3 permissions to ECS task
+    imagesBucket.grantReadWrite(taskDefinition.taskRole);
 
     // DynamoDB Tables
     const roomsTable = new dynamodb.Table(this, 'RoomsTable', {
