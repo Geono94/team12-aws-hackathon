@@ -853,6 +853,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
         onTouchMove={draw}
         onTouchEnd={stopDrawing}
         onTouchCancel={stopDrawing}
+        onContextMenu={(e) => e.preventDefault()}
         style={{
           display: gameState === 'playing' ? 'flex' : 'none',
           position: 'relative',
