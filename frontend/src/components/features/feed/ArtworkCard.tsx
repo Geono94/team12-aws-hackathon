@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { COLORS, SPACING, BORDER_RADIUS } from '@/constants/design';
 import { ArtworkItem } from '@/types/ui';
+import { getUserReaction } from '@/lib/utils/artwork';
 
 interface ArtworkCardProps {
   artwork: ArtworkItem;
@@ -12,7 +13,7 @@ interface ArtworkCardProps {
 
 export default function ArtworkCard({ artwork, onReaction, onViewDetail }: ArtworkCardProps) {
   const [imageError, setImageError] = useState(false);
-  const likeReaction = artwork.reactions.find(r => r.type === 'like');
+  const likeReaction = getUserReaction(artwork, 'like');
   const isLiked = likeReaction?.userReacted || false;
   const likeCount = likeReaction?.count || 0;
 

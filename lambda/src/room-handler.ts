@@ -23,6 +23,8 @@ interface Room {
   updatedAt: number;
   topic?: string;
   finishedAt?: number;
+  aiStatus?: 'pending' | 'analyzing' | 'completed' | 'failed';
+  completedAt?: string;
 }
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -298,40 +300,49 @@ async function leaveRoom(roomId: string, playerId: string): Promise<APIGatewayPr
 
 async function getFinishedRooms(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
-    // Parse query parameters
     const limit = parseInt(event.queryStringParameters?.limit || '10');
-    const nextToken = event.queryStringParameters?.nextToken;
+    const cursor = event.queryStringParameters?.cursor;
+
+    let exclusiveStartKey;
+    if (cursor) {
+      try {
+        exclusiveStartKey = JSON.parse(Buffer.from(cursor, 'base64').toString());
+      } catch (e) {
+        console.error('Invalid cursor:', e);
+      }
+    }
 
     const command = new ScanCommand({
       TableName: ROOMS_TABLE,
-      FilterExpression: '#status = :status',
+      FilterExpression: '#status = :status AND aiStatus = :aiStatus',
       ExpressionAttributeNames: {
         '#status': 'status',
       },
       ExpressionAttributeValues: {
         ':status': 'finished',
+        ':aiStatus': 'completed'
       },
-      Limit: Math.min(limit * 3, 150), // Get more items to sort properly
-      ...(nextToken && { ExclusiveStartKey: JSON.parse(Buffer.from(nextToken, 'base64').toString()) })
+      Limit: limit,
+      ...(exclusiveStartKey && { ExclusiveStartKey: exclusiveStartKey })
     });
 
     const result = await docClient.send(command);
     let rooms = (result.Items as Room[]) || [];
 
-    // Sort by finishedAt descending (newest first)
-    rooms.sort((a, b) => (b.finishedAt || b.createdAt || 0) - (a.finishedAt || a.createdAt || 0));
-    
-    // Take only the requested limit
-    const limitedRooms = rooms.slice(0, limit);
+    // Sort by completedAt descending
+    rooms.sort((a, b) => {
+      const aTime = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+      const bTime = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+      return bTime - aTime;
+    });
 
-    // Prepare response with pagination
     const response: any = {
-      rooms: limitedRooms,
-      hasMore: !!result.LastEvaluatedKey || rooms.length > limit
+      rooms,
+      hasMore: !!result.LastEvaluatedKey // Only true if DynamoDB has more items
     };
 
     if (result.LastEvaluatedKey) {
-      response.nextToken = Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64');
+      response.cursor = Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64');
     }
 
     return {

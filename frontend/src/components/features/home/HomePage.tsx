@@ -9,7 +9,7 @@ import { getPlayer, savePlayer } from '@/lib/player';
 import { ArtworkItem, Reaction } from '@/types/ui';
 import { useYjs } from '@/contexts/YjsContext';
 import { getFinishedRooms } from '@/lib/api/room';
-import { getOriginalImageUrl, getAiImageUrl } from '@/lib/utils/s3';
+import { createArtworkFromRoom } from '@/lib/utils/artwork';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { Title } from './Title';
 
@@ -27,7 +27,7 @@ export default function HomePage() {
   const [artworks, setArtworks] = useState<ArtworkItem[]>([]);
   const [isLoadingFeed, setIsLoadingFeed] = useState(false);
   const [hasMoreArtworks, setHasMoreArtworks] = useState(true);
-  const [nextToken, setNextToken] = useState<string | undefined>();
+  const [cursor, setCursor] = useState<string | undefined>();
 
   const defaultAvatars = [
     '/characters/character1.svg',
@@ -54,19 +54,9 @@ export default function HomePage() {
     
     setIsLoadingFeed(true);
     try {
-      const response = await getFinishedRooms(10, reset ? undefined : nextToken);
+      const response = await getFinishedRooms(10, reset ? undefined : cursor);
       
-      const newArtworks: ArtworkItem[] = response.rooms
-        .map((room) => ({
-          id: room.roomId,
-          originalImage: getOriginalImageUrl(room.roomId),
-          aiImage: getAiImageUrl(room.roomId),
-          topic: room.topic || '알 수 없음',
-          playerCount: room.playerCount,
-          createdAt: formatTimeAgo(room.finishedAt || room.createdAt || Date.now()),
-          aiModel: 'Amazon Bedrock',
-          reactions: [{ type: 'like', count: Math.floor(Math.random() * 100), userReacted: Math.random() > 0.5 }]
-        }));
+      const newArtworks: ArtworkItem[] = response.rooms.map(createArtworkFromRoom);
 
       if (reset) {
         setArtworks(newArtworks);
@@ -74,14 +64,14 @@ export default function HomePage() {
         setArtworks(prev => [...prev, ...newArtworks]);
       }
       
-      setNextToken(response.nextToken);
+      setCursor(response.cursor);
       setHasMoreArtworks(response.hasMore);
     } catch (error) {
       console.error('Failed to load feed:', error);
     } finally {
       setIsLoadingFeed(false);
     }
-  }, [isLoadingFeed, hasMoreArtworks, nextToken]);
+  }, [isLoadingFeed, hasMoreArtworks, cursor]);
 
   const { ref: loadMoreRef, resetFetching } = useInfiniteScroll(() => {
     loadFeedData();
@@ -90,19 +80,6 @@ export default function HomePage() {
   useEffect(() => {
     resetFetching();
   }, [isLoadingFeed, resetFetching]);
-
-  const formatTimeAgo = (timestamp: number): string => {
-    const now = Date.now();
-    const diff = now - timestamp;
-    const minutes = Math.floor(diff / (1000 * 60));
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (days > 0) return `${days}일 전`;
-    if (hours > 0) return `${hours}시간 전`;
-    if (minutes > 0) return `${minutes}분 전`;
-    return '방금 전';
-  };
 
   useEffect(() => {
     loadFeedData(true);

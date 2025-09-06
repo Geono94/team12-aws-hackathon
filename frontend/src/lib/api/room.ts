@@ -12,6 +12,7 @@ export interface RoomResponse {
   topic?: string;
   createdAt?: number;
   finishedAt?: number;
+  completedAt?: Date;
   players?: Array<{
     playerId: string;
     name: string;
@@ -21,7 +22,7 @@ export interface RoomResponse {
 
 export interface PaginatedRoomsResponse {
   rooms: RoomResponse[];
-  nextToken?: string;
+  cursor?: string;
   hasMore: boolean;
 }
 
@@ -117,10 +118,10 @@ export async function leaveRoom(roomId: string, playerId: string): Promise<void>
   }
 }
 
-export async function getFinishedRooms(limit: number = 10, nextToken?: string): Promise<PaginatedRoomsResponse> {
+export async function getFinishedRooms(limit: number = 10, cursor?: string): Promise<PaginatedRoomsResponse> {
   try {
     const params = new URLSearchParams({ limit: limit.toString() });
-    if (nextToken) params.append('nextToken', nextToken);
+    if (cursor) params.append('cursor', cursor);
     
     const response = await fetch(`${API_BASE_URL}/rooms/finished?${params}`, {
       method: 'GET',

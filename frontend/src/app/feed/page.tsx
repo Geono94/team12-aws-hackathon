@@ -7,61 +7,55 @@ import EmptyState from '@/components/ui/EmptyState';
 import Button from '@/components/ui/Button';
 import { ArtworkItem } from '@/types/ui';
 import { getFinishedRooms } from '@/lib/api/room';
-import { getOriginalImageUrl, getAiImageUrl } from '@/lib/utils/s3';
+import { createArtworkFromRoom } from '@/lib/utils/artwork';
 
 export default function Feed() {
   const router = useRouter();
   const [artworks, setArtworks] = useState<ArtworkItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [cursor, setCursor] = useState<string | undefined>();
 
   useEffect(() => {
     loadFinishedRooms();
   }, []);
 
-  const loadFinishedRooms = async () => {
+  const loadFinishedRooms = async (reset = true) => {
     try {
-      console.log('Loading finished rooms...');
-      const {rooms} = await getFinishedRooms();
-      console.log('Finished rooms response:', rooms);
+      if (reset) {
+        setIsLoading(true);
+        setCursor(undefined);
+      } else {
+        setIsLoadingMore(true);
+      }
+
+      const response = await getFinishedRooms(10, reset ? undefined : cursor);
       
-      const artworkItems: ArtworkItem[] = rooms.map((room) => {
-        console.log('Processing room:', room);
-        const artwork = {
-          id: room.roomId,
-          originalImage: getOriginalImageUrl(room.roomId),
-          aiImage: getAiImageUrl(room.roomId),
-          topic: room.topic || '알 수 없음',
-          playerCount: room.playerCount,
-          createdAt: formatTimeAgo(room.finishedAt || room.createdAt || Date.now()),
-          aiModel: 'Amazon Bedrock',
-          reactions: [{ type: 'like' as const, count: Math.floor(Math.random() * 100), userReacted: Math.random() > 0.5 }]
-        };
-        console.log('Generated artwork item:', artwork);
-        return artwork;
-      });
+      const artworkItems: ArtworkItem[] = response.rooms.map(createArtworkFromRoom);
       
-      console.log('Final artworks array:', artworkItems);
-      setArtworks(artworkItems);
+      if (reset) {
+        setArtworks(artworkItems);
+      } else {
+        setArtworks(prev => [...prev, ...artworkItems]);
+      }
+      
+      setHasMore(response.hasMore);
+      setCursor(response.cursor);
     } catch (error) {
       console.error('Failed to load finished rooms:', error);
       setError('작품을 불러오는 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
-  const formatTimeAgo = (timestamp: number): string => {
-    const now = Date.now();
-    const diff = now - timestamp;
-    const minutes = Math.floor(diff / (1000 * 60));
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (days > 0) return `${days}일 전`;
-    if (hours > 0) return `${hours}시간 전`;
-    if (minutes > 0) return `${minutes}분 전`;
-    return '방금 전';
+  const loadMore = () => {
+    if (!isLoadingMore && hasMore) {
+      loadFinishedRooms(false);
+    }
   };
 
   if (isLoading) {
@@ -110,5 +104,12 @@ export default function Feed() {
     );
   }
 
-  return <FeedPage artworks={artworks} />;
+  return (
+    <FeedPage 
+      artworks={artworks} 
+      onLoadMore={loadMore}
+      isLoadingMore={isLoadingMore}
+      hasMore={hasMore}
+    />
+  );
 }

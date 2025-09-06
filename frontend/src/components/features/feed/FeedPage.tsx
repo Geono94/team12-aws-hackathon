@@ -10,9 +10,12 @@ import { ArtworkItem, FeedFilters, Reaction } from '@/types/ui';
 
 interface FeedPageProps {
   artworks: ArtworkItem[];
+  onLoadMore: () => void;
+  isLoadingMore: boolean;
+  hasMore: boolean;
 }
 
-export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
+export default function FeedPage({ artworks: initialArtworks, onLoadMore, isLoadingMore, hasMore }: FeedPageProps) {
   const router = useRouter();
   const [artworks, setArtworks] = useState(initialArtworks);
   const [filters, setFilters] = useState<FeedFilters>({ sortBy: 'latest' });
@@ -22,21 +25,11 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
   // Get available topics for filtering
   const availableTopics = Array.from(new Set(artworks.map(artwork => artwork.topic)));
 
-  // Filter and sort artworks
-  const filteredArtworks = artworks
-    .filter(artwork => {
-      if (filters.topicFilter && artwork.topic !== filters.topicFilter) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      if (filters.sortBy === 'popular') {
-        const aTotal = a.reactions.reduce((sum, r) => sum + r.count, 0);
-        const bTotal = b.reactions.reduce((sum, r) => sum + r.count, 0);
-        return bTotal - aTotal;
-      }
-      // Default to latest
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+  // Filter artworks (no sorting needed - backend already sorted)
+  const filteredArtworks = artworks.filter(artwork => {
+    if (filters.topicFilter && artwork.topic !== filters.topicFilter) return false;
+    return true;
+  });
 
   // Pull to refresh functionality
   useEffect(() => {
@@ -127,14 +120,18 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
   // Infinite scroll
   useEffect(() => {
     const handleScroll = () => {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000) {
-        console.log('Loading more artworks...');
+      if (
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000 &&
+        hasMore &&
+        !isLoadingMore
+      ) {
+        onLoadMore();
       }
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [hasMore, isLoadingMore, onLoadMore]);
 
   return (
     <div style={{ 
@@ -247,6 +244,28 @@ export default function FeedPage({ artworks: initialArtworks }: FeedPageProps) {
 
             {/* Game Invite - Always show at bottom */}
             <GameInvite />
+
+            {/* Loading More Indicator */}
+            {isLoadingMore && (
+              <div style={{ 
+                textAlign: 'center',
+                padding: SPACING.lg,
+                color: '#888888'
+              }}>
+                <p>더 많은 작품을 불러오는 중...</p>
+              </div>
+            )}
+
+            {/* End of Feed Indicator */}
+            {!hasMore && artworks.length > 0 && (
+              <div style={{ 
+                textAlign: 'center',
+                padding: SPACING.lg,
+                color: '#666666'
+              }}>
+                <p>모든 작품을 확인했습니다</p>
+              </div>
+            )}
 
             {/* Empty State */}
             {filteredArtworks.length === 0 && (

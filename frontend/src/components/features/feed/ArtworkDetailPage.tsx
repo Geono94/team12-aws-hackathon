@@ -2,11 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Button from '@/components/ui/Button';
-import ReactionButton from '@/components/ui/ReactionButton';
 import ImageCompareSlider from '@/components/ui/ImageCompareSlider';
 import { COLORS, SPACING, BORDER_RADIUS } from '@/constants/design';
 import { ArtworkItem } from '@/types/ui';
+import { formatTimeAgo } from '@/lib/utils/time';
 
 interface ArtworkDetailPageProps {
   artwork: ArtworkItem;
