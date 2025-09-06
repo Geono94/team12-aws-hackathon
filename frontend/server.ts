@@ -54,7 +54,7 @@ app.prepare().then(() => {
           console.log('Game message:', message);
           
           // Store playerId for cleanup
-          if (message.type === 'searchRoom' && message.data) {
+          if (message.data && message.data.playerId) {
             playerId = message.data.playerId;
           }
           

@@ -165,6 +165,7 @@ export class GameManager {
 
     // 이미 존재하는 플레이어면 재연결
     if (room.players.has(playerId)) {
+      console.log("room.players size", room.players.size);
       console.log(`[${roomId}] Player ${playerId} rejoining`);
       room.players.get(playerId)!.ws = ws;
       room.broadcastGameState();
