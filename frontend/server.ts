@@ -36,7 +36,7 @@ app.prepare().then(() => {
     }
   });
 
-  const gameManager = new GameManager(wss);
+  const gameManager = new GameManager();
 
   wss.on('connection', (ws, req) => {
     console.log('New WebSocket connection from:', req.url);
