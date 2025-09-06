@@ -115,15 +115,30 @@ export default function ResultsPage({ params }: ResultsPageProps) {
   };
 
   const handleShareResult = async () => {
-    try {
-      // 현재 결과 페이지 URL을 클립보드에 복사
-      const currentPageUrl = window.location.href;
-      await navigator.clipboard.writeText(currentPageUrl);
-      alert('🔗 결과 페이지 링크가 클립보드에 복사되었습니다!\n카카오톡이나 다른 앱에 붙여넣기하여 공유하세요.');
-      console.log('✅ 결과 페이지 링크 복사 완료:', currentPageUrl);
-    } catch (error) {
-      console.error('❌ 클립보드 복사 실패:', error);
-      alert('클립보드 복사에 실패했습니다. 브라우저 설정을 확인해주세요.');
+    const currentPageUrl = window.location.href;
+    
+    // Web Share API 지원 여부 확인
+    if (navigator.share) {
+      try {
+        console.log('📱 Web Share API로 네이티브 공유 시트 띄우기');
+        await navigator.share({
+          title: 'DrawTogether 협업 작품 🎨',
+          text: `${playerCount}명이 함께 만든 협업 드로잉 작품을 확인해보세요! AI가 새롭게 재탄생시킨 작품도 함께 감상하세요.`,
+          url: currentPageUrl
+        });
+        console.log('✅ 네이티브 공유 완료');
+      } catch (error) {
+        // 사용자가 공유를 취소한 경우
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.log('✅ 사용자가 공유를 취소했습니다.');
+          return;
+        }
+        console.error('❌ Web Share API 실패:', error);
+        alert('공유 기능을 사용할 수 없습니다. 브라우저 설정을 확인해주세요.');
+      }
+    } else {
+      console.log('❌ Web Share API를 지원하지 않는 브라우저입니다.');
+      alert('이 브라우저는 공유 기능을 지원하지 않습니다. 모바일 브라우저에서 시도해보세요.');
     }
   };
 

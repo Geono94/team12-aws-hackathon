@@ -54,7 +54,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      🔗 링크 복사
+      📱 공유하기
     </button>
   );
 };
