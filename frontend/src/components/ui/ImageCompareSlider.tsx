@@ -53,7 +53,7 @@ export default function ImageCompareSlider({
     setIsDragging(false);
   };
 
-  const updateSliderPosition = (event: MouseEvent | Touch | React.MouseEvent) => {
+  const updateSliderPosition = (event: { clientX: number }) => {
     if (!containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();

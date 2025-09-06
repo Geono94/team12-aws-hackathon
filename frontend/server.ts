@@ -1,15 +1,15 @@
 import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
-import WebSocket from 'ws';
+import { WebSocketServer } from 'ws';
 import { setupWSConnection } from 'y-websocket/bin/utils';
 import { GameManager } from './src/server/GameManager';
 import { ClientToServerMessage } from '@/types';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0';
-const port = process.env.PORT || 3000;
-const wsPort = process.env.WS_PORT || 3001;
+const port = (process.env.PORT ? parseInt(process.env.PORT, 10) : 3000);
+const wsPort = (process.env.WS_PORT ? parseInt(process.env.WS_PORT, 10) : 3001);
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
@@ -28,12 +28,9 @@ app.prepare().then(() => {
 
   // Separate WebSocket server on different port
   const wsServer = createServer();
-  const wss = new WebSocket.Server({ 
+  const wss = new WebSocketServer({ 
     server: wsServer,
-    verifyClient: (info) => {
-      console.log('WebSocket connection attempt:', info.req.url);
-      return true;
-    }
+    verifyClient: () => true
   });
 
   const gameManager = new GameManager();

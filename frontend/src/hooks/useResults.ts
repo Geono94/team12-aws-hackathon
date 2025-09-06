@@ -150,8 +150,6 @@ export const useResults = (roomId: string | null) => {
         }
       }
       
-      setGameInfo({ topic, playerCount });
-      
       const drawingResult = localStorage.getItem('drawingResult');
       console.log('drawingResult from localStorage:', drawingResult);
       

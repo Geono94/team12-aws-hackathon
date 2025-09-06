@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useResults } from '@/hooks/useResults';
 import ImageCompareSlider from '@/components/ui/ImageCompareSlider';
+import { SaveButton } from '@/components/ui/SaveButton';
+import { ShareButton } from '@/components/ui/ShareButton';
+import { HomeButton } from '@/components/ui/HomeButton';
 
 export default function ResultsPage() {
   const searchParams = useSearchParams();
@@ -313,105 +316,18 @@ export default function ResultsPage() {
           }}>
             {/* 저장 및 공유 버튼 */}
             <div style={{ display: 'flex', gap: '16px' }}>
-              <button
-                onClick={handleDownloadImage}
+              <SaveButton 
+                onSave={handleDownloadImage}
                 disabled={!originalImage}
-                style={{
-                  flex: 1,
-                  padding: '16px',
-                  border: 'none',
-                  borderRadius: '16px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  cursor: !originalImage ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s ease',
-                  background: !originalImage 
-                    ? 'rgba(255,255,255,0.1)' 
-                    : 'linear-gradient(135deg, #4ECDC4, #45B7D1)',
-                  color: !originalImage ? '#666' : '#FFFFFF',
-                  opacity: !originalImage ? 0.5 : 1,
-                  boxShadow: !originalImage ? 'none' : '0 4px 12px rgba(78,205,196,0.3)'
-                }}
-                onMouseEnter={(e) => {
-                  if (originalImage) {
-                    e.target.style.transform = 'translateY(-2px)';
-                    e.target.style.boxShadow = '0 6px 20px rgba(78,205,196,0.4)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (originalImage) {
-                    e.target.style.transform = 'translateY(0)';
-                    e.target.style.boxShadow = '0 4px 12px rgba(78,205,196,0.3)';
-                  }
-                }}
-              >
-                저장
-              </button>
-              
-              <button
-                onClick={handleShareResult}
+              />
+              <ShareButton 
+                onShare={handleShareResult}
                 disabled={!originalImage}
-                style={{
-                  flex: 1,
-                  padding: '16px',
-                  border: 'none',
-                  borderRadius: '16px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  cursor: !originalImage ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s ease',
-                  background: !originalImage 
-                    ? 'rgba(255,255,255,0.1)' 
-                    : 'linear-gradient(135deg, #FF6B6B, #FF8E8E)',
-                  color: !originalImage ? '#666' : '#FFFFFF',
-                  opacity: !originalImage ? 0.5 : 1,
-                  boxShadow: !originalImage ? 'none' : '0 4px 12px rgba(255,107,107,0.3)'
-                }}
-                onMouseEnter={(e) => {
-                  if (originalImage) {
-                    e.target.style.transform = 'translateY(-2px)';
-                    e.target.style.boxShadow = '0 6px 20px rgba(255,107,107,0.4)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (originalImage) {
-                    e.target.style.transform = 'translateY(0)';
-                    e.target.style.boxShadow = '0 4px 12px rgba(255,107,107,0.3)';
-                  }
-                }}
-              >
-                공유
-              </button>
+              />
             </div>
 
             {/* 홈으로 돌아가기 */}
-            <button
-              onClick={onGoHome}
-              style={{
-                padding: '18px',
-                border: '2px solid rgba(255,255,255,0.2)',
-                borderRadius: '16px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                background: 'rgba(255,255,255,0.05)',
-                color: '#FFFFFF',
-                backdropFilter: 'blur(10px)'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = 'rgba(255,255,255,0.1)';
-                e.target.style.borderColor = 'rgba(255,255,255,0.3)';
-                e.target.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'rgba(255,255,255,0.05)';
-                e.target.style.borderColor = 'rgba(255,255,255,0.2)';
-                e.target.style.transform = 'translateY(0)';
-              }}
-            >
-              홈으로 돌아가기
-            </button>
+            <HomeButton onGoHome={onGoHome} />
           </div>
         )}
 

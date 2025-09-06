@@ -5,12 +5,17 @@ import { GAME_CONFIG, S3_BUCKET_NAME, TOPICS } from './config';
 import { ServerToClientMessage } from '@/types';
 import { drawSvgPath } from './svgDrawing';
 
-export class PlayerInfo {
+export interface PlayerData {
+  id: string;
+  name: string;
+  joinedAt: string;
+};
+
+export class PlayerInfo implements PlayerData {
   id: string;
   name: string;
   joinedAt: string;
   ws: WebSocket;
-
 
   constructor(args: {
     id: string;

@@ -9,7 +9,13 @@ import { ArtworkItem } from '@/types/ui';
 import { getRoomInfo } from '@/lib/api/room';
 import { getOriginalImageUrl, getAiImageUrl } from '@/lib/utils/s3';
 
-export default function ArtworkDetail({ params }: { params: { id: string } }) {
+export default async function ArtworkDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  
+  return <ArtworkDetailClient roomId={id} />;
+}
+
+function ArtworkDetailClient({ roomId }: { roomId: string }) {
   const router = useRouter();
   const [artwork, setArtwork] = useState<ArtworkItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,7 +27,6 @@ export default function ArtworkDetail({ params }: { params: { id: string } }) {
 
   const loadArtwork = async () => {
     try {
-      const roomId = params.id;
       const room = await getRoomInfo(roomId);
       
       if (room && room.status === 'finished') {

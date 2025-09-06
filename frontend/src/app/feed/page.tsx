@@ -22,7 +22,7 @@ export default function Feed() {
   const loadFinishedRooms = async () => {
     try {
       console.log('Loading finished rooms...');
-      const rooms = await getFinishedRooms();
+      const {rooms} = await getFinishedRooms();
       console.log('Finished rooms response:', rooms);
       
       const artworkItems: ArtworkItem[] = rooms.map((room) => {
@@ -35,7 +35,7 @@ export default function Feed() {
           playerCount: room.playerCount,
           createdAt: formatTimeAgo(room.finishedAt || room.createdAt || Date.now()),
           aiModel: 'Amazon Bedrock',
-          reactions: [{ type: 'like', count: Math.floor(Math.random() * 100), userReacted: Math.random() > 0.5 }]
+          reactions: [{ type: 'like' as const, count: Math.floor(Math.random() * 100), userReacted: Math.random() > 0.5 }]
         };
         console.log('Generated artwork item:', artwork);
         return artwork;
@@ -101,7 +101,7 @@ export default function Feed() {
           <Button
             onClick={() => router.push('/')}
             variant="primary"
-            size="medium"
+            size="md"
           >
             게임 시작하기
           </Button>

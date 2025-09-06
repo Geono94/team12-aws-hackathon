@@ -12,7 +12,7 @@ export function drawSvgPath(ctx: any, d: string, color = '#000', strokeWidth = 2
 
   ctx.beginPath();
 
-  const isRel = (c) => c === c.toLowerCase();
+  const isRel = (c: string) => c === c.toLowerCase();
 
   for (const seg of segs) {
     const cmd = seg[0];

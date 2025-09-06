@@ -7,12 +7,14 @@ import { COLORS, SPACING, BORDER_RADIUS } from '@/constants/design';
 import { GAME_CONFIG } from '@/constants/game';
 import { GameStateType, ServerToClientMessage } from '@/types';
 import TopicSelection from './TopicSelection';
-import { PlayerInfo } from '@/server/Room';
+import { PlayerData, PlayerInfo } from '@/server/Room';
 import { getPlayer } from '@/lib/player';
 import { leaveRoom } from '@/lib/api/room';
 import { getStroke } from 'perfect-freehand';
 import { ColorPalette } from './ColorPalette';
 import { BrushSizeSelector } from './BrushSizeSelector';
+import { InviteButton } from '../../ui/InviteButton';
+import { LeaveButton } from '../../ui/LeaveButton';
 
 // PlayerAvatar 컴포넌트
 const PlayerAvatar = ({ player, index }: { player?: PlayerInfo; index: number }) => {
@@ -141,7 +143,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   const [countdown, setCountdown] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number>(30);
   const [playerCount, setPlayerCount] = useState<number>(1);
-  const [players, setPlayers] = useState<PlayerInfo[]>([]);
+  const [players, setPlayers] = useState<PlayerData[]>([]);
 
   const [toastMessage, setToastMessage] = useState<string>('');
   const [showToast, setShowToast] = useState(false);
@@ -175,7 +177,11 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
 
   const handleLeaveRoom = async () => {
     try {
-      const playerId = getPlayer().id;
+      const player = getPlayer();
+      if (!player) {  
+        throw new Error('Player not found');
+      }
+      const playerId = player.id;
       await leaveRoom(roomId, playerId);
       router.push('/');
     } catch (error) {
@@ -235,7 +241,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
         const newPlayerCount = message.data.playerCount;
         setPlayerCount(newPlayerCount);
         
-        const updatedPlayers: PlayerInfo[] = Array.from({ length: newPlayerCount }, (_, index) => ({
+        const updatedPlayers: PlayerData[] = Array.from({ length: newPlayerCount }, (_, index) => ({
           id: `player_${index + 1}`,
           name: `플레이어 ${index + 1}`,
           joinedAt: Date.now().toString()
@@ -318,7 +324,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
         }
         
         // Show cursor with player name
-        if (cursors && tempStroke.lastPoint && tempStroke.playerId !== getPlayer().id) {
+        if (cursors && tempStroke.lastPoint && tempStroke.playerId !== getPlayer()?.id) {
           const [x, y] = tempStroke.lastPoint;
           const cursor = document.createElement('div');
           cursor.style.position = 'absolute';
@@ -391,11 +397,13 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
     const point = getEventPos(e);
     setCurrentStroke([point]);
     
-    const strokeId = `${getPlayer().id}_${Date.now()}`;
+    const strokeId = `${getPlayer()?.id}_${Date.now()}`;
     setCurrentStrokeId(strokeId);
   };
 
   const draw = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    const player = getPlayer();
+    if (!player) return;
     if (!isDrawing || gameState !== 'playing') return;
     e.preventDefault();
 
@@ -422,8 +430,8 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
         color: currentColor,
         size: brushSize,
         pathData,
-        playerId: getPlayer().id,
-        playerName: getPlayer().name,
+        playerId: player.id,
+        playerName: player.name,
         lastPoint: [point[0], point[1]]
       };
       
@@ -723,66 +731,13 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
               justifyContent: 'center',
               borderTop: '1px solid rgba(255,255,255,0.1)'
             }}>
-              <button
-                onClick={() => {
+              <InviteButton 
+                onInvite={() => {
                   navigator.clipboard.writeText(window.location.href);
                   showToastMessage('초대 링크가 복사되었습니다!');
                 }}
-                style={{
-                  flex: 2,
-                  maxWidth: '200px',
-                  padding: '16px 24px',
-                  border: 'none',
-                  borderRadius: '16px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  background: 'linear-gradient(135deg, #4ECDC4, #FF6B6B)',
-                  color: '#FFFFFF',
-                  boxShadow: '0 4px 16px rgba(78,205,196,0.3)'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 6px 24px rgba(78,205,196,0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 4px 16px rgba(78,205,196,0.3)';
-                }}
-              >
-                초대하기
-              </button>
-              
-              <button
-                onClick={handleLeaveRoom}
-                style={{
-                  flex: 0.7,
-                  maxWidth: '100px',
-                  padding: '16px 24px',
-                  border: '2px solid rgba(255,255,255,0.2)',
-                  borderRadius: '16px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  background: 'rgba(255,255,255,0.1)',
-                  color: 'rgba(255,255,255,0.8)',
-                  backdropFilter: 'blur(10px)'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(255,255,255,0.15)';
-                  e.target.style.color = '#FFFFFF';
-                  e.target.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = 'rgba(255,255,255,0.1)';
-                  e.target.style.color = 'rgba(255,255,255,0.8)';
-                  e.target.style.transform = 'translateY(0)';
-                }}
-              >
-                나가기
-              </button>
+              />
+              <LeaveButton onLeave={handleLeaveRoom} />
             </div>
 
             {/* CSS 애니메이션 */}
