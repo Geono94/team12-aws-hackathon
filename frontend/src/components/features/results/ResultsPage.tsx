@@ -170,7 +170,7 @@ export default function ResultsPage() {
         </div>
 
         {/* Progress Bar (moved to where tabs were) */}
-        {!isLoading && (
+        {isLoading && (
           <div style={{
             width: '100%',
             maxWidth: '400px'

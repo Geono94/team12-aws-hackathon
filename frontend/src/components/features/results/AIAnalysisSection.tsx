@@ -145,10 +145,10 @@ const generateAnalysisText = (imageAnalysis: ImageAnalysis, actualTopic: string)
   }
 
   return {
-    interpretation: `AI가 "${imageAnalysis.subject}"로 인식했습니다. ${imageAnalysis.style} 스타일로 표현되었네요.`,
-    guess: `주제 "${actualTopic}"에 대한 ${imageAnalysis.technicalEvaluation}`,
-    best: imageAnalysis.mvp,
-    worst: imageAnalysis.worst
+    interpretation: `AI가 "${imageAnalysis.subject}"로 예상했습니다. ${imageAnalysis.style} 스타일로 표현되었네요.`,
+    guess: `아하, 실제 그림 주제는 "${actualTopic}"이네요. "${imageAnalysis.technicalEvaluation}`, 
+    best: `저는 "${imageAnalysis.mvp}"이 제일 좋은 단서였어요`,
+    worst: `저는 "${imageAnalysis.worst}"이 제일 헷갈렸어요`
   };
 };
 
