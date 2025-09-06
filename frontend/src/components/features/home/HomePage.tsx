@@ -213,7 +213,7 @@ export default function HomePage() {
 
   return (
     <div style={{ 
-      background: 'linear-gradient(135deg, #000000 0%, #1a1a2e 25%, #16213e 50%, #000000 100%)',
+      background: '#000000',
       backgroundSize: '200% 200%',
       animation: 'subtleMove 20s ease-in-out infinite',
       minHeight: '100vh',
