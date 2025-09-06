@@ -22,7 +22,7 @@ export class GeminiImageProcessor {
             const imagePart = {
                 inlineData: {
                     data: imageBase64,
-                    mimeType: 'image/png'
+                    mimeType: 'image/jpeg'
                 }
             };
 
@@ -34,7 +34,7 @@ Transform this into a beautiful cartoon masterpiece with:
 - Professional cartoon/anime art style (Disney, Pixar, Studio Ghibli quality)
 - Dynamic poses and expressive character design
 - Perfect lighting and shading for depth
-- Ultra-high resolution, crisp details
+- Image resolution: Maximum 792x632 pixels or smaller for optimized file size
 - Polished, commercial-grade illustration quality
 - Creative cartoon interpretation that enhances the original concept
 - NO TEXT OR LETTERS in the image - create only visual artwork without any written words

@@ -62,33 +62,55 @@ export default function ResultsPage() {
     router.push('/');
   };
 
-  const handleDownloadImage = () => {
+  const handleDownloadImage = async () => {
     const imageUrl = aiImage || originalImage;
     if (!imageUrl) return;
 
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = `drawtogether-${roomId}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      // fetch를 사용해서 이미지를 blob으로 가져오기
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+
+      // blob URL 생성
+      const blobUrl = URL.createObjectURL(blob);
+
+      // 다운로드 링크 생성
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `drawtogether-${roomId || 'artwork'}.png`;
+      
+      // DOM에 추가하고 클릭
+      document.body.appendChild(link);
+      link.click();
+      
+      // 정리
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+      
+      console.log('✅ 이미지 다운로드 완료');
+    } catch (error) {
+      console.error('❌ 이미지 다운로드 실패:', error);
+      // 실패 시 기존 방법으로 시도
+      const link = document.createElement('a');
+      link.href = imageUrl;
+      link.download = `drawtogether-${roomId || 'artwork'}.png`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   const handleShareResult = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'DrawTogether 작품',
-          text: `${playerCount}명이 함께 만든 작품을 확인해보세요!`,
-          url: window.location.href
-        });
-      } catch (error) {
-        console.log('공유 취소됨');
-      }
-    } else {
-      // 클립보드에 URL 복사
-      navigator.clipboard.writeText(window.location.href);
-      alert('링크가 클립보드에 복사되었습니다!');
+    try {
+      // 현재 결과 페이지 URL을 클립보드에 복사
+      const currentPageUrl = window.location.href;
+      await navigator.clipboard.writeText(currentPageUrl);
+      alert('🔗 결과 페이지 링크가 클립보드에 복사되었습니다!\n카카오톡이나 다른 앱에 붙여넣기하여 공유하세요.');
+      console.log('✅ 결과 페이지 링크 복사 완료:', currentPageUrl);
+    } catch (error) {
+      console.error('❌ 클립보드 복사 실패:', error);
+      alert('클립보드 복사에 실패했습니다. 브라우저 설정을 확인해주세요.');
     }
   };
 
