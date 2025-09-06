@@ -8,7 +8,6 @@ import { GAME_CONFIG } from '@/constants/game';
 import { GameStateType, ServerToClientMessage } from '@/types';
 import TopicSelection from './TopicSelection';
 import { PlayerInfo } from '@/server/Room';
-import Button from '@/components/ui/Button';
 import { getPlayer } from '@/lib/player';
 import { leaveRoom } from '@/lib/api/room';
 import { getStroke } from 'perfect-freehand';
@@ -842,10 +841,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
           </div>
         )}
       </div>
-
-      {/* 캔버스 영역 - 대기실이 아닐 때만 표시 */}
-      {gameState !== 'waiting' && (
-        <>
+ 
           {gameState === 'playing' && (
             <div style={{
               display: 'flex',
@@ -869,81 +865,80 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
           )}
 
           <div
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseLeave={stopDrawing}
-        onTouchStart={startDrawing}
-        onTouchMove={draw}
-        onTouchEnd={stopDrawing}
-        onTouchCancel={stopDrawing}
-        style={{
-          position: 'relative',
-          border: `2px solid ${COLORS.neutral.border}`,
-          borderRadius: BORDER_RADIUS.sm,
-          cursor: gameState === 'playing' ? 'crosshair' : 'not-allowed',
-          background: 'white',
-          width: GAME_CONFIG.CANVAS_SIZE.width,
-          height: GAME_CONFIG.CANVAS_SIZE.height,
-          touchAction: 'none',
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          WebkitTouchCallout: 'none',
-          WebkitTapHighlightColor: 'transparent'
-        }}
-      >
-        <canvas
-          ref={canvasRef}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none'
-          }}
-        />
-        <svg
-          ref={svgRef}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none',
-            zIndex: 1
-          }}
-          viewBox={`0 0 ${GAME_CONFIG.CANVAS_SIZE.width} ${GAME_CONFIG.CANVAS_SIZE.height}`}
-        />
-        <svg
-          ref={previewRef}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none',
-            zIndex: 2
-          }}
-          viewBox={`0 0 ${GAME_CONFIG.CANVAS_SIZE.width} ${GAME_CONFIG.CANVAS_SIZE.height}`}
-        />
-        <div
-          ref={cursorsRef}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none',
-            zIndex: 3
-          }}
-        />
-      </div>
-        </>
-      )}
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={stopDrawing}
+            onTouchCancel={stopDrawing}
+            style={{
+              display: gameState === 'playing' ? 'flex' : 'none',
+              position: 'relative',
+              border: `2px solid ${COLORS.neutral.border}`,
+              borderRadius: BORDER_RADIUS.sm,
+              cursor: gameState === 'playing' ? 'crosshair' : 'not-allowed',
+              background: 'white',
+              width: GAME_CONFIG.CANVAS_SIZE.width,
+              height: GAME_CONFIG.CANVAS_SIZE.height,
+              touchAction: 'none',
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              WebkitTouchCallout: 'none',
+              WebkitTapHighlightColor: 'transparent'
+            }}
+          >
+            <canvas
+              ref={canvasRef}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none'
+              }}
+            />
+            <svg
+              ref={svgRef}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+                zIndex: 1
+              }}
+              viewBox={`0 0 ${GAME_CONFIG.CANVAS_SIZE.width} ${GAME_CONFIG.CANVAS_SIZE.height}`}
+            />
+            <svg
+              ref={previewRef}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+                zIndex: 2
+              }}
+              viewBox={`0 0 ${GAME_CONFIG.CANVAS_SIZE.width} ${GAME_CONFIG.CANVAS_SIZE.height}`}
+            />
+            <div
+              ref={cursorsRef}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+                zIndex: 3
+              }}
+            />
+          </div> 
     </div>
   );
 }
