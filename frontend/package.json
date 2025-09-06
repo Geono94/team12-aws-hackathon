@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "NODE_ENV=production tsx server.ts",
     "lint": "eslint",
-    "docker": "docker buildx build --platform linux/amd64 -t 339712932307.dkr.ecr.us-east-1.amazonaws.com/drawtogether-repository:$(date +%Y%m%d-%H%M%S) . --push"
+    "docker": "docker buildx build --platform linux/amd64 -t 339712932307.dkr.ecr.us-east-1.amazonaws.com/drawtogether-repository . --push"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.882.0",
