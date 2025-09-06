@@ -10,7 +10,6 @@ import { ArtworkItem, Reaction } from '@/types/ui';
 import { useYjs } from '@/contexts/YjsContext';
 import { getFinishedRooms } from '@/lib/api/room';
 import { createArtworkFromRoom } from '@/lib/utils/artwork';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { Title } from './Title';
 
 export default function HomePage() {
@@ -50,13 +49,15 @@ export default function HomePage() {
 
   // Load initial feed data
   const loadFeedData = useCallback(async (reset = false) => {
-    // 이미 로딩 중이거나, reset이 아닌데 더 이상 데이터가 없으면 return
-    if (isLoadingFeed || (!reset && !hasMoreArtworks)) {
-      console.log('Load blocked:', { isLoadingFeed, hasMoreArtworks, reset });
+    // 더 엄격한 조건 검사
+    if (isLoadingFeed) {
       return;
     }
     
-    console.log('Loading feed data:', { reset, cursor, hasMoreArtworks });
+    if (!reset && !hasMoreArtworks) {
+      return;
+    }
+    
     setIsLoadingFeed(true);
     
     if (reset) {
@@ -66,7 +67,6 @@ export default function HomePage() {
     
     try {
       const response = await getFinishedRooms(10, reset ? undefined : cursor);
-      console.log('Feed response:', response);
       
       const newArtworks: ArtworkItem[] = response.rooms.map(createArtworkFromRoom);
 
@@ -77,39 +77,43 @@ export default function HomePage() {
         setArtworks(prev => {
           const existingIds = new Set(prev.map(item => item.id));
           const uniqueNewItems = newArtworks.filter(item => !existingIds.has(item.id));
-          console.log('Adding unique items:', uniqueNewItems.length);
           return [...prev, ...uniqueNewItems];
         });
       }
       
       setCursor(response.cursor);
-      const actualHasMore = response.hasMore && response.rooms.length > 0;
-      setHasMoreArtworks(actualHasMore);
-      console.log('Updated state:', { 
-        cursor: response.cursor, 
-        hasMore: response.hasMore, 
-        roomsCount: response.rooms.length,
-        actualHasMore 
-      });
+      setHasMoreArtworks(response.hasMore);
     } catch (error) {
       console.error('Failed to load feed:', error);
     } finally {
       setIsLoadingFeed(false);
     }
-  }, [isLoadingFeed, hasMoreArtworks, cursor]);
+  }, [cursor, hasMoreArtworks, isLoadingFeed]);
 
-  const { ref: loadMoreRef, resetFetching } = useInfiniteScroll(() => {
-    console.log('Infinite scroll triggered:', { isLoadingFeed, hasMoreArtworks });
-    if (!isLoadingFeed && hasMoreArtworks) {
-      loadFeedData(false);
-    }
-  });
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
+  // Intersection Observer for infinite scroll
   useEffect(() => {
-    if (!isLoadingFeed) {
-      resetFetching();
+    const element = loadMoreRef.current;
+    if (!element || !hasMoreArtworks || isLoadingFeed) {
+      return;
     }
-  }, [isLoadingFeed, resetFetching]);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          loadFeedData(false);
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasMoreArtworks, isLoadingFeed, loadFeedData]);
 
   useEffect(() => {
     loadFeedData(true);
@@ -706,13 +710,14 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Infinite scroll trigger - only render when there's more data */}
-              {hasMoreArtworks && !isLoadingFeed && (
+              {/* Infinite scroll trigger */}
+              {hasMoreArtworks && (
                 <div 
                   ref={loadMoreRef}
                   style={{ 
                     height: '20px',
-                    margin: SPACING.md
+                    margin: SPACING.md,
+                    background: 'transparent'
                   }} 
                 />
               )}

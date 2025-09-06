@@ -13,6 +13,19 @@ rm -f lambda-code.zip
 echo "📦 Lambda 코드 압축 중..."
 zip -r lambda-code.zip dist/ node_modules/ package.json > /dev/null 2>&1
 
+# Room Handler 함수 업데이트
+echo "🔄 Room Handler 함수 업데이트 중..."
+aws lambda update-function-code \
+  --function-name DrawTogetherStack-RoomHandlerCF7B6EB0-94lxOlRSHdPi \
+  --zip-file fileb://lambda-code.zip \
+  --region us-east-1 > /dev/null 2>&1
+
+if [ $? -eq 0 ]; then
+    echo "✅ Room Handler 업데이트 완료"
+else
+    echo "❌ Room Handler 업데이트 실패"
+fi
+
 # AI Handler 함수 업데이트
 echo "🔄 AI Handler 함수 업데이트 중..."
 aws lambda update-function-code \

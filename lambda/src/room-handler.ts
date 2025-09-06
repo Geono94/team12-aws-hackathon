@@ -301,17 +301,9 @@ async function leaveRoom(roomId: string, playerId: string): Promise<APIGatewayPr
 async function getFinishedRooms(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
     const limit = parseInt(event.queryStringParameters?.limit || '10');
-    const cursor = event.queryStringParameters?.cursor;
+    const lastCompletedAt = event.queryStringParameters?.cursor;
 
-    let exclusiveStartKey;
-    if (cursor) {
-      try {
-        exclusiveStartKey = JSON.parse(Buffer.from(cursor, 'base64').toString());
-      } catch (e) {
-        console.error('Invalid cursor:', e);
-      }
-    }
-
+    // Get all finished rooms first (since we don't have many)
     const command = new ScanCommand({
       TableName: ROOMS_TABLE,
       FilterExpression: '#status = :status AND aiStatus = :aiStatus',
@@ -321,20 +313,11 @@ async function getFinishedRooms(event: APIGatewayProxyEvent): Promise<APIGateway
       ExpressionAttributeValues: {
         ':status': 'finished',
         ':aiStatus': 'completed'
-      },
-      Limit: limit,
-      ...(exclusiveStartKey && { ExclusiveStartKey: exclusiveStartKey })
+      }
     });
 
     const result = await docClient.send(command);
     let rooms = (result.Items as Room[]) || [];
-
-    console.log('DynamoDB scan result:', {
-      itemCount: rooms.length,
-      hasLastEvaluatedKey: !!result.LastEvaluatedKey,
-      limit,
-      cursor: cursor ? 'present' : 'none'
-    });
 
     // Sort by completedAt descending
     rooms.sort((a, b) => {
@@ -343,23 +326,31 @@ async function getFinishedRooms(event: APIGatewayProxyEvent): Promise<APIGateway
       return bTime - aTime;
     });
 
-    // More accurate hasMore logic for filtered scans
-    const hasMore = !!result.LastEvaluatedKey && rooms.length === limit;
+    // Apply cursor-based filtering
+    if (lastCompletedAt) {
+      const cursorTime = new Date(lastCompletedAt).getTime();
+      rooms = rooms.filter(room => {
+        const roomTime = room.completedAt ? new Date(room.completedAt).getTime() : 0;
+        return roomTime < cursorTime;
+      });
+    }
+
+    // Apply limit and check if there are more
+    const hasMore = rooms.length > limit;
+    const limitedRooms = rooms.slice(0, limit);
 
     const response: any = {
-      rooms,
+      rooms: limitedRooms,
       hasMore
     };
 
-    if (result.LastEvaluatedKey && hasMore) {
-      response.cursor = Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64');
+    // Set cursor to the last item's completedAt
+    if (hasMore && limitedRooms.length > 0) {
+      const lastRoom = limitedRooms[limitedRooms.length - 1];
+      if (lastRoom.completedAt) {
+        response.cursor = lastRoom.completedAt;
+      }
     }
-
-    console.log('Response:', {
-      roomCount: rooms.length,
-      hasMore,
-      hasCursor: !!response.cursor
-    });
 
     return {
       statusCode: 200,
