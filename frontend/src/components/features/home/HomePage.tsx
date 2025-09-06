@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import ArtworkCard from '@/components/features/feed/ArtworkCard';
-import { COLORS, SPACING } from '@/constants/design';
+import { COLORS, SPACING, BORDER_RADIUS } from '@/constants/design';
 import { getPlayer, savePlayer } from '@/lib/player';
 import { ArtworkItem, Reaction } from '@/types/ui';
 import { useYjs } from '@/contexts/YjsContext';
@@ -26,7 +26,7 @@ export default function HomePage() {
   // Feed state
   const [artworks, setArtworks] = useState<ArtworkItem[]>([]);
   const [isLoadingFeed, setIsLoadingFeed] = useState(false);
-  const [hasMoreArtworks, setHasMoreArtworks] = useState(true);
+  const [hasMoreArtworks, setHasMoreArtworks] = useState(false);
   const [cursor, setCursor] = useState<string | undefined>();
 
   const defaultAvatars = [
@@ -50,22 +50,47 @@ export default function HomePage() {
 
   // Load initial feed data
   const loadFeedData = useCallback(async (reset = false) => {
-    if (isLoadingFeed || (!hasMoreArtworks && !reset)) return;
+    // 이미 로딩 중이거나, reset이 아닌데 더 이상 데이터가 없으면 return
+    if (isLoadingFeed || (!reset && !hasMoreArtworks)) {
+      console.log('Load blocked:', { isLoadingFeed, hasMoreArtworks, reset });
+      return;
+    }
     
+    console.log('Loading feed data:', { reset, cursor, hasMoreArtworks });
     setIsLoadingFeed(true);
+    
+    if (reset) {
+      setCursor(undefined);
+      setHasMoreArtworks(false);
+    }
+    
     try {
       const response = await getFinishedRooms(10, reset ? undefined : cursor);
+      console.log('Feed response:', response);
       
       const newArtworks: ArtworkItem[] = response.rooms.map(createArtworkFromRoom);
 
       if (reset) {
         setArtworks(newArtworks);
       } else {
-        setArtworks(prev => [...prev, ...newArtworks]);
+        // 중복 제거하면서 추가
+        setArtworks(prev => {
+          const existingIds = new Set(prev.map(item => item.id));
+          const uniqueNewItems = newArtworks.filter(item => !existingIds.has(item.id));
+          console.log('Adding unique items:', uniqueNewItems.length);
+          return [...prev, ...uniqueNewItems];
+        });
       }
       
       setCursor(response.cursor);
-      setHasMoreArtworks(response.hasMore);
+      const actualHasMore = response.hasMore && response.rooms.length > 0;
+      setHasMoreArtworks(actualHasMore);
+      console.log('Updated state:', { 
+        cursor: response.cursor, 
+        hasMore: response.hasMore, 
+        roomsCount: response.rooms.length,
+        actualHasMore 
+      });
     } catch (error) {
       console.error('Failed to load feed:', error);
     } finally {
@@ -74,11 +99,16 @@ export default function HomePage() {
   }, [isLoadingFeed, hasMoreArtworks, cursor]);
 
   const { ref: loadMoreRef, resetFetching } = useInfiniteScroll(() => {
-    loadFeedData();
+    console.log('Infinite scroll triggered:', { isLoadingFeed, hasMoreArtworks });
+    if (!isLoadingFeed && hasMoreArtworks) {
+      loadFeedData(false);
+    }
   });
 
   useEffect(() => {
-    resetFetching();
+    if (!isLoadingFeed) {
+      resetFetching();
+    }
   }, [isLoadingFeed, resetFetching]);
 
   useEffect(() => {
@@ -594,6 +624,47 @@ export default function HomePage() {
             }} />
           </div>
 
+          {/* Loading Skeleton */}
+          {isLoadingFeed && artworks.length === 0 && (
+            <div style={{ 
+              display: 'flex',
+              flexDirection: 'column',
+              gap: SPACING.md
+            }}>
+              {[...Array(3)].map((_, i) => (
+                <div key={i} style={{
+                  background: '#1a1a1a',
+                  borderRadius: BORDER_RADIUS.lg,
+                  overflow: 'hidden',
+                  height: '400px'
+                }}>
+                  {/* Image skeleton */}
+                  <div style={{
+                    height: '240px',
+                    background: 'linear-gradient(90deg, #333 25%, #444 50%, #333 75%)',
+                    backgroundSize: '200% 100%',
+                    animation: 'shimmer 1.5s infinite'
+                  }} />
+                  {/* Content skeleton */}
+                  <div style={{ padding: SPACING.md }}>
+                    <div style={{
+                      height: '20px',
+                      background: '#333',
+                      borderRadius: '4px',
+                      marginBottom: SPACING.sm
+                    }} />
+                    <div style={{
+                      height: '16px',
+                      background: '#333',
+                      borderRadius: '4px',
+                      width: '60%'
+                    }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {artworks.length === 0 && !isLoadingFeed ? (
             <div style={{
               textAlign: 'center',
@@ -606,7 +677,7 @@ export default function HomePage() {
                 게임을 플레이하고 첫 번째 작품을 만들어보세요!
               </p>
             </div>
-          ) : (
+          ) : artworks.length > 0 ? (
             <>
               <div style={{ 
                 display: 'flex',
@@ -635,8 +706,8 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Infinite scroll trigger */}
-              {hasMoreArtworks && (
+              {/* Infinite scroll trigger - only render when there's more data */}
+              {hasMoreArtworks && !isLoadingFeed && (
                 <div 
                   ref={loadMoreRef}
                   style={{ 
@@ -659,7 +730,7 @@ export default function HomePage() {
                 </div>
               )}
             </>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

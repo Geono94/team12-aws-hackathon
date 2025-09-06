@@ -329,6 +329,13 @@ async function getFinishedRooms(event: APIGatewayProxyEvent): Promise<APIGateway
     const result = await docClient.send(command);
     let rooms = (result.Items as Room[]) || [];
 
+    console.log('DynamoDB scan result:', {
+      itemCount: rooms.length,
+      hasLastEvaluatedKey: !!result.LastEvaluatedKey,
+      limit,
+      cursor: cursor ? 'present' : 'none'
+    });
+
     // Sort by completedAt descending
     rooms.sort((a, b) => {
       const aTime = a.completedAt ? new Date(a.completedAt).getTime() : 0;
@@ -336,14 +343,23 @@ async function getFinishedRooms(event: APIGatewayProxyEvent): Promise<APIGateway
       return bTime - aTime;
     });
 
+    // More accurate hasMore logic for filtered scans
+    const hasMore = !!result.LastEvaluatedKey && rooms.length === limit;
+
     const response: any = {
       rooms,
-      hasMore: !!result.LastEvaluatedKey // Only true if DynamoDB has more items
+      hasMore
     };
 
-    if (result.LastEvaluatedKey) {
+    if (result.LastEvaluatedKey && hasMore) {
       response.cursor = Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64');
     }
+
+    console.log('Response:', {
+      roomCount: rooms.length,
+      hasMore,
+      hasCursor: !!response.cursor
+    });
 
     return {
       statusCode: 200,

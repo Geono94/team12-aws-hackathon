@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { COLORS, SPACING, BORDER_RADIUS } from '@/constants/design';
 import { ArtworkItem } from '@/types/ui';
 import { getUserReaction } from '@/lib/utils/artwork';
+import ImageSkeleton from '@/components/ui/ImageSkeleton';
 
 interface ArtworkCardProps {
   artwork: ArtworkItem;
@@ -54,15 +55,14 @@ export default function ArtworkCard({ artwork, onReaction, onViewDetail }: Artwo
         style={{ position: 'relative' }}
         onDoubleClick={handleDoubleClick}
       >
-        <img
+        <ImageSkeleton
           src={displayImage}
           alt={`${artwork.topic} ${imageError ? 'original' : 'AI'} artwork`}
           onError={handleImageError}
           style={{
             width: '100%',
             height: '240px',
-            objectFit: 'cover',
-            display: 'block'
+            borderRadius: `${BORDER_RADIUS.lg} ${BORDER_RADIUS.lg} 0 0`
           }}
         />
 
