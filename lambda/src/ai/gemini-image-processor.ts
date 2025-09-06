@@ -37,6 +37,8 @@ Transform this into a beautiful cartoon masterpiece with:
 - Ultra-high resolution, crisp details
 - Polished, commercial-grade illustration quality
 - Creative cartoon interpretation that enhances the original concept
+- NO TEXT OR LETTERS in the image - create only visual artwork without any written words
+- If the reference image is completely blank or empty (white canvas with no drawings), return an empty response instead of generating new content
 
 Create this as if it were the main poster art for a blockbuster animated movie. Make it visually striking, colorful, and absolutely captivating with cartoon charm and personality.`;
 
