@@ -135,7 +135,9 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
 
       if (message.type === 'gameStateUpdate') {
         const data = message.data;
-        if (data.state) setGameState(data.state);
+        if (data.state) {
+          setGameState(data.state);
+        }
         if (data.topic) {
           setTopic(data.topic);
           // topic을 localStorage에 저장
@@ -410,7 +412,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
       alignItems: 'center', 
       touchAction: 'none',
       userSelect: 'none',
-      overflowX: 'hidden',
+      overflow: 'hidden',
       WebkitUserSelect: 'none',
       WebkitTouchCallout: 'none',
       WebkitTapHighlightColor: 'transparent'
