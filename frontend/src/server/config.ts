@@ -1,5 +1,5 @@
 export const GAME_CONFIG = {
-  MAX_PLAYERS: 1,
+  MAX_PLAYERS: 2,
   GAME_TIME: 30,  
 
   MATCHED_COUNTDOWN_TIME: 3, // 매치 완료 후 3초 카운트

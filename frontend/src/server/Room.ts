@@ -4,6 +4,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { GAME_CONFIG, S3_BUCKET_NAME, TOPICS } from './config';
 import { ServerToClientMessage } from '@/types';
 import { drawSvgPath } from './svgDrawing';
+import { randomBytes } from 'crypto';
 
 export interface PlayerData {
   id: string;
@@ -203,7 +204,10 @@ export class Room {
   }
 
   async startGame(docs: Map<string, any>) {
-    const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
+    // 암호학적으로 안전한 랜덤 생성
+    const randomBuffer = randomBytes(4);
+    const randomValue = randomBuffer.readUInt32BE(0);
+    const topic = TOPICS[randomValue % TOPICS.length];
 
     // 게임 시작 하면 3초 일단 대기
     // 토픽 전송 후, 3초 대기
