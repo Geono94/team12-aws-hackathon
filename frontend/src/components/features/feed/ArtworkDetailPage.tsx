@@ -95,7 +95,9 @@ export default function ArtworkDetailPage({ artwork }: ArtworkDetailPageProps) {
   return (
     <div style={{ 
       background: '#000000',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      overflowX: 'hidden',
+      overscrollBehavior: 'none'
     }}>
       {/* Header */}
       <div style={{

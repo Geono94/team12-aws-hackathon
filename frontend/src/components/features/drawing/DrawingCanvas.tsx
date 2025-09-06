@@ -132,7 +132,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   const cursorsRef = useRef<HTMLDivElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentColor, setCurrentColor] = useState<string>(COLORS.primary.main);
-  const [brushSize, setBrushSize] = useState(5);
+  const [brushSize, setBrushSize] = useState(3);
   const [currentStroke, setCurrentStroke] = useState<number[][]>([]);
   const [currentStrokeId, setCurrentStrokeId] = useState<string>('');
   const [lastSyncTime, setLastSyncTime] = useState<number>(0);
@@ -842,103 +842,103 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
         )}
       </div>
  
-          {gameState === 'playing' && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              flexDirection: 'column',
-              gap: SPACING.md,
-              marginBottom: SPACING.md,
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-            }}>
-              <ColorPalette 
-                colors={colors}
-                currentColor={currentColor}
-                onColorChange={setCurrentColor}
-              />
-              <BrushSizeSelector
-                currentSize={brushSize}
-                onSizeChange={setBrushSize}
-              />
-            </div>
-          )}
+      {gameState === 'playing' && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          flexDirection: 'column',
+          gap: SPACING.md,
+          marginBottom: SPACING.md,
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+        }}>
+          <ColorPalette 
+            colors={colors}
+            currentColor={currentColor}
+            onColorChange={setCurrentColor}
+          />
+          <BrushSizeSelector
+            currentSize={brushSize}
+            onSizeChange={setBrushSize}
+          />
+        </div>
+      )}
 
-          <div
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-            onTouchStart={startDrawing}
-            onTouchMove={draw}
-            onTouchEnd={stopDrawing}
-            onTouchCancel={stopDrawing}
-            style={{
-              display: gameState === 'playing' ? 'flex' : 'none',
-              position: 'relative',
-              border: `2px solid ${COLORS.neutral.border}`,
-              borderRadius: BORDER_RADIUS.sm,
-              cursor: gameState === 'playing' ? 'crosshair' : 'not-allowed',
-              background: 'white',
-              width: GAME_CONFIG.CANVAS_SIZE.width,
-              height: GAME_CONFIG.CANVAS_SIZE.height,
-              touchAction: 'none',
-              userSelect: 'none',
-              WebkitUserSelect: 'none',
-              WebkitTouchCallout: 'none',
-              WebkitTapHighlightColor: 'transparent'
-            }}
-          >
-            <canvas
-              ref={canvasRef}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                pointerEvents: 'none'
-              }}
-            />
-            <svg
-              ref={svgRef}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                pointerEvents: 'none',
-                zIndex: 1
-              }}
-              viewBox={`0 0 ${GAME_CONFIG.CANVAS_SIZE.width} ${GAME_CONFIG.CANVAS_SIZE.height}`}
-            />
-            <svg
-              ref={previewRef}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                pointerEvents: 'none',
-                zIndex: 2
-              }}
-              viewBox={`0 0 ${GAME_CONFIG.CANVAS_SIZE.width} ${GAME_CONFIG.CANVAS_SIZE.height}`}
-            />
-            <div
-              ref={cursorsRef}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                pointerEvents: 'none',
-                zIndex: 3
-              }}
-            />
-          </div> 
+      <div
+        onMouseDown={startDrawing}
+        onMouseMove={draw}
+        onMouseUp={stopDrawing}
+        onMouseLeave={stopDrawing}
+        onTouchStart={startDrawing}
+        onTouchMove={draw}
+        onTouchEnd={stopDrawing}
+        onTouchCancel={stopDrawing}
+        style={{
+          display: gameState === 'playing' ? 'flex' : 'none',
+          position: 'relative',
+          border: `2px solid ${COLORS.neutral.border}`,
+          borderRadius: BORDER_RADIUS.sm,
+          cursor: gameState === 'playing' ? 'crosshair' : 'not-allowed',
+          background: 'white',
+          width: GAME_CONFIG.CANVAS_SIZE.width,
+          height: GAME_CONFIG.CANVAS_SIZE.height,
+          touchAction: 'none',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          WebkitTouchCallout: 'none',
+          WebkitTapHighlightColor: 'transparent'
+        }}
+      >
+        <canvas
+          ref={canvasRef}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none'
+          }}
+        />
+        <svg
+          ref={svgRef}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 1
+          }}
+          viewBox={`0 0 ${GAME_CONFIG.CANVAS_SIZE.width} ${GAME_CONFIG.CANVAS_SIZE.height}`}
+        />
+        <svg
+          ref={previewRef}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 2
+          }}
+          viewBox={`0 0 ${GAME_CONFIG.CANVAS_SIZE.width} ${GAME_CONFIG.CANVAS_SIZE.height}`}
+        />
+        <div
+          ref={cursorsRef}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 3
+          }}
+        />
+      </div>
     </div>
   );
 }
