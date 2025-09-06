@@ -105,12 +105,19 @@ export class GameAIProcessor {
 
         try {
             const analysisResponse = await this.bedrock.analyzeImage(imageBase64);
-            console.log('✅ Bedrock 분석 완료');
+            console.log('✅ Bedrock 분석 완료:', JSON.stringify(analysisResponse.evaluation, null, 2));
             return analysisResponse;
 
         } catch (error) {
-            console.error('❌ Bedrock 분석 실패, fallback 사용:', error);
-            return this.getFallbackAnalysis();
+            console.error('❌❌❌ BEDROCK 분석 완전 실패! ❌❌❌');
+            console.error('실패 원인:', error);
+            console.error('에러 메시지:', error instanceof Error ? error.message : String(error));
+            console.error('에러 스택:', error instanceof Error ? error.stack : 'No stack trace');
+            console.error('🔄 Fallback 분석 사용 중...');
+            
+            const fallback = this.getFallbackAnalysis();
+            console.log('📋 Fallback 분석 결과:', JSON.stringify(fallback.evaluation, null, 2));
+            return fallback;
         }
     }
 
