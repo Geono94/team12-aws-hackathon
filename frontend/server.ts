@@ -7,7 +7,7 @@ import { GameManager } from './src/server/GameManager';
 import { ClientToServerMessage } from '@/types';
 
 const dev = process.env.NODE_ENV !== 'production';
-const hostname = 'localhost';
+const hostname = '0.0.0.0';
 const port = process.env.PORT || 3000;
 const wsPort = process.env.WS_PORT || 3001;
 
@@ -76,12 +76,12 @@ app.prepare().then(() => {
     });
   });
 
-  server.listen(port, (err?: Error) => {
+  server.listen(port, hostname, (err?: Error) => {
     if (err) throw err;
     console.log(`> Ready on http://${hostname}:${port}`);
   });
 
-  wsServer.listen(wsPort, (err?: Error) => {
+  wsServer.listen(wsPort, hostname, (err?: Error) => {
     if (err) throw err;
     console.log(`> WebSocket on ws://${hostname}:${wsPort}`);
   });
