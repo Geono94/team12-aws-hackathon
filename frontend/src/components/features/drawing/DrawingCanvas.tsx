@@ -158,7 +158,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
   useEffect(() => {
     const currentPlayerCount = players.length;
     if (currentPlayerCount === GAME_CONFIG.MAX_PLAYERS && gameStartCountdown === 0) {
-      setGameStartCountdown(5);
+      setGameStartCountdown(GAME_CONFIG.COUNTDOWN_TIME);
       const countdownInterval = setInterval(() => {
         setGameStartCountdown(prev => {
           if (prev <= 1) {

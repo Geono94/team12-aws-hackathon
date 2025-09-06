@@ -119,8 +119,6 @@ export class Room {
     console.log(`[${this.id}] PNG created and uploaded: ${filename}`);
   }
 
- 
-
   private async uploadToS3(buffer: Buffer, filename: string) {
     const s3Client = new S3Client({ region: 'us-east-1' });
      
@@ -202,7 +200,6 @@ export class Room {
 
   async startGame(docs: Map<string, any>) {
     const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
-    
     console.log(`[${this.id}] Auto-starting game with topic: ${topic}`);
     
     await this.selectTopic(topic);
@@ -214,7 +211,7 @@ export class Room {
           this.endGame(docs);
         });
       });
-    }, 3000); // 3초 지연
+    }, GAME_CONFIG.TOPIC_SELECT_TIME * 1000); // 3초 지연
   }
 
   public broadcastGameState() {
