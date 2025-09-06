@@ -19,6 +19,7 @@ export interface RoomResponse {
     joinedAt: number;
   }>;
   analysis?: string;
+  aiStatus?: 'pending' | 'analyzing' | 'completed' | 'failed';
 }
 
 export interface ImageAnalysis {

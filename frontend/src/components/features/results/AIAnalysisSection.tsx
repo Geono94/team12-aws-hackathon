@@ -1,8 +1,8 @@
 import { ImageAnalysis } from '@/lib/api/room';
 import React, { useState, useEffect } from 'react';
 
-const AIAnalysisSection = ({ imageAnalysis, topic }: {
-  imageAnalysis: ImageAnalysis; topic: string;
+const AIAnalysisSection = ({ imageAnalysis, topic, isFromDrawing = true }: {
+  imageAnalysis: ImageAnalysis; topic: string; isFromDrawing?: boolean;
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [analysis, setAnalysis] = useState<Record<string, { key: string; icon: string; label: string; text: string }>>({});
@@ -19,6 +19,18 @@ const AIAnalysisSection = ({ imageAnalysis, topic }: {
       { key: 'worst', icon: '❌', label: '워스트', text: analysisData.worst }
     ];
 
+    if (!isFromDrawing) {
+      // from=drawing이 아니면 모든 단계를 즉시 표시
+      const allSteps = steps.reduce((acc, step) => {
+        acc[step.key] = step;
+        return acc;
+      }, {} as Record<string, any>);
+      setAnalysis(allSteps);
+      setCurrentStep(steps.length);
+      return;
+    }
+
+    // from=drawing일 때만 애니메이션 적용
     steps.forEach((step, index) => {
       setTimeout(() => {
         setAnalysis(prev => ({ ...prev, [step.key]: step }));
@@ -30,9 +42,16 @@ const AIAnalysisSection = ({ imageAnalysis, topic }: {
             setFadingOut(prev => ({ ...prev, [steps[index - 1].key]: true }));
           }, 2000);
         }
+
+        // 마지막 단계에서 모든 fade out 제거
+        if (index === steps.length - 1) {
+          setTimeout(() => {
+            setFadingOut({});
+          }, 2000);
+        }
       }, index * 3000);
     });
-  }, [imageAnalysis, topic]);
+  }, [imageAnalysis, topic, isFromDrawing]);
 
   return (
     <div style={{
@@ -138,17 +157,17 @@ const generateAnalysisText = (imageAnalysis: ImageAnalysis, actualTopic: string)
   if (!imageAnalysis) {
     return {
       interpretation: `그림을 분석하고 있습니다...`,
-      guess: `"${actualTopic}" 주제를 표현하려 한 것 같습니다.`,
+      guess: `"${actualTopic || '알 수 없음'}" 주제를 표현하려 한 것 같습니다.`,
       best: `전체적인 구성이 인상적입니다.`,
       worst: `더 많은 세부 요소가 있었다면 좋았을 것 같아요.`
     };
   }
 
   return {
-    interpretation: `AI가 "${imageAnalysis.subject}"로 예상했습니다. ${imageAnalysis.style} 스타일로 표현되었네요.`,
-    guess: `아하, 실제 그림 주제는 "${actualTopic}"이네요. "${imageAnalysis.technicalEvaluation}`, 
-    best: `저는 "${imageAnalysis.mvp}"이 제일 좋은 단서였어요`,
-    worst: `저는 "${imageAnalysis.worst}"이 제일 헷갈렸어요`
+    interpretation: `AI가 "${imageAnalysis.subject || '알 수 없음'}"로 예상했습니다. ${imageAnalysis.style || '일반적인'} 스타일로 표현되었네요.`,
+    guess: `아하, 실제 그림 주제는 "${actualTopic || '알 수 없음'}"이네요. "${imageAnalysis.technicalEvaluation || '흥미로운 표현이네요'}"`, 
+    best: `저는 "${imageAnalysis.mvp || '전체적인 구성'}"이 제일 좋은 단서였어요`,
+    worst: `저는 "${imageAnalysis.worst || '일부 세부사항'}"이 제일 헷갈렸어요`
   };
 };
 

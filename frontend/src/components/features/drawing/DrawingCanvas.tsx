@@ -166,7 +166,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
           setPlayerCount(message.data.playerCount);
         }
       } else if (message.type === 'gameEnded') {
-        router.push(message.data.redirectTo);
+        router.push(`${message.data.redirectTo}?from=drawing`);
       } else if (message.type === 'kickRoom') {
         router.push('/')
       }

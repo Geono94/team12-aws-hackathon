@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useResults } from '@/hooks/useResults';
 import ImageCompareSlider from '@/components/ui/ImageCompareSlider';
 import { SaveButton } from '@/components/ui/SaveButton';
@@ -15,7 +15,9 @@ interface ResultsPageProps {
 
 export default function ResultsPage({ params }: ResultsPageProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [roomId, setRoomId] = useState<string | null>(null);
+  const isFromDrawing = searchParams.get('from') === 'drawing';
   
   useEffect(() => {
     const getRoomId = async () => {
@@ -27,10 +29,10 @@ export default function ResultsPage({ params }: ResultsPageProps) {
     getRoomId();
   }, [params]);
   
-  const { originalImage, aiImage, isLoading, imageAnalysis, topic } = useResults(roomId);
+  const { originalImage, aiImage, isLoading, imageAnalysis, topic, roomInfo } = useResults(roomId);
   
   const [playerCount] = useState(4);
-  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingProgress, setLoadingProgress] = useState(isFromDrawing ? 0 : 100);
   const [funFacts] = useState([
     "🎨 AI가 당신의 그림을 분석하고 있어요",
     "✨ 새로운 스타일로 변환 중이에요", 
@@ -41,7 +43,16 @@ export default function ResultsPage({ params }: ResultsPageProps) {
 
   // AI 생성 대기시간 동안의 재미있는 효과들
   useEffect(() => {
+    // from=drawing이 아니면 애니메이션 효과 없이 바로 완료 상태로 설정
+    if (!isFromDrawing) {
+      setLoadingProgress(100);
+      return;
+    }
+
     if (isLoading) {
+      // 로딩 시작 시 0으로 초기화
+      setLoadingProgress(0);
+      
       const startTime = Date.now();
       const targetDuration = 30000; // 30초
       
@@ -69,7 +80,7 @@ export default function ResultsPage({ params }: ResultsPageProps) {
       // AI 변환 완료 시 즉시 100%로 설정
       setLoadingProgress(100);
     }
-  }, [isLoading, funFacts.length]);
+  }, [isLoading, funFacts.length, isFromDrawing]);
 
   const onGoHome = () => {
     router.push('/');
@@ -178,115 +189,30 @@ export default function ResultsPage({ params }: ResultsPageProps) {
           <p style={{
             fontSize: '18px',
             color: '#FFFFFF',
-            marginBottom: '8px'
+            marginBottom: '16px'
           }}>
             함께 만든 작품을 확인해보세요
           </p>
-          {/* 게임 정보 */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '16px',
-            fontSize: '14px',
-            color: '#888',
-            marginTop: '8px'
-          }}>
-            <span>👥 {playerCount}명 참여</span>
-            <span>🎯 주제: {topic}</span>
-            <span>⏱️ 30초 드로잉</span>
-          </div>
+          {/* from=drawing일 때만 헤더에 주제 표시 */}
+          {isFromDrawing && topic && (
+            <div style={{
+              display: 'inline-block',
+              padding: '12px 24px',
+              backgroundColor: 'rgba(78, 205, 196, 0.15)',
+              border: '2px solid #4ECDC4',
+              borderRadius: '20px',
+              marginTop: '8px'
+            }}>
+              <span style={{
+                fontSize: '18px',
+                fontWeight: 'bold',
+                color: '#4ECDC4'
+              }}>
+                주제: {topic}
+              </span>
+            </div>
+          )}
         </div>
-
-        {/* Progress Bar (moved to where tabs were) */}
-        {isLoading && (
-          <div style={{
-            width: '100%',
-            maxWidth: '400px'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '8px'
-            }}>
-              <span style={{
-                fontSize: '14px',
-                color: '#FFFFFF',
-                fontWeight: '500'
-              }}>
-                AI 변환 진행 중
-              </span>
-              <span style={{
-                fontSize: '14px',
-                color: '#4ECDC4',
-                fontWeight: 'bold'
-              }}>
-                {Math.round(loadingProgress)}%
-              </span>
-            </div>
-            <div style={{
-              width: '100%',
-              height: '12px',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              borderRadius: '6px',
-              overflow: 'hidden',
-              border: '1px solid rgba(255,255,255,0.1)'
-            }}>
-              <div style={{
-                width: `${loadingProgress}%`,
-                height: '100%',
-                background: 'linear-gradient(90deg, #FF6B6B 0%, #4ECDC4 100%)',
-                borderRadius: '6px',
-                transition: 'width 0.1s ease',
-                boxShadow: '0 0 8px rgba(78,205,196,0.3)'
-              }} />
-            </div>
-            
-            {/* 변환 메시지 - 인라인 레이아웃 */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginTop: '12px',
-              marginBottom: '1px',
-              padding: '12px',
-              backgroundColor: 'rgba(255,255,255,0.05)',
-              borderRadius: '12px'
-            }}>
-              <div style={{
-                fontSize: '32px',
-                animation: 'float 2s ease-in-out infinite',
-                flexShrink: 0
-              }}>
-                🎨
-              </div>
-              <div style={{ flex: 1 }}>
-                <p style={{ 
-                  fontSize: '16px', 
-                  fontWeight: '600',
-                  color: '#FFFFFF',
-                  marginBottom: '6px',
-                  margin: 0
-                }}>
-                  {funFacts[currentFactIndex]}
-                </p>
-                <p style={{ 
-                  fontSize: '12px', 
-                  color: '#888',
-                  margin: 0
-                }}>
-                  AI가 그림을 분석하고 새로운 스타일로 변환하고 있어요
-                </p>
-              </div>
-            </div>
-
-            {/* AI 분석 섹션 - AI 변환 중일 때만 표시 */}
-            <AIAnalysisSection 
-              imageAnalysis={imageAnalysis}
-              topic={topic}
-            />
-          </div>
-        )}
 
         {/* Image Area */}
         <div style={{
@@ -302,30 +228,27 @@ export default function ResultsPage({ params }: ResultsPageProps) {
           position: 'relative',
           margin: '0 16px'
         }}>
-          {isLoading ? (
-            /* 로딩 중에도 원본 이미지 표시 */
-            originalImage ? (
-              <img
-                src={originalImage}
-                alt="Original artwork"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  borderRadius: '12px',
-                  objectFit: 'contain'
-                }}
-              />
-            ) : (
-              <div style={{
-                textAlign: 'center',
-                color: '#718096',
-                fontSize: '18px'
-              }}>
-                <p>원본 이미지를 불러오는 중...</p>
-              </div>
-            )
+          {!originalImage ? (
+            <div style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: '12px',
+              background: 'linear-gradient(90deg, #333 25%, #444 50%, #333 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 1.5s infinite'
+            }} />
+          ) : isLoading ? (
+            <img
+              src={originalImage}
+              alt="Original artwork"
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '12px',
+                objectFit: 'contain'
+              }}
+            />
           ) : originalImage && aiImage ? (
-            /* 완료 후 비교 슬라이더 - 팔레트 내부에 직접 배치 */
             <div style={{
               width: '100%',
               height: '100%',
@@ -338,7 +261,7 @@ export default function ResultsPage({ params }: ResultsPageProps) {
                 alt="DrawTogether artwork"
               />
             </div>
-          ) : originalImage ? (
+          ) : (
             <img
               src={originalImage}
               alt="Original artwork"
@@ -349,19 +272,164 @@ export default function ResultsPage({ params }: ResultsPageProps) {
                 objectFit: 'contain'
               }}
             />
-          ) : (
-            <div style={{
-              textAlign: 'center',
-              color: '#718096',
-              fontSize: '18px'
-            }}>
-              <p>이미지를 불러올 수 없습니다</p>
-            </div>
           )}
         </div>
 
-        {/* Action Buttons - AI 변환 중에는 숨김 */}
-        {!isLoading && (
+        {/* 주제 - 항상 이미지 바로 아래에 표시 */}
+        {topic && (
+          <div style={{
+            display: 'inline-block',
+            padding: '12px 24px',
+            backgroundColor: 'rgba(78, 205, 196, 0.15)',
+            border: '2px solid #4ECDC4',
+            borderRadius: '20px'
+          }}>
+            <span style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              color: '#4ECDC4'
+            }}>
+              주제: {topic}
+            </span>
+          </div>
+        )}
+
+        {/* from=drawing일 때 진행률 바와 AI 분석 섹션을 이미지 아래에 배치 */}
+        {isFromDrawing && (
+          <>
+            {/* 분석 준비 메시지 - 초기 로딩 시에만 */}
+            {(!imageAnalysis && !roomInfo) && (
+              <div style={{
+                width: '100%',
+                maxWidth: '400px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '16px',
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                borderRadius: '12px'
+              }}>
+                <div style={{
+                  fontSize: '32px',
+                  animation: 'float 2s ease-in-out infinite'
+                }}>
+                  🎨
+                </div>
+                <div>
+                  <p style={{ 
+                    fontSize: '16px', 
+                    fontWeight: '600',
+                    color: '#FFFFFF',
+                    margin: 0,
+                    marginBottom: '4px'
+                  }}>
+                    AI 분석을 준비하고 있어요
+                  </p>
+                  <p style={{ 
+                    fontSize: '12px', 
+                    color: '#888',
+                    margin: 0
+                  }}>
+                    잠시만 기다려주세요...
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* 진행률 바 - roomInfo가 있고 completed가 아닐 때 */}
+            {roomInfo && roomInfo.aiStatus !== 'completed' && (
+              <div style={{ width: '100%', maxWidth: '400px' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '8px'
+                }}>
+                  <span style={{ fontSize: '14px', color: '#FFFFFF', fontWeight: '500' }}>
+                    AI 변환 진행 중
+                  </span>
+                  <span style={{ fontSize: '14px', color: '#4ECDC4', fontWeight: 'bold' }}>
+                    {Math.round(loadingProgress)}%
+                  </span>
+                </div>
+                <div style={{
+                  width: '100%',
+                  height: '12px',
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  borderRadius: '6px',
+                  overflow: 'hidden',
+                  border: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                  <div style={{
+                    width: `${loadingProgress}%`,
+                    height: '100%',
+                    background: 'linear-gradient(90deg, #FF6B6B 0%, #4ECDC4 100%)',
+                    borderRadius: '6px',
+                    transition: 'width 0.1s ease',
+                    boxShadow: '0 0 8px rgba(78,205,196,0.3)'
+                  }} />
+                </div>
+                
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  marginTop: '12px',
+                  padding: '12px',
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  borderRadius: '12px'
+                }}>
+                  <div style={{
+                    fontSize: '32px',
+                    animation: 'float 2s ease-in-out infinite',
+                    flexShrink: 0
+                  }}>
+                    🎨
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ 
+                      fontSize: '16px', 
+                      fontWeight: '600',
+                      color: '#FFFFFF',
+                      margin: 0,
+                      marginBottom: '6px'
+                    }}>
+                      {funFacts[currentFactIndex]}
+                    </p>
+                    <p style={{ 
+                      fontSize: '12px', 
+                      color: '#888',
+                      margin: 0
+                    }}>
+                      AI가 그림을 분석하고 새로운 스타일로 변환하고 있어요
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* AI 분석 섹션 */}
+            {imageAnalysis && (
+              <AIAnalysisSection 
+                imageAnalysis={imageAnalysis}
+                topic={topic}
+                isFromDrawing={true}
+              />
+            )}
+          </>
+        )}
+
+        {/* from=drawing이 아닐 때 AI 분석 섹션 */}
+        {!isFromDrawing && imageAnalysis && (
+          <AIAnalysisSection 
+            imageAnalysis={imageAnalysis}
+            topic={topic}
+            isFromDrawing={false}
+          />
+        )}
+
+        {/* Action Buttons - 로딩 중이 아니고, from=drawing이 아니거나 분석이 완료된 경우 */}
+        {!isLoading && (!isFromDrawing || imageAnalysis) && (
           <div style={{
             display: 'flex',
             flexDirection: 'column',
@@ -370,7 +438,6 @@ export default function ResultsPage({ params }: ResultsPageProps) {
             maxWidth: '400px',
             marginTop: '32px'
           }}>
-            {/* 저장 및 공유 버튼 */}
             <div style={{ display: 'flex', gap: '16px' }}>
               <SaveButton 
                 onSave={handleDownloadImage}
@@ -381,8 +448,6 @@ export default function ResultsPage({ params }: ResultsPageProps) {
                 disabled={!originalImage}
               />
             </div>
-
-            {/* 홈으로 돌아가기 */}
             <HomeButton onGoHome={onGoHome} />
           </div>
         )}
@@ -393,6 +458,10 @@ export default function ResultsPage({ params }: ResultsPageProps) {
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-10px); }
+        }
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
         }
       `}</style>
     </div>

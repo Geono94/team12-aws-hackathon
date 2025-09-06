@@ -25,6 +25,10 @@ interface Room {
   finishedAt?: number;
   aiStatus?: 'pending' | 'analyzing' | 'completed' | 'failed';
   completedAt?: string;
+  originalImageUrl?: string;
+  aiImageUrl?: string;
+  analysis?: string;
+  aiGeneratedImageUrl?: string;
 }
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
