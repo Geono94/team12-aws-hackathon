@@ -5,14 +5,24 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as ecr from 'aws-cdk-lib/aws-ecr';
 import { Construct } from 'constructs';
+import { RESOURCE_NAMES } from './types';
 
 export class DrawTogetherStack extends cdk.Stack {
   public readonly restApiUrl: string;
   public readonly bucketName: string;
+  public readonly ecrRepositoryUri: string;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    // ECR Repository
+    const ecrRepository = new ecr.Repository(this, 'DrawTogetherRepository', {
+      repositoryName: RESOURCE_NAMES.ecrRepository,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      emptyOnDelete: true,
+    });
 
     // S3 Bucket for images
     const imagesBucket = new s3.Bucket(this, 'ImagesBucket', {
@@ -30,7 +40,7 @@ export class DrawTogetherStack extends cdk.Stack {
 
     // DynamoDB Tables
     const roomsTable = new dynamodb.Table(this, 'RoomsTable', {
-      tableName: 'DrawTogether-Rooms',
+      tableName: RESOURCE_NAMES.roomsTable,
       partitionKey: { name: 'roomId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -90,7 +100,7 @@ export class DrawTogetherStack extends cdk.Stack {
 
     // REST API
     const restApi = new apigateway.RestApi(this, 'RestApi', {
-      restApiName: 'DrawTogether-API',
+      restApiName: RESOURCE_NAMES.restApi,
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
         allowMethods: apigateway.Cors.ALL_METHODS,
@@ -172,8 +182,14 @@ export class DrawTogetherStack extends cdk.Stack {
       description: 'S3 Images Bucket Name',
     });
 
+    new cdk.CfnOutput(this, 'ECRRepositoryURI', {
+      value: ecrRepository.repositoryUri,
+      description: 'ECR Repository URI',
+    });
+
     // Export values for Amplify stack
     this.restApiUrl = restApi.url;
     this.bucketName = imagesBucket.bucketName;
+    this.ecrRepositoryUri = ecrRepository.repositoryUri;
   }
 }

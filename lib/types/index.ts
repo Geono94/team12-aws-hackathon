@@ -12,6 +12,7 @@ export interface ResourceNames {
   readonly restApi: string;
   readonly webSocketApi: string;
   readonly amplifyApp: string;
+  readonly ecrRepository: string;
 }
 
 export interface LambdaConfig {
@@ -32,4 +33,5 @@ export const RESOURCE_NAMES: ResourceNames = {
   restApi: 'DrawTogether-API',
   webSocketApi: 'DrawTogether-WebSocket',
   amplifyApp: 'DrawTogether',
+  ecrRepository: 'drawtogether-repository',
 };
