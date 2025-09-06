@@ -236,7 +236,6 @@ export default function FeedPage({ artworks: initialArtworks, onLoadMore, isLoad
                 <ArtworkCard
                   key={artwork.id}
                   artwork={artwork}
-                  onReaction={handleReaction}
                   onViewDetail={handleViewDetail}
                 />
               ))}

@@ -680,7 +680,6 @@ export default function HomePage() {
                   <ArtworkCard
                     key={artwork.id}
                     artwork={artwork}
-                    onReaction={handleReaction}
                     onViewDetail={handleViewDetail}
                   />
                 ))}
