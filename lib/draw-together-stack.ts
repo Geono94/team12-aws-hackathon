@@ -6,6 +6,10 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as ecs from 'aws-cdk-lib/aws-ecs';
+import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 import { RESOURCE_NAMES } from './types';
 
@@ -13,9 +17,30 @@ export class DrawTogetherStack extends cdk.Stack {
   public readonly restApiUrl: string;
   public readonly bucketName: string;
   public readonly ecrRepositoryUri: string;
+  public readonly vpc: ec2.Vpc;
+  public readonly ecsCluster: ecs.Cluster;
+  public readonly loadBalancer: elbv2.NetworkLoadBalancer;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    // VPC
+    const vpc = new ec2.Vpc(this, 'DrawTogetherVPC', {
+      maxAzs: 2,
+      natGateways: 1,
+      subnetConfiguration: [
+        {
+          cidrMask: 24,
+          name: 'Public',
+          subnetType: ec2.SubnetType.PUBLIC,
+        },
+        {
+          cidrMask: 24,
+          name: 'Private',
+          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+        },
+      ],
+    });
 
     // ECR Repository
     const ecrRepository = new ecr.Repository(this, 'DrawTogetherRepository', {
@@ -23,6 +48,137 @@ export class DrawTogetherStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       emptyOnDelete: true,
     });
+
+    // ECS Cluster
+    const cluster = new ecs.Cluster(this, 'DrawTogetherCluster', {
+      vpc: vpc,
+      clusterName: 'DrawTogether-Cluster',
+    });
+
+    // Security Groups
+    const albSecurityGroup = new ec2.SecurityGroup(this, 'ALBSecurityGroup', {
+      vpc: vpc,
+      description: 'Security group for ALB',
+      allowAllOutbound: true,
+    });
+
+    albSecurityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(80),
+      'Allow HTTP traffic from anywhere'
+    );
+
+    albSecurityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(3000),
+      'Allow traffic to port 3000'
+    );
+
+    albSecurityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(3001),
+      'Allow traffic to port 3001'
+    );
+
+    const ecsSecurityGroup = new ec2.SecurityGroup(this, 'ECSSecurityGroup', {
+      vpc: vpc,
+      description: 'Security group for ECS tasks',
+      allowAllOutbound: true,
+    });
+
+    ecsSecurityGroup.addIngressRule(
+      albSecurityGroup,
+      ec2.Port.tcp(3000),
+      'Allow traffic from ALB to port 3000'
+    );
+
+    ecsSecurityGroup.addIngressRule(
+      albSecurityGroup,
+      ec2.Port.tcp(3001),
+      'Allow traffic from ALB to port 3001'
+    );
+
+    // CloudWatch Log Group
+    const logGroup = new logs.LogGroup(this, 'DrawTogetherLogGroup', {
+      logGroupName: '/ecs/drawtogether',
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    // Task Definition
+    const taskDefinition = new ecs.FargateTaskDefinition(this, 'DrawTogetherTaskDef', {
+      memoryLimitMiB: 512,
+      cpu: 256,
+    });
+
+    // Container Definition
+    const container = taskDefinition.addContainer('DrawTogetherContainer', {
+      image: ecs.ContainerImage.fromEcrRepository(ecrRepository, 'latest'),
+      logging: ecs.LogDrivers.awsLogs({
+        streamPrefix: 'drawtogether',
+        logGroup: logGroup,
+      }),
+      portMappings: [
+        {
+          containerPort: 3000,
+          protocol: ecs.Protocol.TCP,
+        },
+        {
+          containerPort: 3001,
+          protocol: ecs.Protocol.TCP,
+        }
+      ],
+    });
+
+    // Network Load Balancer
+    const nlb = new elbv2.NetworkLoadBalancer(this, 'DrawTogetherNLB', {
+      vpc: vpc,
+      internetFacing: true,
+      loadBalancerName: 'DrawTogether-NLB',
+    });
+
+    // Target Groups
+    const targetGroup3000 = new elbv2.NetworkTargetGroup(this, 'DrawTogetherTargetGroup3000', {
+      vpc: vpc,
+      port: 3000,
+      protocol: elbv2.Protocol.TCP,
+      targetType: elbv2.TargetType.IP,
+    });
+
+    const targetGroup3001 = new elbv2.NetworkTargetGroup(this, 'DrawTogetherTargetGroup3001', {
+      vpc: vpc,
+      port: 3001,
+      protocol: elbv2.Protocol.TCP,
+      targetType: elbv2.TargetType.IP,
+    });
+
+    // Listeners
+    nlb.addListener('DrawTogetherListener3000', {
+      port: 3000,
+      protocol: elbv2.Protocol.TCP,
+      defaultTargetGroups: [targetGroup3000],
+    });
+
+    nlb.addListener('DrawTogetherListener3001', {
+      port: 3001,
+      protocol: elbv2.Protocol.TCP,
+      defaultTargetGroups: [targetGroup3001],
+    });
+
+    // ECS Service
+    const service = new ecs.FargateService(this, 'DrawTogetherService', {
+      cluster: cluster,
+      taskDefinition: taskDefinition,
+      desiredCount: 1,
+      assignPublicIp: false,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [ecsSecurityGroup],
+    });
+
+    // Attach service to target groups
+    service.attachToNetworkTargetGroup(targetGroup3000);
+    service.attachToNetworkTargetGroup(targetGroup3001);
 
     // S3 Bucket for images
     const imagesBucket = new s3.Bucket(this, 'ImagesBucket', {
@@ -187,9 +343,37 @@ export class DrawTogetherStack extends cdk.Stack {
       description: 'ECR Repository URI',
     });
 
+    new cdk.CfnOutput(this, 'VpcId', {
+      value: vpc.vpcId,
+      description: 'VPC ID',
+    });
+
+    new cdk.CfnOutput(this, 'ECSClusterName', {
+      value: cluster.clusterName,
+      description: 'ECS Cluster Name',
+    });
+
+    new cdk.CfnOutput(this, 'LoadBalancerURL', {
+      value: nlb.loadBalancerDnsName,
+      description: 'Network Load Balancer DNS Name',
+    });
+
+    new cdk.CfnOutput(this, 'AppURL3000', {
+      value: `http://${nlb.loadBalancerDnsName}:3000`,
+      description: 'Application URL (Port 3000)',
+    });
+
+    new cdk.CfnOutput(this, 'WebSocketURL3001', {
+      value: `ws://${nlb.loadBalancerDnsName}:3001`,
+      description: 'WebSocket URL (Port 3001)',
+    });
+
     // Export values for Amplify stack
     this.restApiUrl = restApi.url;
     this.bucketName = imagesBucket.bucketName;
     this.ecrRepositoryUri = ecrRepository.repositoryUri;
+    this.vpc = vpc;
+    this.ecsCluster = cluster;
+    this.loadBalancer = nlb;
   }
 }

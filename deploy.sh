@@ -2,10 +2,16 @@
 
 echo "🚀 Deploying CDK infrastructure..."
 
+# --force 플래그 처리
+FORCE_FLAG=""
+if [ "$1" = "--force" ]; then
+  FORCE_FLAG="--force"
+  echo "🔥 Force deployment enabled"
+fi
+
 # CDK 배포
-#cd /Users/link.ahn/project/team12-aws-hackathon
 npm run build
-cdk deploy --require-approval never
+cdk deploy --require-approval never $FORCE_FLAG
 
 # API Gateway URL 추출
 API_URL=$(aws cloudformation describe-stacks \
