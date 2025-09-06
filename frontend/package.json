@@ -21,11 +21,12 @@
     "ws": "^8.18.3",
     "y-protocols": "^1.0.6",
     "y-websocket": "^2.1.0",
-    "yjs": "^13.6.27"
+    "yjs": "^13.6.27",
+    "@tailwindcss/postcss": "^4",
+    "typescript": "^5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -33,7 +34,6 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
     "tailwindcss": "^4",
-    "tsx": "^4.19.2",
-    "typescript": "^5"
+    "tsx": "^4.19.2"
   }
 }

@@ -33,7 +33,7 @@ interface YjsProviderProps {
 
 export function YjsProvider({ children,   roomId = 'default' }: YjsProviderProps) {
   const wsUrl = typeof window !== 'undefined' 
-    ? (process.env.NODE_ENV === 'production' 
+    ? (window.location.protocol === 'https:'
         ? `wss://${window.location.host}` 
         : `ws://${window.location.hostname}:3001`)
     : `ws://172.30.3.57:3001`;
