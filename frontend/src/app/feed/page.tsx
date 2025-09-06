@@ -97,7 +97,7 @@ export default function Feed() {
             variant="primary"
             size="md"
           >
-            게임 시작하기
+            🎨 드로잉 시작하기
           </Button>
         }
       />

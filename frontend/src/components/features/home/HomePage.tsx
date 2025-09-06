@@ -15,12 +15,8 @@ import { Title } from './Title';
 export default function HomePage() {
   const router = useRouter();
   const [playerName, setPlayerName] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
-  const [profileImage, setProfileImage] = useState('/characters/character1.svg');
-  const [showProfileSelector, setShowProfileSelector] = useState(false);
   const [showFixedButton, setShowFixedButton] = useState(false);
   const [isSearchingRoom, setIsSearchingRoom] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Feed state
   const [artworks, setArtworks] = useState<ArtworkItem[]>([]);
@@ -28,22 +24,10 @@ export default function HomePage() {
   const [hasMoreArtworks, setHasMoreArtworks] = useState(false);
   const [cursor, setCursor] = useState<string | undefined>();
 
-  const defaultAvatars = [
-    '/characters/character1.svg',
-    '/characters/character2.svg', 
-    '/characters/character3.svg',
-    '/characters/character4.svg',
-    '/characters/character5.svg'
-  ];
-
   useEffect(() => {
     const player = getPlayer();
     if (player) {
       setPlayerName(player.name);
-      setProfileImage(player.profileImage || defaultAvatars[0]);
-      setIsEditing(false);
-    } else {
-      setIsEditing(true);
     }
   }, []);
 
@@ -142,9 +126,12 @@ export default function HomePage() {
   
   const handleQuickMatch = () => {
     if (!playerName.trim()) {
-      setIsEditing(true);
       return;
     }
+    
+    // 닉네임 자동 저장
+    savePlayer(playerName.trim(), '/characters/character1.svg');
+    
     const player = getPlayer();
     if (!player) {
       return;
@@ -155,37 +142,14 @@ export default function HomePage() {
       type: 'searchRoom',
       data: {
         playerId: player.id,
-        playerName,
+        playerName: playerName.trim(),
       }
     });
   };
 
-  const handleNameSave = () => {
-    if (playerName.trim()) {
-      savePlayer(playerName, profileImage);
-      setIsEditing(false);
-    }
-  };
-
-  const handleProfileImageClick = () => {
-    setShowProfileSelector(true);
-  };
-
-  const handleAvatarSelect = (avatar: string) => {
-    setProfileImage(avatar);
-    setShowProfileSelector(false);
-  };
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setProfileImage(result);
-        setShowProfileSelector(false);
-      };
-      reader.readAsDataURL(file);
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && playerName.trim() && !isSearchingRoom) {
+      handleQuickMatch();
     }
   };
 
@@ -253,114 +217,11 @@ export default function HomePage() {
                   animation: 'spin 1s linear infinite'
                 }} />
               ) : (
-                '🎮 게임 시작하기'
+                '🎨 드로잉 시작하기'
               )}
             </Button>
           </div>
         )}
-      {/* Profile Selector Modal */}
-      {showProfileSelector && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: '#1a1a1a',
-            borderRadius: '16px',
-            padding: SPACING.lg,
-            maxWidth: '400px',
-            width: '90%'
-          }}>
-            <h3 style={{ color: '#FFFFFF', marginBottom: SPACING.md, textAlign: 'center' }}>
-              프로필 이미지 선택
-            </h3>
-            
-            {/* Default Avatars */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: SPACING.sm,
-              marginBottom: SPACING.md
-            }}>
-              {defaultAvatars.map((avatar, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleAvatarSelect(avatar)}
-                  style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    border: profileImage === avatar ? `2px solid ${COLORS.primary.main}` : '2px solid transparent',
-                    borderRadius: '12px',
-                    padding: SPACING.sm,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  <img 
-                    src={avatar} 
-                    alt={`캐릭터 ${index + 1}`}
-                    style={{
-                      width: '60px',
-                      height: '60px',
-                      borderRadius: '8px',
-                      objectFit: 'cover'
-                    }}
-                  />
-                </button>
-              ))}
-            </div>
-
-            {/* Upload Button */}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                width: '100%',
-                background: 'rgba(255,255,255,0.1)',
-                border: '2px dashed rgba(255,255,255,0.3)',
-                borderRadius: '12px',
-                padding: SPACING.md,
-                color: '#FFFFFF',
-                cursor: 'pointer',
-                marginBottom: SPACING.md
-              }}
-            >
-              📁 이미지 업로드
-            </button>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileUpload}
-              style={{ display: 'none' }}
-            />
-
-            {/* Close Button */}
-            <button
-              onClick={() => setShowProfileSelector(false)}
-              style={{
-                width: '100%',
-                background: 'rgba(255,255,255,0.1)',
-                border: 'none',
-                borderRadius: '8px',
-                padding: SPACING.sm,
-                color: '#888',
-                cursor: 'pointer'
-              }}
-            >
-              취소
-            </button>
-          </div>
-        </div>
-      )}
-
         {/* Hero Section */}
         <div style={{
           display: 'flex',
@@ -421,7 +282,7 @@ export default function HomePage() {
               color: '#888888',
               marginBottom: SPACING.lg
             }}>
-              친구들과 함께 그리고 AI가 새로운 스타일로 변환해주는 게임
+              친구와 함께하는 Ai 드로잉
             </p>
           </div>
         </div>
@@ -429,113 +290,33 @@ export default function HomePage() {
         {/* Profile Section */}
         <div style={{
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
+          justifyContent: 'center',
           marginBottom: SPACING.lg,
           width: '100%',
           maxWidth: '320px'
         }}>
-          {/* Profile Image */}
-          <button
-            onClick={handleProfileImageClick}
+          {/* Name Input */}
+          <input
+            type="text"
+            value={playerName}
+            onChange={(e) => setPlayerName(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="닉네임을 입력하세요"
+            maxLength={20}
             style={{
-              background: 'none',
-              border: '2px solid rgba(255,255,255,0.15)',
-              borderRadius: '50%',
-              padding: '3px',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              marginBottom: SPACING.md
-            }}
-          >
-            <img 
-              src={profileImage} 
-              alt="프로필"
-              style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                objectFit: 'cover'
-              }}
-            />
-          </button>
-
-          {/* Name Section */}
-          {isEditing ? (
-            <div style={{ 
-              display: 'flex', 
-              gap: SPACING.xs, 
-              alignItems: 'center',
-              width: '100%'
-            }}>
-              <input
-                type="text"
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                placeholder="닉네임 입력"
-                maxLength={20}
-                style={{
-                  flex: 1,
-                  padding: '10px 14px',
-                  fontSize: '16px',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  borderRadius: '8px',
-                  background: 'rgba(255,255,255,0.05)',
-                  color: '#FFFFFF',
-                  outline: 'none',
-                  textAlign: 'center'
-                }}
-                autoFocus
-              />
-              <button
-                onClick={handleNameSave}
-                disabled={!playerName.trim()}
-                style={{
-                  background: playerName.trim() ? COLORS.primary.main : 'rgba(255,255,255,0.1)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: 'white',
-                  padding: '10px 14px',
-                  fontSize: '14px',
-                  minWidth: '50px',
-                  cursor: 'pointer'
-                }}
-              >
-                ✓
-              </button>
-            </div>
-          ) : (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: SPACING.xs,
-              padding: '8px 12px',
+              width: '100%',
+              padding: '12px 16px',
+              fontSize: '16px',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '12px',
               background: 'rgba(255,255,255,0.05)',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.1)'
-            }}>
-              <span style={{ 
-                color: '#FFFFFF', 
-                fontSize: '16px', 
-                fontWeight: '500' 
-              }}>
-                {playerName}
-              </span>
-              <button
-                onClick={() => setIsEditing(true)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'rgba(255,255,255,0.5)',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  padding: '2px 4px'
-                }}
-              >
-                ✏️
-              </button>
-            </div>
-          )}
+              color: '#FFFFFF',
+              outline: 'none',
+              textAlign: 'center',
+              transition: 'all 0.2s',
+              boxSizing: 'border-box'
+            }}
+          />
         </div>
 
         {/* Game Start Button - Centered */}
@@ -561,7 +342,7 @@ export default function HomePage() {
                 animation: 'spin 1s linear infinite'
               }} />
             ) : (
-              '🎮 게임 시작하기'
+              '🎨 드로잉 시작하기'
             )}
           </Button>
         </div>

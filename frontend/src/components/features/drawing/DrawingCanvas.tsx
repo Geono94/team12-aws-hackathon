@@ -14,7 +14,6 @@ import { getStroke } from 'perfect-freehand';
 import { ColorPalette } from './ColorPalette';
 import { BrushSizeSelector } from './BrushSizeSelector';
 import { InviteButton } from '../../ui/InviteButton';
-import { LeaveButton } from '../../ui/LeaveButton';
 
 // PlayerAvatar 컴포넌트
 const PlayerAvatar = ({ player, index }: { player?: PlayerInfo; index: number }) => {
@@ -735,17 +734,15 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
               backdropFilter: 'blur(20px)',
               padding: '20px',
               display: 'flex',
-              gap: '16px',
               justifyContent: 'center',
               borderTop: '1px solid rgba(255,255,255,0.1)'
             }}>
               <InviteButton 
                 onInvite={() => {
-                  navigator.clipboard.writeText(window.location.href);
+                  navigator.clipboard.writeText(window.location.origin + '/');
                   showToastMessage('초대 링크가 복사되었습니다!');
                 }}
               />
-              <LeaveButton onLeave={handleLeaveRoom} />
             </div>
 
             {/* CSS 애니메이션 */}
