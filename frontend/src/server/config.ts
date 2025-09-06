@@ -1,5 +1,5 @@
 export const GAME_CONFIG = {
-  MAX_PLAYERS: 2,
+  MAX_PLAYERS: 4,
   GAME_TIME: 30,  
   COUNTDOWN_TIME: 3,  
   TOPIC_SELECT_TIME: 3,
