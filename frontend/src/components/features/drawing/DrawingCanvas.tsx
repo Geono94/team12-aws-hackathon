@@ -43,7 +43,7 @@ const PlayerAvatar = ({ player, index }: { player?: PlayerInfo; index: number })
       {player ? (
         <>
           <img 
-            src={`https://drawtogether-test-1757052413482.s3.us-east-1.amazonaws.com/images/char_${index + 1}.gif`}
+            src={`/characters/character${index + 1}.svg`}
             alt={`Character ${index + 1}`}
             style={{
               width: '50px',
@@ -600,7 +600,7 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
                         {player ? (
                           <>
                             <img 
-                              src={`https://drawtogether-test-1757052413482.s3.us-east-1.amazonaws.com/images/char_${index + 1}.gif`}
+                              src={`/characters/character${index + 1}.svg`}
                               alt={`Character ${index + 1}`}
                               style={{
                                 width: '60px',
@@ -771,6 +771,23 @@ export default function DrawingCanvas({ roomId }: DrawingCanvasProps) {
               @keyframes pulse {
                 0%, 100% { transform: scale(1); }
                 50% { transform: scale(1.05); }
+              }
+              
+              @keyframes bounce {
+                0% { transform: translateY(0px) rotate(0deg); }
+                25% { transform: translateY(-5px) rotate(-25deg); }
+                50% { transform: translateY(-11px) rotate(30deg); }
+                75% { transform: translateY(-5px) rotate(-20deg); }
+                100% { transform: translateY(0px) rotate(0deg); }
+              }
+              
+              @keyframes wiggle {
+                0% { transform: translateX(0px) rotate(0deg); }
+                20% { transform: translateX(-8px) rotate(-25deg); }
+                40% { transform: translateX(8px) rotate(25deg); }
+                60% { transform: translateX(-5px) rotate(-20deg); }
+                80% { transform: translateX(5px) rotate(20deg); }
+                100% { transform: translateX(0px) rotate(0deg); }
               }
             `}</style>
           </div>
