@@ -234,6 +234,7 @@ export class DrawTogetherStack extends cdk.Stack {
       handler: 'dist/ai-handler.handler',
       code: lambda.Code.fromAsset('lambda'),
       timeout: cdk.Duration.minutes(5),
+      reservedConcurrentExecutions: 1, // 중복 호출 방지를 위한 순차 처리
     });
 
     // Grant permissions

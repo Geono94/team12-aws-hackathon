@@ -94,7 +94,7 @@ export const useResults = (roomId: string | null) => {
     aiImage,
     isLoading,
     roomInfo,
-    imageAnalysis: roomInfo?.analysis as ImageAnalysis,
+    imageAnalysis: roomInfo?.analysis as unknown as ImageAnalysis,
     topic: roomInfo?.topic ?? '',
   };
 };
