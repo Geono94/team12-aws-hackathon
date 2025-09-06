@@ -227,7 +227,7 @@ export default function HomePage() {
         maxWidth: '414px', // iPhone 14 Pro Max width
         minHeight: '100vh'
       }}>
-        {/* Fixed Game Start Button */}
+        {/* Fixed Scroll to Top Button */}
         {showFixedButton && (
           <div style={{
             position: 'fixed',
@@ -238,23 +238,11 @@ export default function HomePage() {
             animation: 'slideDown 0.3s ease-out'
           }}>
             <Button 
-              onClick={handleQuickMatch}
-              disabled={!playerName.trim() || isSearchingRoom}
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               size="sm"
               className="min-w-[160px]"
             >
-              {isSearchingRoom ? (
-                <div style={{
-                  width: '16px',
-                  height: '16px',
-                  border: '2px solid rgba(255,255,255,0.3)',
-                  borderTop: '2px solid #fff',
-                  borderRadius: '50%',
-                  animation: 'spin 1s linear infinite'
-                }} />
-              ) : (
-                '🎮 게임 시작하기'
-              )}
+              맨 위로
             </Button>
           </div>
         )}
