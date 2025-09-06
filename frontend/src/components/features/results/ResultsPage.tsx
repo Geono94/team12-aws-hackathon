@@ -275,8 +275,8 @@ export default function ResultsPage({ params }: ResultsPageProps) {
           )}
         </div>
 
-        {/* 주제 - 항상 이미지 바로 아래에 표시 */}
-        {topic && (
+        {/* 주제 - from=drawing이 아닐 때만 이미지 아래에 표시 */}
+        {!isFromDrawing && topic && (
           <div style={{
             display: 'inline-block',
             padding: '12px 24px',
