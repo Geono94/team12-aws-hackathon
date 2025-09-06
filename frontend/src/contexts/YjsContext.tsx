@@ -12,7 +12,6 @@ interface YjsContextType {
   connected: boolean;
   sendMessage: (message: ClientToServerMessage) => void;
   onMessage: (callback: (message: ServerToClientMessage) => void) => (() => void) | undefined;
-  messages: any[]; 
   roomId: string;
 }
 
@@ -22,7 +21,6 @@ const YjsContext = createContext<YjsContextType>({
   connected: false, 
   sendMessage: () => {},
   onMessage: () => undefined,
-  messages: [],
   roomId: '',
 });
 
@@ -38,14 +36,14 @@ export function YjsProvider({ children,   roomId = 'default' }: YjsProviderProps
         : `ws://${window.location.hostname}:3001`)
     : `ws://172.30.3.57:3001`;
     
-  const { doc, provider, connected, sendMessage, onMessage, messages, roomId: currentRoomId } = useWebSocket(roomId, wsUrl);
+  const { doc, provider, connected, sendMessage, onMessage, roomId: currentRoomId } = useWebSocket(roomId, wsUrl);
 
   if (!connected) {
     return null;
   }
 
   return (
-    <YjsContext.Provider value={{   doc, provider, connected, sendMessage, onMessage, messages, roomId: currentRoomId }}>
+    <YjsContext.Provider value={{   doc, provider, connected, sendMessage, onMessage, roomId: currentRoomId }}>
       {children}
     </YjsContext.Provider>
   );

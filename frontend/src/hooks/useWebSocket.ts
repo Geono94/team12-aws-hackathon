@@ -6,7 +6,6 @@ export const useWebSocket = (roomId: string, wsUrl: string) => {
   const [doc] = useState(() => new Y.Doc());
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
   const [connected, setConnected] = useState(false);
-  const [messages, setMessages] = useState<any[]>([]);
 
   const sendMessage = useCallback((message: any) => {
     if (provider?.ws && connected) {
@@ -16,7 +15,6 @@ export const useWebSocket = (roomId: string, wsUrl: string) => {
   }, [provider, connected]);
 
   const onMessage = useCallback((callback: (message: any) => void) => {
-    console.log(provider?.ws)
     if (provider?.ws) {
       const handleMessage = (event: MessageEvent) => {
         try {
@@ -25,7 +23,6 @@ export const useWebSocket = (roomId: string, wsUrl: string) => {
           // Only handle game messages (has type property and roomId)
           if (message.type && typeof message.type === 'string') {
             callback(message);
-            setMessages(prev => [...prev, message]);
           }
           // Ignore Yjs protocol messages
         } catch (error) {
@@ -79,5 +76,5 @@ export const useWebSocket = (roomId: string, wsUrl: string) => {
     }
   }, [roomId, wsUrl, doc]);
 
-  return { doc, provider, connected, sendMessage, onMessage, messages, roomId };
+  return { doc, provider, connected, sendMessage, onMessage, roomId };
 };
