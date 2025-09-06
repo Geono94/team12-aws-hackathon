@@ -191,7 +191,7 @@ export default function HomePage() {
         maxWidth: '414px', // iPhone 14 Pro Max width
         minHeight: '100vh'
       }}>
-        {/* Fixed Game Start Button */}
+        {/* Fixed Scroll to Top Button */}
         {showFixedButton && (
           <div style={{
             position: 'fixed',
@@ -473,7 +473,6 @@ export default function HomePage() {
                   <ArtworkCard
                     key={artwork.id}
                     artwork={artwork}
-                    onReaction={handleReaction}
                     onViewDetail={handleViewDetail}
                   />
                 ))}
