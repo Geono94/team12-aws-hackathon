@@ -71,7 +71,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
           body: JSON.stringify({ error: 'playerId and playerName are required' }),
         };
       }
-      return await joinRoom(playerId, playerName);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Room join via Lambda is deprecated. Use WebSocket server.' }),
+      };
     }
 
     if (path === '/rooms/leave' && method === 'POST') {
@@ -269,89 +273,6 @@ async function leaveRoom(roomId: string, playerId: string): Promise<APIGatewayPr
       statusCode: 500,
       headers: { 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({ error: 'Failed to leave room' }),
-    };
-  }
-}
-
-async function joinRoom(playerId: string, playerName: string): Promise<APIGatewayProxyResult> {
-  try {
-    // Find an available room
-    const availableRoom = await findAvailableRoom();
-    
-    if (!availableRoom) {
-      return {
-        statusCode: 404,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({ error: 'No available room found' }),
-      };
-    }
-
-    // Check if player already exists in the room
-    const existingPlayer = (availableRoom.players || []).find(p => p.playerId === playerId);
-    if (existingPlayer) {
-      return {
-        statusCode: 200,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({
-          roomId: availableRoom.roomId,
-          playerCount: availableRoom.playerCount,
-          maxPlayers: availableRoom.maxPlayers,
-          players: availableRoom.players,
-        }),
-      };
-    }
-
-    // Add new player to the room
-    const newPlayer: Player = {
-      playerId,
-      name: playerName,
-      joinedAt: Date.now(),
-    };
-
-    const updatedPlayers = [...(availableRoom.players || []), newPlayer];
-
-    await docClient.send(new UpdateCommand({
-      TableName: ROOMS_TABLE,
-      Key: { roomId: availableRoom.roomId },
-      UpdateExpression: 'SET playerCount = playerCount + :inc, players = :players, updatedAt = :time',
-      ConditionExpression: 'playerCount < maxPlayers AND #status = :status',
-      ExpressionAttributeNames: {
-        '#status': 'status',
-      },
-      ExpressionAttributeValues: {
-        ':inc': 1,
-        ':players': updatedPlayers,
-        ':time': Date.now(),
-        ':status': 'waiting',
-      },
-    }));
-
-    return {
-      statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({
-        roomId: availableRoom.roomId,
-        playerCount: availableRoom.playerCount + 1,
-        maxPlayers: availableRoom.maxPlayers,
-        players: updatedPlayers,
-      }),
-    };
-  } catch (error: any) {
-    console.error('Join room error:', error);
-    
-    // Handle conditional check failed exception (race condition)
-    if (error.name === 'ConditionalCheckFailedException') {
-      return {
-        statusCode: 409,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({ error: 'Room is full or not available' }),
-      };
-    }
-    
-    return {
-      statusCode: 500,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: 'Failed to join room' }),
     };
   }
 }
