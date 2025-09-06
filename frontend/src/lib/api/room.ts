@@ -18,6 +18,17 @@ export interface RoomResponse {
     name: string;
     joinedAt: number;
   }>;
+  analysis?: string;
+}
+
+export interface ImageAnalysis {
+  subject: string;
+  technicalEvaluation: string;
+  creativityEvaluation: string;
+  mvp: string;
+  worst: string;
+  score: number;
+  style: string;
 }
 
 export interface PaginatedRoomsResponse {

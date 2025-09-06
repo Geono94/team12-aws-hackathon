@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { S3_BUCKET_NAME } from '@/server/config';
+import { ImageAnalysis, RoomResponse } from '@/lib/api/room';
 
 const BUCKET_URL = `https://${S3_BUCKET_NAME}.s3.us-east-1.amazonaws.com`;
 
@@ -54,6 +55,7 @@ export const useResults = (roomId: string | null) => {
   const [aiImage, setAiImage] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [loadingMessage, setLoadingMessage] = useState('AI가 이미지를 생성하고 있습니다...');
+  const [roomInfo, setRoomInfo] = useState<RoomResponse>();
 
   const pollForAiImage = async (aiImageUrl: string, drawingResult: string) => {
     let attempts = 0;
@@ -78,12 +80,26 @@ export const useResults = (roomId: string | null) => {
       return false;
     };
 
+    async function fetchRoom() {
+      if (roomInfo?.analysis){return;}
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/rooms/${roomId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const room = await response.json();
+      setRoomInfo(room);
+    };
+    
     // Check immediately
     const success = await checkImage();
     if (success) return;
     
     // Poll every 5 seconds
     const interval = setInterval(async () => {
+      fetchRoom();
       const success = await checkImage();
       if (success || attempts >= maxAttempts) {
         clearInterval(interval);
@@ -176,6 +192,9 @@ export const useResults = (roomId: string | null) => {
     originalImage,
     aiImage,
     isLoading,
-    loadingMessage
+    loadingMessage,
+    roomInfo,
+    imageAnalysis: JSON.parse(roomInfo?.analysis ?? 'null') as ImageAnalysis,
+    topic: roomInfo?.topic??'',
   };
 };

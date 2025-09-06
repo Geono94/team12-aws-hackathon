@@ -1,0 +1,83 @@
+.ai-analysis-section {
+  margin: 20px 0;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 10px;
+}
+
+.ai-analysis-section h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.analysis-box {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  min-height: 80px;
+  position: relative;
+}
+
+.analysis-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.5s ease-in-out;
+  position: relative;
+}
+
+.analysis-item.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+  animation: slideIn 0.5s ease-out;
+}
+
+.analysis-item.fade-out {
+  opacity: 0.3;
+  transform: translateY(-10px);
+  font-size: 0.9em;
+  margin: 6px 0;
+}
+
+.analysis-item .icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.analysis-item .content {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.analysis-item strong {
+  color: #555;
+  margin-right: 5px;
+}
+
+.analyzing {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}

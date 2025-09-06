@@ -7,16 +7,16 @@ import ImageCompareSlider from '@/components/ui/ImageCompareSlider';
 import { SaveButton } from '@/components/ui/SaveButton';
 import { ShareButton } from '@/components/ui/ShareButton';
 import { HomeButton } from '@/components/ui/HomeButton';
+import AIAnalysisSection from './AIAnalysisSection';
 
 export default function ResultsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const roomId = searchParams.get('roomId');
   
-  const { originalImage, aiImage, isLoading, loadingMessage } = useResults(roomId);
+  const { originalImage, aiImage, isLoading, imageAnalysis, topic } = useResults(roomId);
   
   const [playerCount] = useState(4);
-  const [topic] = useState('자유 주제');
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [funFacts] = useState([
     "🎨 AI가 당신의 그림을 분석하고 있어요",
@@ -170,7 +170,7 @@ export default function ResultsPage() {
         </div>
 
         {/* Progress Bar (moved to where tabs were) */}
-        {isLoading && (
+        {!isLoading && (
           <div style={{
             width: '100%',
             maxWidth: '400px'
@@ -251,6 +251,12 @@ export default function ResultsPage() {
                 </p>
               </div>
             </div>
+
+            {/* AI 분석 섹션 - AI 변환 중일 때만 표시 */}
+            <AIAnalysisSection 
+              imageAnalysis={imageAnalysis}
+              topic={topic}
+            />
           </div>
         )}
 
