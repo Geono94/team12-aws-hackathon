@@ -236,8 +236,9 @@ export default function ArtworkDetailPage({ artwork }: ArtworkDetailPageProps) {
             borderRadius: BORDER_RADIUS.lg,
             overflow: 'hidden',
             position: 'relative',
-            height: '300px',
-            width: '100%'
+            width: '100%',
+            aspectRatio: '4/3',
+            maxHeight: '500px'
           }}>
             <ImageCompareSlider
               originalImage={artwork.originalImage}

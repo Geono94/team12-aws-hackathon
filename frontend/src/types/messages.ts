@@ -80,7 +80,8 @@ export type ServerToClientMessage =
   | RoomJoinedMessage
   | GameStateUpdateMessage
   | PlayerUpdateMessage
-  | GameEndedMessage | KickRoomMessage;
+  | GameEndedMessage 
+  | KickRoomMessage;
 
 // Combined message types
 export type NetworkMessage = ClientToServerMessage | ServerToClientMessage;
