@@ -34,38 +34,6 @@ export class GameAIProcessor {
         this.gemini = new GeminiImageProcessor();
     }
 
-    private isEmptyImage(imageBuffer: Buffer): boolean {
-        // Check if image is too small (likely empty)
-        if (imageBuffer.length < 1000) {
-            return true;
-        }
-
-        // Simple check: if image is mostly white pixels
-        // This is a basic heuristic - for more accurate detection, 
-        // you might want to use image processing libraries
-        const imageString = imageBuffer.toString('base64');
-        
-        // Check for patterns common in empty/white canvas images
-        // This is a simplified approach
-        const whitePatterns = [
-            'AAAA', // Common white pixel pattern in base64
-            'FFFF', // Another white pattern
-            '/////'  // Yet another white pattern
-        ];
-
-        let whitePatternCount = 0;
-        whitePatterns.forEach(pattern => {
-            const matches = (imageString.match(new RegExp(pattern, 'g')) || []).length;
-            whitePatternCount += matches;
-        });
-
-        // If more than 80% of patterns suggest white/empty image
-        const threshold = imageString.length * 0.01; // 1% threshold
-        console.log(`🔍 Empty image check - White patterns: ${whitePatternCount}, Threshold: ${threshold}`);
-        
-        return whitePatternCount > threshold;
-    }
-
     async processS3Image(request: S3ImageProcessRequest, onAnalysisComplete?: (analysis: any) => Promise<void>): Promise<any> {
         console.log('S3 이미지 처리 시작 (Gemini만 사용):', request);
         
@@ -83,24 +51,6 @@ export class GameAIProcessor {
 
             const imageBuffer = Buffer.from(await s3Object.Body.transformToByteArray());
             const imageBase64 = imageBuffer.toString('base64');
-
-            // Check if image is empty/blank before processing
-            if (this.isEmptyImage(imageBuffer)) {
-                console.log('🚫 빈 이미지 감지 - AI 생성을 건너뜁니다');
-                return {
-                    evaluation: {
-                        subject: "빈 캔버스",
-                        technicalEvaluation: "그림이 그려지지 않았음",
-                        creativityEvaluation: "내용 없음",
-                        mvp: "깨끗한 캔버스",
-                        worst: "그림이 없음",
-                        score: 0,
-                        style: "빈 화면"
-                    },
-                    aiImageUrl: null,
-                    originalImageUrl: `https://${request.bucketName}.s3.amazonaws.com/${request.inputKey}`
-                };
-            }
 
             // Analyze drawing using existing method
             const analysisResult = await this.analyzeDrawing(imageBase64);
