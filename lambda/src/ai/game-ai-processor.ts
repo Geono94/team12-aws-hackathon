@@ -101,13 +101,15 @@ export class GameAIProcessor {
     }
 
     async analyzeDrawing(imageBase64: string): Promise<AnalysisResponse> {
-        console.log('🔍 이미지 분석 시작 (Fallback 사용)...');
-        
+        console.log('🔍 이미지 분석 시작 (Bedrock 사용)...');
+
         try {
-            // Use fallback analysis for now
-            return this.getFallbackAnalysis();
+            const analysisResponse = await this.bedrock.analyzeImage(imageBase64);
+            console.log('✅ Bedrock 분석 완료');
+            return analysisResponse;
+
         } catch (error) {
-            console.error('AI 분석 오류:', error);
+            console.error('❌ Bedrock 분석 실패, fallback 사용:', error);
             return this.getFallbackAnalysis();
         }
     }

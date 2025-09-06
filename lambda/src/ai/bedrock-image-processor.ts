@@ -25,7 +25,6 @@ export class BedrockImageProcessor {
 
     async analyzeImage(imageBase64: string): Promise<AnalysisResponse> {
         const mediaType = 'image/png';
-        const imageBuffer = Buffer.from(imageBase64, 'base64');
         
         const payload = {
             anthropic_version: "bedrock-2023-05-31",
@@ -38,7 +37,7 @@ export class BedrockImageProcessor {
                         source: {
                             type: "base64",
                             media_type: mediaType,
-                            data: imageBuffer.toString('base64')
+                            data: imageBase64  // 직접 사용
                         }
                     },
                     {

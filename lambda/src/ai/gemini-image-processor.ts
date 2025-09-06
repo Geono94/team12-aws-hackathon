@@ -78,6 +78,11 @@ Create this as if it were the main poster art for a blockbuster animated movie. 
 
         } catch (error: any) {
             console.error('❌ Gemini 이미지 생성 오류:', error);
+            console.error('🔍 에러 상세 정보:');
+            console.error('- Status:', error.status);
+            console.error('- StatusText:', error.statusText);
+            console.error('- Message:', error.message);
+            console.error('- ErrorDetails:', error.errorDetails);
             
             // 할당량 초과 확인
             if (error.message?.includes('quota') || error.message?.includes('limit') || error.message?.includes('429')) {

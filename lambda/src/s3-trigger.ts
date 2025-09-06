@@ -10,10 +10,17 @@ export const handler = async (event: S3Event): Promise<void> => {
     const bucketName = record.s3.bucket.name;
     const objectKey = decodeURIComponent(record.s3.object.key.replace(/\+/g, ' '));
     
-    // Extract room ID from object key (format: original/{roomId}/image.png)
+    // Extract room ID from object key (format: drawings/room_xxx.png)
     const pathParts = objectKey.split('/');
-    const roomId = pathParts[1];
     const fileName = pathParts[pathParts.length - 1];
+    
+    // Skip AI-generated files to prevent infinite loop
+    if (fileName.includes('_ai')) {
+      console.log('Skipping AI-generated file:', fileName);
+      continue;
+    }
+    
+    const roomId = fileName.replace(/\.(png|jpg|jpeg)$/i, ''); // 확장자 제거
     
     if (!roomId || !fileName) {
       console.log('Invalid object key format:', objectKey);
