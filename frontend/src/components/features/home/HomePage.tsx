@@ -10,6 +10,7 @@ import { ArtworkItem, Reaction } from '@/types/ui';
 import { useYjs } from '@/contexts/YjsContext';
 import { getFinishedRooms } from '@/lib/api/room';
 import { createArtworkFromRoom } from '@/lib/utils/artwork';
+import { getAiImageUrl } from '@/lib/utils/s3';
 import { Title } from './Title';
 
 export default function HomePage() {
@@ -24,10 +25,42 @@ export default function HomePage() {
   const [hasMoreArtworks, setHasMoreArtworks] = useState(false);
   const [cursor, setCursor] = useState<string | undefined>();
 
+  // 랜덤 닉네임 생성 함수
+  const generateRandomNickname = () => {
+    const adjectives = ['멋진', '귀여운', '신비한', '빛나는', '용감한', '재미있는', '똑똑한', '활발한', '차분한', '친근한'];
+    const nouns = ['고양이', '강아지', '토끼', '곰', '여우', '사자', '호랑이', '판다', '코알라', '펭귄'];
+    const numbers = Math.floor(Math.random() * 100);
+    
+    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+    
+    return `${randomAdjective}${randomNoun}${numbers}`;
+  };
+
+  // Panorama room IDs
+  const panoramaRoomIds = [
+    'room_1757135517915_ldp0yo',
+    'room_1757134386735_6zmiog',
+    'room_1757128854344_mr6onq',
+    'room_1757134559358_5j39vv',
+    'room_1757124167243_gr9an5',
+    'room_1757120095142_moba5p',
+    'room_1757127565141_hfbopv',
+    'room_1757135323951_5ml2ry',
+    'room_1757133808962_5ucsip',
+    'room_1757138877786_h3t6aq',
+    'room_1757134559358_5j39vv',
+    'room_1757134345608_l6jtnz'
+  ];
+
   useEffect(() => {
     const player = getPlayer();
-    if (player) {
+    if (player && player.name) {
       setPlayerName(player.name);
+    } else {
+      // 저장된 닉네임이 없으면 랜덤 닉네임 생성
+      const randomNickname = generateRandomNickname();
+      setPlayerName(randomNickname);
     }
   }, []);
 
@@ -180,7 +213,9 @@ export default function HomePage() {
 
   return (
     <div style={{ 
-      background: '#000000',
+      background: 'linear-gradient(135deg, #000000 0%, #1a1a2e 25%, #16213e 50%, #000000 100%)',
+      backgroundSize: '200% 200%',
+      animation: 'subtleMove 20s ease-in-out infinite',
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
@@ -228,7 +263,7 @@ export default function HomePage() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: `${SPACING.md} ${SPACING.lg}`,
+          padding: `${SPACING.xl} ${SPACING.lg}`,
           textAlign: 'center',
           minHeight: '80vh'
         }}>
@@ -280,10 +315,97 @@ export default function HomePage() {
             <p style={{
               fontSize: '16px',
               color: '#888888',
-              marginBottom: SPACING.lg
+              marginBottom: SPACING.sm
             }}>
               친구와 함께하는 Ai 드로잉
             </p>
+          </div>
+        </div>
+
+        {/* Artwork Panorama Section */}
+        <div style={{
+          width: '100vw',
+          height: '140px',
+          overflow: 'hidden',
+          marginBottom: SPACING.sm,
+          position: 'relative',
+          marginLeft: 'calc(-50vw + 50%)',
+          marginRight: 'calc(-50vw + 50%)',
+          mask: 'linear-gradient(90deg, transparent 0%, black 5%, black 95%, transparent 100%)',
+          WebkitMask: 'linear-gradient(90deg, transparent 0%, black 5%, black 95%, transparent 100%)'
+        }}>
+          <div style={{
+            display: 'flex',
+            gap: '2px',
+            animation: 'slideLeft 30s linear infinite',
+            width: 'fit-content'
+          }}>
+            {/* Artwork images from S3 */}
+            {panoramaRoomIds.map((roomId, index) => (
+              <div
+                key={index}
+                style={{
+                  width: '160px',
+                  height: '120px',
+                  flexShrink: 0,
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+              >
+                <img
+                  src={getAiImageUrl(roomId)}
+                  alt={`작품 ${index + 1}`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                  onError={(e) => {
+                    // AI 이미지 로드 실패시 그라데이션 배경으로 대체
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    if (target.parentElement) {
+                      target.parentElement.style.background = `linear-gradient(${45 + index * 30}deg, 
+                        ${['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'][index % 6]}, 
+                        ${['#4ECDC4', '#FF6B6B', '#96CEB4', '#45B7D1', '#DDA0DD', '#FFEAA7'][index % 6]})`;
+                    }
+                  }}
+                />
+              </div>
+            ))}
+            {/* Duplicate for seamless loop */}
+            {panoramaRoomIds.map((roomId, index) => (
+              <div
+                key={`duplicate-${index}`}
+                style={{
+                  width: '160px',
+                  height: '120px',
+                  flexShrink: 0,
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+              >
+                <img
+                  src={getAiImageUrl(roomId)}
+                  alt={`작품 ${index + 1}`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                  onError={(e) => {
+                    // AI 이미지 로드 실패시 그라데이션 배경으로 대체
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    if (target.parentElement) {
+                      target.parentElement.style.background = `linear-gradient(${45 + index * 30}deg, 
+                        ${['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'][index % 6]}, 
+                        ${['#4ECDC4', '#FF6B6B', '#96CEB4', '#45B7D1', '#DDA0DD', '#FFEAA7'][index % 6]})`;
+                    }
+                  }}
+                />
+              </div>
+            ))}
           </div>
         </div>
 
@@ -518,6 +640,53 @@ export default function HomePage() {
           ) : null}
         </div>
       </div>
+      
+      {/* CSS 애니메이션 */}
+      <style jsx>{`
+        @keyframes slideLeft {
+          0% { 
+            transform: translateX(0); 
+          }
+          100% { 
+            transform: translateX(-50%); 
+          }
+        }
+        
+        @keyframes subtleMove {
+          0%, 100% { 
+            background-position: 0% 50%; 
+          }
+          50% { 
+            background-position: 100% 50%; 
+          }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+        
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes bounce {
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-10px); }
+          60% { transform: translateY(-5px); }
+        }
+        
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
