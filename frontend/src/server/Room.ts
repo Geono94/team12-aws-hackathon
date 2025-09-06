@@ -268,7 +268,7 @@ export class Room {
     
     this.broadcast({ 
       type: 'gameEnded', 
-      data: { redirectTo: `/results?roomId=${this.id}` } 
+      data: { redirectTo: `/result/${this.id}` } 
     });
 
     this.players.clear();

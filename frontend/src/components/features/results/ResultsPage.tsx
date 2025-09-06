@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useResults } from '@/hooks/useResults';
 import ImageCompareSlider from '@/components/ui/ImageCompareSlider';
 import { SaveButton } from '@/components/ui/SaveButton';
@@ -9,10 +9,23 @@ import { ShareButton } from '@/components/ui/ShareButton';
 import { HomeButton } from '@/components/ui/HomeButton';
 import AIAnalysisSection from './AIAnalysisSection';
 
-export default function ResultsPage() {
-  const searchParams = useSearchParams();
+interface ResultsPageProps {
+  params?: Promise<{ roomId: string }>;
+}
+
+export default function ResultsPage({ params }: ResultsPageProps) {
   const router = useRouter();
-  const roomId = searchParams.get('roomId');
+  const [roomId, setRoomId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const getRoomId = async () => {
+      if (params) {
+        const { roomId: paramRoomId } = await params;
+        setRoomId(paramRoomId);
+      }
+    };
+    getRoomId();
+  }, [params]);
   
   const { originalImage, aiImage, isLoading, imageAnalysis, topic } = useResults(roomId);
   

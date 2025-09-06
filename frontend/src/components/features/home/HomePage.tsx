@@ -211,7 +211,7 @@ export default function HomePage() {
   };
 
   const handleViewDetail = (artworkId: string) => {
-    router.push(`/feed/${artworkId}`);
+    router.push(`/result/${artworkId}`);
   };
 
   return (

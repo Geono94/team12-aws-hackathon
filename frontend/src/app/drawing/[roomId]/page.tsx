@@ -34,7 +34,7 @@ export default function Drawing() {
         setIsFinished(true);
         // 3초 후 결과 페이지로 이동
         setTimeout(() => {
-          router.push(`/results?roomId=${roomId}`);
+          router.push(`/result/${roomId}`);
         }, 3000);
         return;
       }
